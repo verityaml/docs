@@ -1,4 +1,4 @@
-# Mintlify Starter Kit
+# Mintlify Starter Kit (Verity)
 
 Use the starter kit to get your docs deployed and ready to customize.
 
