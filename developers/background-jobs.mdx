@@ -1,0 +1,70 @@
+---
+title: Background jobs
+description: Inngest step functions for examination parsing and evidence auto-matching
+---
+
+Verity uses [Inngest](https://www.inngest.com/) for background jobs. Two functions handle long-running operations that exceed Vercel's function timeout limits.
+
+## parse-examination
+
+**Event:** `exam/parse.requested`
+
+Parses uploaded examination request letters into structured request items.
+
+<Steps>
+  <Step title="validate-upload">
+    Check upload exists, mark as "processing"
+  </Step>
+  <Step title="extract-content">
+    Download file from Supabase Storage (PDF, CSV, PNG, JPG)
+  </Step>
+  <Step title="parse-with-llm">
+    Claude Sonnet via Vercel AI SDK with regulation-specific system prompt from `REGULATION_CONFIG`
+  </Step>
+  <Step title="record-total-items">
+    Save count for UI progress polling
+  </Step>
+  <Step title="save-item-{i} (per item)">
+    For each parsed item: generate embedding → search KB for FFIEC match → search for deficiency patterns → insert request item
+  </Step>
+  <Step title="mark-completed">
+    Update upload status to "completed"
+  </Step>
+</Steps>
+
+Each item is a separate Inngest step so Vercel's 60-second function timeout is never exceeded. Steps use `onConflictDoNothing` for idempotency — at-least-once semantics means steps can retry after successful writes.
+
+### Rate limiting
+
+Voyage AI free tier is 3 requests per minute. `step.sleep("rate-limit-N", "22s")` is inserted between per-item steps.
+
+<Note>
+Adding a payment method to Voyage AI unlocks standard rate limits and the sleep can be removed — parsing 28 items would drop from ~10 minutes to under 2 minutes.
+</Note>
+
+## auto-match-evidence
+
+**Event:** `scoring/auto-match.requested`
+
+Matches examination evidence against scoring criteria using two signals:
+
+1. **Regulatory source alignment** — if a request item and a criterion both reference the same FFIEC section or regulatory source
+2. **Domain/pillar alignment** — if a request item's assigned pillar corresponds to the current domain
+
+Results appear as suggestions (`suggested: true` in linked evidence) requiring human review — the system proposes, humans decide.
+
+## Configuration
+
+Inngest functions live in `backend/src/inngest/`. The Inngest dev server runs alongside Next.js during development. Functions are triggered via events sent from API routes.
+
+The webhook endpoint is at `/api/inngest/route.ts` and must be listed in `proxy.ts` `publicPaths` to bypass auth.
+
+```typescript
+// Triggering from an API route
+import { inngest } from "@verity/backend/inngest"
+
+await inngest.send({
+  name: "exam/parse.requested",
+  data: { uploadId, examinationId, orgId }
+})
+```

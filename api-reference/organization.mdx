@@ -1,0 +1,75 @@
+---
+title: Organization
+description: Team management, member invitations, and organization settings
+---
+
+## Add member directly
+
+<ParamField path="method" type="POST">`/api/org/members/add-direct`</ParamField>
+
+Adds a new member to the organization directly (admin-only). Creates a user account with a random password and sends a password reset email.
+
+<ParamField body="name" type="string" required>
+  Display name for the new member.
+</ParamField>
+
+<ParamField body="email" type="string" required>
+  Email address for the new member.
+</ParamField>
+
+<ParamField body="role" type="string">
+  Member role. One of: `admin`, `member`. Defaults to `member`.
+</ParamField>
+
+<ResponseField name="data.userId" type="string">
+  The created user's ID.
+</ResponseField>
+
+<ResponseField name="data.email" type="string">
+  The member's email address.
+</ResponseField>
+
+<ResponseField name="data.role" type="string">
+  The assigned role.
+</ResponseField>
+
+<Note>
+This endpoint logs an `member.added_direct` audit event.
+</Note>
+
+---
+
+## Send setup email
+
+<ParamField path="method" type="POST">`/api/org/members/send-setup-email`</ParamField>
+
+Sends a password reset email to a member who was added directly, allowing them to set their own password.
+
+---
+
+## Resend invitation
+
+<ParamField path="method" type="POST">`/api/org/invitations/resend`</ParamField>
+
+Resends a pending invitation email to a member who hasn't accepted yet.
+
+---
+
+## Roles
+
+| Role | Permissions |
+|------|------------|
+| `admin` | Full access — manage settings, team members, all examinations and programs |
+| `member` | View and work on examinations and compliance programs |
+
+## Organization scope
+
+The organization is the tenant boundary. All data — examinations, compliance programs, evidence, MRAs — is scoped to the organization. Users can belong to one organization.
+
+### Audit log
+
+All significant actions are logged to an immutable, org-scoped audit log. Events include:
+- Member additions and removals
+- Examination creation, archival, and deletion
+- Status changes on examinations and MRAs
+- Evidence uploads and deletions

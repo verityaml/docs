@@ -1,0 +1,276 @@
+---
+title: Feature walkthrough
+description: A guided tour of Verity's compliance platform — follow along in the app or read through to understand what the system does and why
+---
+
+## Before you start
+
+You'll need a running instance of Verity with at least one compliance program seeded. The quickest way:
+
+```bash
+cd docker
+docker compose --profile seeded up --build
+```
+
+Log in with `demo@verity.local` / `demo1234`. The seeded profile includes a BSA/AML compliance program, a third-party oversight program, a sample examination, and a populated regulatory knowledge base.
+
+If you're running against the cloud instance at `app.verityaml.com`, sign up and the system will guide you through setup.
+
+---
+
+## The dashboard: your compliance command center
+
+**Where to find it:** Log in and you're here. This is the home page.
+
+<img
+  src="/images/home-top.png"
+  alt="Verity dashboard with bank-readiness score and domain cards"
+  style={{ borderRadius: '0.5rem' }}
+/>
+
+The dashboard is the single view that answers the question every BSA officer asks: *"How ready are we?"*
+
+At the top, you'll see a **Bank-Readiness Score** — a real-time percentage measuring how prepared your compliance program is for an examination. This isn't a static number someone entered. It's computed from the evidence status of every criterion across every regulatory domain.
+
+Below the score, **domain cards** break down readiness by compliance area. For a BSA/AML program, that's the five FFIEC pillars — Internal Controls, Independent Testing, BSA Officer Oversight, Training, and CDD/KYC. Each card shows its own score and a count of how many criteria are sufficient, partial, or missing.
+
+<img
+  src="/images/home-scroll-1.png"
+  alt="Domain cards showing per-pillar readiness scores"
+  style={{ borderRadius: '0.5rem' }}
+/>
+
+If you see a domain card with gaps — say CDD/KYC at 60% with two missing criteria — that's the system telling you where to focus *before* the examination letter arrives.
+
+**The Priority Gaps panel** lists the highest-priority unfilled criteria across all domains, ranked by regulatory importance. This is your team's to-do list, derived directly from the regulatory requirements.
+
+### Switching programs
+
+Verity supports multiple compliance programs. Click the tab at the top of the dashboard to switch between them. The seeded demo includes:
+
+- **BSA/AML** — mapped to the 5 FFIEC examination pillars
+- **Third-Party Oversight** — mapped to the 8 monitoring areas from OCC 2023-17 (the interagency guidance on third-party risk management)
+
+When you switch programs, the entire dashboard reconfigures — different domains, different criteria, different score. Same platform, different regulatory framework.
+
+---
+
+## Domain detail: criteria and evidence
+
+**Where to find it:** Click any domain card on the dashboard.
+
+<img
+  src="/images/evidence-internal-controls-top.png"
+  alt="Domain detail page showing scoring criteria table"
+  style={{ borderRadius: '0.5rem' }}
+/>
+
+This is where the real work happens. The domain detail page lists every scoring criterion for that regulatory domain, each one mapped to a specific section of the relevant regulatory guidance.
+
+### Understanding the criteria table
+
+Each row shows:
+- **Criterion text** — what the regulation requires (e.g., "Board-approved BSA/AML compliance program documented and updated annually")
+- **Regulatory source** — the specific FFIEC section or OCC 2023-17 paragraph it traces back to
+- **Evidence count** — how many documents are linked to this criterion
+- **Evidence status** — where you stand: Missing, Stale, Partial, or Sufficient
+
+### Updating evidence status
+
+The status column is a dropdown, not a static label. Click it to change a criterion's evidence status. The change takes effect immediately — you'll see the domain score at the top of the page update in real time.
+
+The score formula is straightforward: each "sufficient" criterion contributes 100 points, each "partial" contributes 50, and everything else contributes zero. Divide by total criteria, and that's your domain score.
+
+### Reviewer notes
+
+Click **Expand** on any criterion to reveal the detail section. The notes textarea lets your team add context — "Waiting on updated board minutes from Q4," "Policy document needs legal sign-off," etc. Notes auto-save after a one-second pause. You'll see a "Saving..." indicator followed by "Saved" to confirm.
+
+### Linked evidence
+
+Below the notes, you'll see any evidence documents linked to the criterion. Each entry shows:
+- The document label
+- Its source type (attachment, MRA evidence, or external URL)
+- An **AUTO** label on entries linked by the auto-match system
+- A **Remove** button to unlink the entry
+
+All linked evidence — whether added manually or auto-matched — is treated the same way. If the auto-match system has linked evidence that doesn't belong, just remove it.
+
+---
+
+## Auto-matching: finding evidence across examinations
+
+**Where to find it:** The **Find Evidence** button in the domain detail page header.
+
+This is the bridge between your examination workflow and your compliance program scoring.
+
+When you click "Find Evidence," a dialog appears listing your organization's examinations. Select one, and the system scans that examination's request items and their attached evidence against the criteria in the current domain.
+
+Matching works on two signals:
+1. **Regulatory source alignment** — if a request item and a criterion both reference the same FFIEC section or regulatory source, that's a strong match
+2. **Domain/pillar alignment** — if a request item's assigned pillar corresponds to the current domain, the evidence is likely relevant
+
+Matched evidence is **automatically linked** to the relevant criteria — you'll see a count appear ("Auto-linked 4 evidence items") once matching completes. Each auto-linked entry is labelled **AUTO** so it's easy to distinguish from manually added evidence.
+
+<Tip>
+This turns examination evidence into reusable compliance proof. Evidence uploaded for one examination cycle can strengthen your readiness score across future cycles.
+</Tip>
+
+---
+
+## The regulatory reference library
+
+**Where to find it:** Click **Library** in the sidebar navigation.
+
+The library is the regulatory knowledge base powering the entire platform. It contains the authoritative guidance text — FFIEC BSA/AML Examination Manual sections, OCC 2023-17 interagency guidance, FinCEN advisories, and enforcement deficiency patterns.
+
+### Searching
+
+Type a query into the search bar — "customer due diligence," "information security monitoring," "suspicious activity reporting." The search uses semantic matching (vector embeddings), so it understands meaning, not just keywords. "CDD requirements" and "know your customer policies" return overlapping results.
+
+### Filtering
+
+Use the domain filter to scope results:
+- **BSA/AML** — FFIEC manual content, FinCEN advisories, enforcement patterns
+- **Third-Party Risk** — OCC 2023-17 monitoring areas, interagency guidance
+
+### Cross-references
+
+Each library entry shows which scoring criteria reference it. Click through to see the criterion in context on its domain detail page. This creates a navigable link between "what does the regulation require?" and "where do we stand on that requirement?"
+
+Going the other direction works too: from a criterion on the domain detail page, click the regulatory source citation to open the corresponding library entry.
+
+---
+
+## Examinations: when the letter arrives
+
+**Where to find it:** Click **Obligations** in the sidebar navigation.
+
+While the dashboard and scoring system are proactive — measuring readiness before the examiner shows up — the examination workflow handles the reactive side: processing the actual request letter and tracking your team's response.
+
+### Creating an examination
+
+Click **New Obligation** to create a new examination record. Enter the basic details — title, examiner, regulation type, due date — and you'll land on the examination detail page.
+
+### Parsing the request letter
+
+Upload the PDF of the examination request letter. The system uses AI to parse every line item from the document. Each extracted item includes:
+- The examiner's request text
+- The FFIEC pillar or regulatory domain it maps to
+- The type of evidence that satisfies it
+- Common deficiencies from published enforcement actions
+
+Items stream in one by one as they're parsed. The BSA officer reviews each one — AI proposes the mapping, the human confirms or adjusts.
+
+### Assigning and tracking
+
+Each request item can be assigned to a team member with a deadline. The examination dashboard shows progress by pillar, by assignee, and by status. Team members upload evidence directly against each request item.
+
+Status progression is straightforward: items move from "not started" through "in progress" to "complete" as evidence is gathered and reviewed. The examination advances from "preparing" to "in progress" automatically as work begins.
+
+### Evidence upload
+
+Each request item accepts file uploads — PDFs, CSVs, images. Files are stored securely and linked to the specific item they satisfy. Multiple files per item are supported.
+
+---
+
+## Exporting the response package
+
+**Where to find it:** The "Export Package" button on any examination detail page, visible once request items exist.
+
+<img
+  src="/images/response-package-top.png"
+  alt="Response package export preview with cover letter and evidence manifest"
+  style={{ borderRadius: '0.5rem' }}
+/>
+
+When your team has gathered evidence and the deadline is approaching, click "Export Package" to open the report preview page.
+
+### The preview
+
+The preview shows you exactly what will be in the export:
+
+- **Cover letter** — prefilled with your organization name, the examiner's details, and the response deadline
+- **Table of contents** — every request item grouped by FFIEC pillar, with page references
+- **Evidence manifest** — a structured inventory of every item, its status, and the files linked to it
+
+### Export options
+
+- **Format selector** — choose PDF (consolidated binder) or ZIP (pillar-organized folder structure)
+- **Options** — watermark and Bates numbering checkboxes
+- **Package contents** — a checklist showing which items are complete and which are still pending
+- **Readiness indicator** — shows "N/M ITEMS COMPLETE" or "N ITEMS PENDING" at a glance
+
+### PDF format
+
+The PDF is a consolidated binder: cover letter, table of contents, per-pillar sections with item summaries, and an evidence manifest table. Uses Verity branded typography (Fraunces headings, Helvetica body, Courier mono) as print-safe fallbacks.
+
+### ZIP format
+
+The ZIP organizes evidence by pillar: each folder contains the evidence files for all items under that pillar, named with their request item IDs. The package also includes the cover letter as a PDF and an evidence manifest CSV.
+
+---
+
+## Response archive: institutional memory
+
+**Where to find it:** Archived examinations appear in the **Archive** section (accessible from the sidebar or by archiving a completed examination).
+
+<img
+  src="/images/archive-top.png"
+  alt="Response archive with search across past examinations"
+  style={{ borderRadius: '0.5rem' }}
+/>
+
+When an examination is complete, archive it. The archive preserves the full examination package — every request item, every uploaded evidence file, all notes and status history.
+
+### Search across examinations
+
+The archive search lets you query across all past examinations. Looking for how you handled a specific regulatory topic last cycle? Search for it. The results show which examination contained it, what evidence was provided, and what the outcome was.
+
+<Tip>
+This is the "institutional memory" that most compliance teams lack. The second examination cycle takes less time because you can reference what worked before.
+</Tip>
+
+### MRA tracking
+
+If the examination results in Matters Requiring Attention (MRAs), track them directly from the archived examination. Each MRA records:
+- The finding text
+- Severity and status
+- Remediation evidence and timeline
+- Links back to the original request items
+
+MRAs have their own lifecycle — from identified through remediation to closed — and their progress is tracked alongside the overall examination record.
+
+---
+
+## The full loop
+
+Here's how all of this connects:
+
+<Steps>
+  <Step title="Define what good looks like">
+    Your **compliance programs** define the regulatory domains and specific criteria your program must satisfy
+  </Step>
+  <Step title="Measure where you stand">
+    The **dashboard** continuously measures your readiness against those criteria
+  </Step>
+  <Step title="Parse the examination letter">
+    When an **examination letter** arrives, the parser converts it into trackable items mapped to the same regulatory framework
+  </Step>
+  <Step title="Collect evidence">
+    Your team **collects evidence** against each request item during the examination
+  </Step>
+  <Step title="Export the response package">
+    When evidence is ready, **export the response package** as a PDF binder or pillar-organized ZIP archive and submit to the examiner
+  </Step>
+  <Step title="Link evidence to scoring">
+    After the examination, the **auto-match** system links that evidence back to your scoring criteria, strengthening your readiness score
+  </Step>
+  <Step title="Track findings">
+    **Findings and MRAs** feed back into the compliance program as gaps to address
+  </Step>
+  <Step title="Build institutional memory">
+    The **archive** preserves everything for the next cycle, and the **library** provides the regulatory grounding throughout
+  </Step>
+</Steps>
+
+Each examination cycle makes the program demonstrably stronger. That's what continuous compliance looks like — not a periodic fire drill, but a system that compounds over time.

@@ -1,0 +1,40 @@
+---
+title: Regulatory reference library
+description: Browse and search across FFIEC guidance, FinCEN advisories, OCC interagency guidance, and enforcement deficiency patterns
+---
+
+The library is the regulatory knowledge base powering the entire platform. It contains the authoritative guidance text that criteria trace back to and that the examination parser references during line-item extraction.
+
+## Content
+
+| Source | Content | Domain |
+|--------|---------|--------|
+| FFIEC Sections | BSA/AML Examination Manual + OCC 2023-17 guidance | BSA/AML or Third-Party Risk |
+| FinCEN Advisories | FinCEN guidance, advisories, rules | BSA/AML |
+| Deficiency Patterns | Enforcement action patterns by pillar/severity | BSA/AML |
+| Red Flags | FFIEC Appendix F suspicious activity indicators | BSA/AML |
+
+The knowledge base is shared across all organizations — regulatory content is not org-scoped.
+
+## Semantic search
+
+Type a query into the search bar — "customer due diligence," "information security monitoring," "suspicious activity reporting." The search uses semantic matching powered by Voyage AI (`voyage-law-2`) embeddings, so it understands meaning, not just keywords.
+
+"CDD requirements" and "know your customer policies" return overlapping results because the system matches on semantic similarity, not keyword overlap.
+
+## Filtering
+
+Use the domain filter to scope results:
+
+- **BSA/AML** — FFIEC manual content, FinCEN advisories, enforcement patterns
+- **Third-Party Risk** — OCC 2023-17 monitoring areas, interagency guidance
+
+## Cross-references
+
+Each library entry shows which scoring criteria reference it. Click through to see the criterion in context on its domain detail page. This creates a navigable link between "what does the regulation require?" and "where do we stand on that requirement?"
+
+Going the other direction works too: from a criterion on the domain detail page, click the regulatory source citation to open the corresponding library entry.
+
+<Note>
+The library also supports full-text search with keyword highlighting alongside semantic search, giving you both exact-match and meaning-based results.
+</Note>

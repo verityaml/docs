@@ -1,0 +1,72 @@
+---
+title: Bank-readiness scoring
+description: Map regulatory requirements to scoring criteria, track evidence status, and compute readiness scores across compliance domains
+---
+
+<img
+  src="/images/evidence-internal-controls-top.png"
+  alt="Domain detail page showing scoring criteria with evidence status"
+  style={{ borderRadius: '0.5rem' }}
+/>
+
+Bank-readiness scoring maps regulatory requirements to scoring criteria by compliance domain, tracks evidence status, and computes readiness scores. Each criterion links to its regulatory source in the knowledge base.
+
+## How scoring works
+
+The scoring model is a three-tier hierarchy: **Program** → **Domain** → **Criteria**.
+
+- **Programs** are scoped by regulation type — BSA/AML maps to 5 FFIEC pillars, Third-Party Oversight maps to 8 OCC 2023-17 monitoring areas
+- **Domains** correspond to regulatory categories (e.g., Internal Controls, Independent Testing)
+- **Criteria** have an evidence status: `missing`, `stale`, `partial`, or `sufficient`
+
+### Score formula
+
+```
+domain_score = ((sufficient_count × 100) + (partial_count × 50)) / total_criteria
+```
+
+Each "sufficient" criterion contributes 100 points, each "partial" contributes 50, and everything else contributes zero. The domain score updates in real time as you change evidence statuses.
+
+## Criteria table
+
+The domain detail page lists every scoring criterion, each one mapped to a specific section of regulatory guidance:
+
+| Column | Description |
+|--------|-------------|
+| Criterion text | What the regulation requires |
+| Regulatory source | The specific FFIEC section or OCC 2023-17 paragraph |
+| Evidence count | How many documents are linked |
+| Evidence status | Missing, Stale, Partial, or Sufficient |
+
+The status column is a dropdown — click to change it and the domain score updates immediately.
+
+## Reviewer notes
+
+Click **Expand** on any criterion to reveal the detail section. The notes textarea lets your team add context — "Waiting on updated board minutes from Q4," "Policy document needs legal sign-off," etc. Notes auto-save after a one-second pause.
+
+## Linked evidence
+
+<img
+  src="/images/evidence-cdd-kyc.png"
+  alt="Scoring criteria with linked evidence documents"
+  style={{ borderRadius: '0.5rem' }}
+/>
+
+Below the notes, you'll see evidence documents linked to the criterion. Each entry shows:
+- The document label
+- Its source type (attachment, MRA evidence, or external URL)
+- An **AUTO** label on entries linked by the auto-match system
+- A **Remove** button to unlink the entry
+
+## Auto-matching
+
+The **Find Evidence** button in the domain detail page header bridges examination workflow and compliance program scoring.
+
+Select an examination, and the system scans its request items and attached evidence against the criteria in the current domain. Matching uses two signals:
+
+1. **Regulatory source alignment** — request item and criterion both reference the same FFIEC section
+2. **Domain/pillar alignment** — request item's assigned pillar corresponds to the current domain
+
+<Tip>
+Auto-matching turns examination evidence into reusable compliance proof. Evidence uploaded for one examination cycle can strengthen your readiness score across future cycles.
+</Tip>

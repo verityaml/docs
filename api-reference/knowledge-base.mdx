@@ -1,0 +1,79 @@
+---
+title: Knowledge base
+description: Browse and search the regulatory reference library — FFIEC sections, FinCEN advisories, deficiency patterns
+---
+
+The knowledge base is shared across all organizations and contains the regulatory guidance that powers scoring criteria and examination parsing.
+
+## Semantic search
+
+<ParamField path="method" type="GET">`/api/knowledge-base/search`</ParamField>
+
+Search the knowledge base using semantic matching (Voyage AI `voyage-law-2` embeddings).
+
+<ParamField query="q" type="string" required>
+  Search query (e.g., "customer due diligence", "suspicious activity reporting").
+</ParamField>
+
+<ParamField query="domain" type="string">
+  Filter by regulation domain. One of: `bsa_aml`, `third_party_risk`.
+</ParamField>
+
+<ResponseField name="data.results" type="array">
+  Top 10 semantic matches. Each result includes:
+  - `id` — Entry ID
+  - `type` — `ffiec_section`, `fincen_advisory`, `deficiency_pattern`, or `red_flag`
+  - `title` — Entry title
+  - `content` — Entry content text
+  - `regulationDomain` — Domain classification
+  - `similarity` — Cosine similarity score
+  - `referencedByCount` — Number of scoring criteria referencing this entry
+</ResponseField>
+
+<Note>
+The search uses a default similarity threshold of 0.3. Results below this threshold are filtered out.
+</Note>
+
+---
+
+## Browse entries
+
+<ParamField path="method" type="GET">`/api/knowledge-base/browse`</ParamField>
+
+Browse knowledge base entries with pagination, grouped by domain.
+
+<ParamField query="domain" type="string">
+  Filter by regulation domain. One of: `bsa_aml`, `third_party_risk`.
+</ParamField>
+
+<ParamField query="limit" type="number">
+  Results per page. Range: 1–50. Default: 20.
+</ParamField>
+
+<ParamField query="offset" type="number">
+  Pagination offset. Default: 0.
+</ParamField>
+
+<ResponseField name="data.entries" type="array">
+  Array of knowledge base entries from FFIEC sections, FinCEN advisories, and deficiency patterns.
+</ResponseField>
+
+<ResponseField name="data.grouped" type="object">
+  Entries grouped by domain for display.
+</ResponseField>
+
+---
+
+## FFIEC sections
+
+<ParamField path="method" type="GET">`/api/knowledge-base/ffiec`</ParamField>
+
+Browse FFIEC BSA/AML Examination Manual sections and OCC 2023-17 guidance entries.
+
+---
+
+## Deficiency patterns
+
+<ParamField path="method" type="GET">`/api/knowledge-base/deficiencies`</ParamField>
+
+Browse enforcement action deficiency patterns by pillar and severity.

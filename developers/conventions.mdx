@@ -1,0 +1,153 @@
+---
+title: Conventions
+description: Coding conventions, import patterns, API patterns, design tokens, and developer guidelines
+---
+
+## Commands
+
+| Command | Description |
+|---------|-------------|
+| `npm run dev` | Start Next.js dev server |
+| `npm run build` | Build both packages for production |
+| `npm test` | Run all unit tests (backend + frontend) |
+| `npm run lint` | Lint the frontend (ESLint flat config) |
+| `npm run db:generate` | Generate Drizzle migration files from schema changes |
+| `npm run db:migrate` | Apply pending migrations |
+| `npm run db:seed` | Seed the regulatory knowledge base |
+| `npm run db:studio` | Open Drizzle Studio (visual DB browser) |
+| `npm run test:e2e` | Run Playwright E2E tests (headless) |
+| `npm run test:e2e:ui` | Run E2E tests with Playwright UI |
+| `npm run test:e2e:headed` | Run E2E tests in headed browser mode |
+
+## Import patterns
+
+### Frontend imports from backend
+
+```typescript
+import { db } from "@verity/backend/db"
+import { examinations } from "@verity/backend/schema"
+import { REGULATION_CONFIG, getRegulationConfig } from "@verity/backend/config"
+import { searchKnowledgeBase } from "@verity/backend/lib"
+```
+
+### Frontend internal imports
+
+Always use the `@/` path alias for all imports, including sibling components:
+
+```typescript
+// Correct
+import { Button } from "@/components/ui/button"
+import { formatDate } from "@/lib/utils"
+
+// Wrong — don't use relative imports
+import { Button } from "./button"
+```
+
+## API patterns
+
+### Request/response shape
+
+```typescript
+// Success
+{ data: { examinations: [...] } }     // 200
+{ data: { examination: {...} } }      // 201
+
+// Error
+{ error: { code: "UNAUTHORIZED", message: "..." } }    // 401
+{ error: { code: "BAD_REQUEST", message: "..." } }     // 400
+{ error: { code: "NOT_FOUND", message: "..." } }       // 404
+```
+
+### Route guard pattern
+
+Every protected route follows this sequence:
+
+```typescript
+const session = await getSession()
+if (!session) return Response.json(
+  { error: { code: "UNAUTHORIZED" } }, { status: 401 }
+)
+
+const orgId = getOrgId(session)
+if (!orgId) return Response.json(
+  { error: { code: "BAD_REQUEST", message: "No active organization" } },
+  { status: 400 }
+)
+
+// All queries filter by orgId
+const rows = await db.select().from(table).where(eq(table.orgId, orgId))
+```
+
+### Body validation
+
+POST/PATCH routes validate parsed JSON is a non-null, non-array object before field access:
+
+```typescript
+let body: unknown
+try { body = await req.json() } catch { return 400 }
+if (typeof body !== "object" || body === null || Array.isArray(body)) return 400
+```
+
+## Drizzle patterns
+
+- Multiple WHERE conditions: `and(eq(a), eq(b))` — never chain `.where()` calls
+- `count(*)` returns string: use `` sql<number>`count(*)::int` ``
+- Vector similarity: always filter `isNotNull(embedding)` before `cosineDistance()`
+- Multi-value URL params: `searchParams.getAll("key")` + `inArray()` in Drizzle
+- `updatedAt` columns: use `.$onUpdate(() => new Date())` for schema-level auto-refresh
+
+## Regulation config
+
+`REGULATION_CONFIG` in `backend/src/config/regulation-types.ts` is the single source of truth for:
+
+- Regulation types and labels
+- Domain categories and labels
+- Obligation types (`examination`, `consent_order`, `call_report`, `attestation`)
+- Evidence status enum
+- Item status enum
+- Parser prompts and output schemas
+
+<Warning>
+Never hardcode pillar labels, pillar order, obligation types, or regulation type lists in components or API routes. Always import from `@verity/backend/config`.
+</Warning>
+
+## Design tokens
+
+All colors are Tailwind tokens defined in `globals.css`:
+
+| Token | Hex | Class |
+|-------|-----|-------|
+| Paper | `#F2F0EB` | `bg-paper` |
+| Ink | `#1C1C1B` | `text-ink` |
+| Forest | `#2A382E` | `bg-forest`, `text-forest` |
+| Clay | `#C9A690` | `border-clay` |
+| Stone | `#D0DCD9` | `bg-stone` |
+| Highlight | `#D4E157` | `bg-highlight` |
+
+No hardcoded hex colors in components — always use design tokens.
+
+### Fonts
+
+| Font | Usage | Class |
+|------|-------|-------|
+| Fraunces | Serif headings | `font-serif` |
+| Inter | Body text, UI | Default |
+| JetBrains Mono | IDs, timestamps, status pills | `font-mono` |
+
+## Schema conventions
+
+- Schema files are grouped by feature, named in kebab-case
+- All tenant-scoped tables must have `org_id` column (`text`, not UUID)
+- Knowledge base tables are not org-scoped
+- Human-readable IDs: `EX-2026-001`, `RI-001`, `MRA-2026-001`
+- pgvector columns use `vector(1024)` dimension (matches Voyage AI output)
+- Embeddings: `inputType: 'query'` for search, `inputType: 'document'` for seeding
+
+## Rendering strategy
+
+Server components by default. Client components (`"use client"`) only for interactivity:
+
+- **Server** — data fetching, auth checks, layout
+- **Client** — forms, search with debounce, status dropdowns, file uploads, polling
+
+Data flows server → client via props. Dates serialized to ISO strings.

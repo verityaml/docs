@@ -1,0 +1,302 @@
+---
+title: Examinations
+description: Create, manage, and track compliance examinations — including request items, evidence, uploads, and response package generation
+---
+
+## List examinations
+
+<ParamField path="method" type="GET">`/api/examinations`</ParamField>
+
+Returns all examinations for the current organization.
+
+<ResponseField name="data.examinations" type="array">
+  Array of examination objects with `id`, `name`, `type`, `status`, `examiner`, `dateReceived`, `responseDeadline`, `createdAt`, `updatedAt`.
+</ResponseField>
+
+---
+
+## Create examination
+
+<ParamField path="method" type="POST">`/api/examinations`</ParamField>
+
+<ParamField body="type" type="string" required>
+  Examination type. One of: `regulatory`, `bank_partner`, `internal_audit`.
+</ParamField>
+
+<ParamField body="examiner" type="string">
+  Name of the examining entity (e.g., "FDIC", "OCC").
+</ParamField>
+
+<ParamField body="name" type="string">
+  Display name for the examination.
+</ParamField>
+
+<ParamField body="dateReceived" type="string">
+  ISO date string when the request letter was received.
+</ParamField>
+
+<ParamField body="responseDeadline" type="string" required>
+  ISO date string for the response deadline.
+</ParamField>
+
+<ResponseField name="data.examination" type="object">
+  The created examination with auto-generated ID (e.g., `EX-2026-001`). Status starts as `preparing`.
+</ResponseField>
+
+---
+
+## Get examination
+
+<ParamField path="method" type="GET">`/api/examinations/{examId}`</ParamField>
+
+<ParamField path="examId" type="string" required>
+  Examination ID (e.g., `EX-2026-001`).
+</ParamField>
+
+---
+
+## Update examination
+
+<ParamField path="method" type="PATCH">`/api/examinations/{examId}`</ParamField>
+
+<ParamField body="status" type="string">
+  One of: `preparing`, `in_progress`, `submitted`, `findings_received`, `archived`.
+</ParamField>
+
+<ParamField body="type" type="string">
+  Examination type.
+</ParamField>
+
+<ParamField body="examiner" type="string">
+  Examiner name.
+</ParamField>
+
+<ParamField body="name" type="string">
+  Display name.
+</ParamField>
+
+<ParamField body="dateReceived" type="string">
+  ISO date string.
+</ParamField>
+
+<ParamField body="responseDeadline" type="string">
+  ISO date string.
+</ParamField>
+
+<Note>
+Archived examinations can only update `findingsReportPath`.
+</Note>
+
+---
+
+## Delete examination
+
+<ParamField path="method" type="DELETE">`/api/examinations/{examId}`</ParamField>
+
+Deletes the examination and all associated data (request items, evidence, uploads). Cleans up files from storage.
+
+---
+
+## Archive examination
+
+<ParamField path="method" type="POST">`/api/examinations/{examId}/archive`</ParamField>
+
+Transitions the examination to `archived` status. Only valid from `submitted` or `findings_received`.
+
+---
+
+## Unarchive examination
+
+<ParamField path="method" type="POST">`/api/examinations/{examId}/unarchive`</ParamField>
+
+Transitions an archived examination back to `in_progress`. Idempotent — if already `in_progress`, returns 200 with current record.
+
+---
+
+## List request items
+
+<ParamField path="method" type="GET">`/api/examinations/{examId}/items`</ParamField>
+
+<ParamField query="after" type="number">
+  Sort order cursor for polling during parse (returns items with `sortOrder > after`).
+</ParamField>
+
+<ResponseField name="data.items" type="array">
+  Array of request items.
+</ResponseField>
+
+<ResponseField name="data.parseStatus" type="string">
+  Upload parse status: `pending`, `processing`, or `completed`.
+</ResponseField>
+
+<ResponseField name="data.totalCount" type="number">
+  Total number of request items.
+</ResponseField>
+
+---
+
+## Create request item
+
+<ParamField path="method" type="POST">`/api/examinations/{examId}/items`</ParamField>
+
+<ParamField body="originalText" type="string" required>
+  The examiner's request text.
+</ParamField>
+
+<ParamField body="pillar" type="string" required>
+  FFIEC pillar or regulatory domain (e.g., `internal_controls`, `cdd_kyc`).
+</ParamField>
+
+<ParamField body="ffiecSection" type="string">
+  Specific FFIEC section reference.
+</ParamField>
+
+<ParamField body="evidenceType" type="string">
+  Type of evidence that satisfies this request.
+</ParamField>
+
+---
+
+## Update request item
+
+<ParamField path="method" type="PATCH">`/api/examinations/{examId}/items/{itemId}`</ParamField>
+
+<ParamField body="originalText" type="string">
+  Updated request text.
+</ParamField>
+
+<ParamField body="pillar" type="string">
+  Updated pillar assignment.
+</ParamField>
+
+<ParamField body="assigneeId" type="string">
+  User ID to assign the item to.
+</ParamField>
+
+<ParamField body="dueDate" type="string">
+  ISO date string for the item deadline.
+</ParamField>
+
+<ParamField body="status" type="string">
+  Item status (e.g., `not_started`, `in_progress`, `complete`).
+</ParamField>
+
+<ParamField body="notes" type="string">
+  Reviewer notes.
+</ParamField>
+
+<Note>
+Updating any item on a `preparing` examination automatically advances the exam to `in_progress`.
+</Note>
+
+---
+
+## List evidence attachments
+
+<ParamField path="method" type="GET">`/api/examinations/{examId}/items/{itemId}/evidence`</ParamField>
+
+<ResponseField name="data.attachments" type="array">
+  Array of evidence attachment objects with `id`, `fileName`, `filePath`, `fileSize`, `mimeType`, `createdAt`.
+</ResponseField>
+
+---
+
+## Upload evidence
+
+<ParamField path="method" type="POST">`/api/examinations/{examId}/items/{itemId}/evidence`</ParamField>
+
+Accepts either file upload (`multipart/form-data`) or external URL (`application/json`).
+
+**File upload:**
+
+<ParamField body="file" type="file" required>
+  The evidence file. Max 50 MB. Allowed: PDF, DOCX, XLSX, CSV, PNG, JPG.
+</ParamField>
+
+**URL mode:**
+
+<ParamField body="url" type="string" required>
+  External URL to the evidence document.
+</ParamField>
+
+<ParamField body="fileName" type="string">
+  Display name for the URL evidence.
+</ParamField>
+
+---
+
+## Delete evidence
+
+<ParamField path="method" type="DELETE">`/api/examinations/{examId}/items/{itemId}/evidence/{evidenceId}`</ParamField>
+
+Deletes the evidence attachment and cleans up the file from storage.
+
+---
+
+## Upload examination file
+
+<ParamField path="method" type="POST">`/api/examinations/{examId}/upload`</ParamField>
+
+Uploads an examination request letter for AI parsing. Triggers the `parse-examination` background job.
+
+<ParamField body="file" type="file" required>
+  The request letter file. Max 50 MB. Allowed: PDF, CSV, PNG, JPG.
+</ParamField>
+
+<ResponseField name="data.uploadId" type="string">
+  Upload ID for tracking parse progress.
+</ResponseField>
+
+<ResponseField name="data.status" type="string">
+  Initial status: `pending`.
+</ResponseField>
+
+---
+
+## Get report data
+
+<ParamField path="method" type="GET">`/api/examinations/{examId}/report`</ParamField>
+
+Returns aggregated report data for the examination, including item counts by pillar and status.
+
+---
+
+## Save report configuration
+
+<ParamField path="method" type="POST">`/api/examinations/{examId}/report`</ParamField>
+
+<ParamField body="format" type="string" required>
+  Export format: `pdf` or `zip`.
+</ParamField>
+
+<ParamField body="watermark" type="boolean">
+  Enable watermark on PDF output.
+</ParamField>
+
+<ParamField body="batesNumbering" type="boolean">
+  Enable Bates numbering on PDF output.
+</ParamField>
+
+---
+
+## Generate report
+
+<ParamField path="method" type="POST">`/api/examinations/{examId}/report/generate`</ParamField>
+
+Generates the response package and returns a signed download URL (valid for 1 hour).
+
+<ParamField body="format" type="string" required>
+  Export format: `pdf` or `zip`.
+</ParamField>
+
+<ResponseField name="data.downloadUrl" type="string">
+  Signed URL for downloading the generated package.
+</ResponseField>
+
+<ResponseField name="data.format" type="string">
+  The format that was generated.
+</ResponseField>
+
+<ResponseField name="data.expiresAt" type="string">
+  ISO timestamp when the download URL expires.
+</ResponseField>

@@ -1,0 +1,47 @@
+---
+title: Roadmap
+description: Tracked ideas and enhancements beyond V1 scope
+---
+
+## Auth and tenancy
+
+- **Optional org at signup** — Allow users to sign up without creating an org, then create or join one later. Currently signup always creates an org.
+- **Direct member add** — Expose BetterAuth's `addMember` API in the UI so admins can add existing users by email without an invite link. Server-side endpoint exists.
+- **Org slug collision on signup** — The org slug is derived from the name. Duplicate names produce a generic error. Improve by appending a numeric suffix on collision or showing a clear message.
+- **Password reset flow** — Email-based password reset (deferred from V1).
+- **Cross-tenant isolation tests** — Automated tests verifying data isolation between orgs.
+
+## Performance
+
+- **Database indexes** — Add indexes on `session(user_id)`, `invitation(organization_id, email)`, `audit_log(org_id, created_at)` for query performance at scale.
+- **Account unique constraint** — Partial unique index on `account(provider_id, account_id)` to prevent duplicate linked accounts.
+- **Invitation dedup** — Partial unique index on `invitation(organization_id, email)` where `status = 'pending'` to prevent duplicate pending invites.
+- **Remove Voyage AI rate-limit sleep** — The Inngest parse function sleeps 22s between items for the free tier. Upgrading unlocks standard rate limits — parsing 28 items would drop from ~10 minutes to under 2 minutes.
+
+## Accessibility
+
+- **Input ref forwarding** — Update `Input` component to use `React.forwardRef` for compatibility with form libraries and focus managers.
+- **ProgressBar labels** — Accept optional `ariaLabel` / `ariaValueText` props for screen reader descriptions.
+
+## Examination workflow tracker
+
+- **Bulk assignment** — Select multiple items, assign to one person. API (`PATCH /items/bulk`) + floating action bar UI with checkbox selection.
+- **Member permission boundary** — API-level check (members can only PATCH items assigned to them, admins can update any). UI read-only mode for non-assigned items.
+- **E2E tests** — Evidence upload workflow test, dashboard views + bulk assignment test.
+
+## Consent order management (entry point 2)
+
+- **Consent order parser** — New `REGULATION_CONFIG` entry with consent-order-specific LLM prompt and Zod schema for extracting remediation requirement nodes.
+- **Consent order lifecycle** — `issued → remediation_in_progress → [node-level closure] → order_lifted` — different from examination lifecycle.
+- **Cross-department assignment** — Consent order findings span multiple business lines. Requires assignment model beyond single-team V1 scope.
+- **Progress report generation** — Structured quarterly progress reports for regulators.
+- **Recurring deadline support** — Inngest scheduled functions for call reports (quarterly) and attestations (monthly).
+
+## Schema naming
+
+- **Rename `examinations` to `obligations`** — When moving beyond V1, rename the table to reflect the generic compliance obligation container. This will cascade to uploads, correspondence, all FK columns, and storage path prefixes. Do this before adding consent order support.
+
+## Infrastructure
+
+- **RLS per-request user context** — Implement `SET LOCAL app.current_user_id` in a Drizzle transaction wrapper so RLS policies enforce per-user access.
+- **Atomic signup** — Move signup + org creation into a single server-side endpoint that rolls back on failure.

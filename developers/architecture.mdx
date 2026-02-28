@@ -1,0 +1,141 @@
+---
+title: Architecture
+description: System overview, monorepo structure, authentication, deployment, and key design decisions
+---
+
+## System overview
+
+Verity is a **monorepo with no separate backend server**. The `backend/` package is a shared library (Drizzle schema, config, background jobs, utilities). All HTTP endpoints live as Next.js API routes inside `frontend/src/app/api/`. The two packages share types and config at build time via npm workspaces.
+
+```
+                                  ┌─────────────────────────────────┐
+                                  │          Vercel (US)            │
+                                  │                                 │
+  Browser ───────────────────────►│  Next.js 16 App Router          │
+                                  │  ├── Server Components (pages)  │
+                                  │  ├── API Routes (REST)          │
+                                  │  └── proxy.ts (session gate)    │
+                                  │                                 │
+                                  │  Inngest Functions              │
+                                  │  (parse-examination,            │
+                                  │   auto-match-evidence)          │
+                                  └──────┬──────┬──────┬────────────┘
+                                         │      │      │
+                          ┌──────────────┘      │      └──────────────┐
+                          ▼                     ▼                     ▼
+                   ┌─────────────┐     ┌──────────────┐      ┌──────────────┐
+                   │  Supabase   │     │  Voyage AI   │      │  Claude /    │
+                   │  PostgreSQL │     │  Embeddings  │      │  OpenAI      │
+                   │  + pgvector │     │  (voyage-    │      │  (via Vercel │
+                   │  + Storage  │     │   law-2)     │      │   AI SDK)    │
+                   └─────────────┘     └──────────────┘      └──────────────┘
+```
+
+**Key constraint:** LLM usage is classification and retrieval only. Never generation of compliance content. All AI outputs require human review.
+
+## Monorepo structure
+
+```
+verity/
+├── frontend/          # Next.js app — pages, API routes, components, tests
+│   └── src/
+│       ├── app/       # App Router (pages + API routes)
+│       ├── components/
+│       ├── lib/       # Auth, supabase client, utilities
+│       └── proxy.ts   # Session gate (replaces middleware.ts in Next.js 16)
+│
+├── backend/           # Shared library — schema, config, jobs, utilities
+│   └── src/
+│       ├── config/    # REGULATION_CONFIG — single source of truth
+│       ├── db/        # Drizzle schema, migrations, seed scripts
+│       ├── inngest/   # Background job definitions
+│       └── lib/       # Embeddings, knowledge search, program provisioning
+│
+└── docker/            # Self-contained demo (Postgres + pgvector + app)
+```
+
+Frontend imports backend via workspace aliases:
+
+```typescript
+import { db } from "@verity/backend/db"
+import { examinations } from "@verity/backend/schema"
+import { REGULATION_CONFIG } from "@verity/backend/config"
+import { searchKnowledgeBase } from "@verity/backend/lib"
+```
+
+## Authentication
+
+Verity uses **BetterAuth** (self-hosted, not Supabase Auth).
+
+### Session flow
+
+```
+Browser → proxy.ts (cookie presence check, fast path)
+       → (dashboard)/layout.tsx → requireAuth() (full session validation)
+       → API route → getSession() + getOrgId() (extract org from session)
+```
+
+`proxy.ts` only checks that a session cookie exists — no token verification. Full auth happens in the dashboard layout's `requireAuth()` server call. This keeps the proxy fast.
+
+### Organization lifecycle
+
+After signup, BetterAuth creates a user and organization. The `afterCreateOrganization` hook provisions default compliance programs (one per supported regulation type) and logs an audit event.
+
+## Frontend architecture
+
+### Rendering strategy
+
+Server components by default. Client components (`"use client"`) only for interactivity:
+
+- **Server components** — data fetching, auth checks, layout
+- **Client components** — forms, search with debounce, status dropdowns, file uploads, polling
+
+### Route groups
+
+| Group | Scope | Layout |
+|-------|-------|--------|
+| `(auth)` | Public | Centered card layout |
+| `(dashboard)` | Protected | Sidebar + main content |
+
+### Design system
+
+Warm paper-and-ink aesthetic with design tokens:
+
+| Token | Hex | Usage |
+|-------|-----|-------|
+| Paper | `#F2F0EB` | Page backgrounds |
+| Ink | `#1C1C1B` | Primary text |
+| Forest | `#2A382E` | Primary actions, sidebar |
+| Clay | `#C9A690` | Borders, decorative |
+| Stone | `#D0DCD9` | Neutral accents |
+| Highlight | `#D4E157` | Success, readiness |
+
+**Fonts:** Fraunces (serif headings), Inter (body), JetBrains Mono (metadata/IDs).
+
+## Deployment
+
+### Production (Vercel)
+
+- **URL:** `https://app.verityaml.com`
+- **Root directory:** `frontend/`
+- **Build:** Backend type-check → frontend production build (standalone output)
+- **Auto-deploy:** Push to `main` → production. PR branches → preview.
+- **Function timeout:** Default 10s, max 60s
+
+### Database
+
+Supabase managed PostgreSQL with pgvector extension. Uses the transaction-mode pooler (`prepare: false` on the postgres.js client).
+
+## Key design decisions
+
+| Decision | Rationale |
+|----------|-----------|
+| No separate backend server | Next.js API routes are sufficient; scales with frontend on Vercel |
+| Shared library pattern | Monorepo keeps schema, config, and business logic in sync at build time |
+| BetterAuth over Supabase Auth | Self-hosted auth gives full control for compliance requirements |
+| pgvector in Postgres | No external vector store; semantic search collocated with relational data |
+| Inngest for background jobs | Reliable retries, step functions for long-running parsing, Vercel-native |
+| Regulation config as code | Hardcoded enums prevent drift between DB, API, and UI |
+| Human-readable IDs | `EX-2026-001` is meaningful in regulatory context; globally unique |
+| Evidence as suggestions | Auto-matching proposes, humans decide. No automated compliance assertions. |
+| Server components by default | Reduces client JS, enables parallel data fetching, keeps secrets server-side |

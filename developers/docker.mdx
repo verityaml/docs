@@ -1,0 +1,72 @@
+---
+title: Docker demo
+description: Run the full Verity stack locally with Docker — no cloud dependencies required
+---
+
+Run the full stack locally with Docker — no Supabase, Voyage AI, or any cloud services required. PostgreSQL + pgvector runs in a container alongside the Next.js app.
+
+## Quick start
+
+<CodeGroup>
+```bash Empty start
+cd docker
+
+# Sign up and create everything from scratch
+docker compose up --build
+```
+
+```bash Seeded start
+cd docker
+
+# Pre-loaded demo user, org, and knowledge base
+docker compose --profile seeded up --build
+```
+</CodeGroup>
+
+The app will be at `http://localhost:3000`.
+
+With the seeded profile, log in with:
+- **Email:** `demo@verity.local`
+- **Password:** `demo1234`
+
+The seeded profile includes a BSA/AML compliance program, a third-party oversight program, a sample examination, and a populated regulatory knowledge base.
+
+## Architecture
+
+Three Docker services:
+
+| Service | Description | Port |
+|---------|-------------|------|
+| **db** | PostgreSQL 16 with pgvector extension | 54322 |
+| **app** | Next.js standalone build | 3000 |
+| **seed** | Optional profile — loads demo user + sample data | — |
+
+The Docker image uses Next.js standalone output (~65 MB) for a minimal footprint. The database is initialized with a consolidated schema and pre-computed knowledge base embeddings — no Voyage AI key needed.
+
+### 3-stage Dockerfile
+
+1. **Dependencies** — install npm packages
+2. **Build** — backend type-check + frontend production build
+3. **Runner** — standalone Next.js server
+
+## Resetting data
+
+To reset all data and start fresh:
+
+```bash
+docker compose down -v
+docker compose up --build
+```
+
+The `-v` flag removes the PostgreSQL volume, ensuring a clean database on the next start.
+
+## Environment
+
+The Docker environment uses `.env.demo` with local-only configuration. No API keys are required — the demo operates without:
+- Voyage AI (embeddings are pre-computed in the database seed)
+- External LLM providers (examination parsing is unavailable in demo mode)
+- Resend (emails are no-ops)
+
+<Note>
+The `next.config.ts` requires `outputFileTracingRoot` set to the parent directory so the standalone output includes backend workspace dependencies.
+</Note>

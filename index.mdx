@@ -1,97 +1,63 @@
 ---
-title: "Introduction"
-description: "Welcome to the new home for your documentation"
+title: Verity
+description: The governance layer for compliance program effectiveness
 ---
 
-## Setting up
+<img
+  src="/images/home-top.png"
+  alt="Verity dashboard showing bank-readiness scores across compliance domains"
+  style={{ borderRadius: '0.5rem' }}
+/>
 
-Get your documentation site up and running in minutes.
+## Detection tools tell you what happened. Verity proves your program works.
 
-<Card
-  title="Start here"
-  icon="rocket"
-  href="/quickstart"
-  horizontal
->
-  Follow our three step quickstart guide.
-</Card>
+Verity helps compliance teams continuously prove their programs work. Monitor readiness across regulatory domains with scored criteria and evidence tracking. Upload examination request letters to get them parsed into trackable items mapped to the FFIEC framework. Assign evidence collection to your team, search a regulatory reference library for guidance, and archive everything for future examinations.
 
-## Make it yours
-
-Design a docs site that looks great and empowers your users.
-
-<Columns cols={2}>
-  <Card
-    title="Edit locally"
-    icon="pen-to-square"
-    href="/development"
-  >
-    Edit your docs locally and preview them in real time.
+<CardGroup cols={3}>
+  <Card title="Feature walkthrough" icon="route" href="/walkthrough">
+    A guided tour of every feature — dashboard, scoring, examinations, archive, and library
   </Card>
-  <Card
-    title="Customize your site"
-    icon="palette"
-    href="/essentials/settings"
-  >
-    Customize the design and colors of your site to match your brand.
+  <Card title="Quickstart" icon="rocket" href="/developers/quickstart">
+    Get a local development environment running in minutes
   </Card>
-    <Card
-    title="Set up navigation"
-    icon="map"
-    href="/essentials/navigation"
-  >
-    Organize your docs to help users find what they need and succeed with your product.
+  <Card title="API reference" icon="code" href="/api-reference/introduction">
+    REST API documentation for all endpoints
   </Card>
-  <Card
-    title="API documentation"
-    icon="terminal"
-    href="/api-reference/introduction"
-  >
-    Auto-generate API documentation from OpenAPI specifications.
-  </Card>
-</Columns>
+</CardGroup>
 
-## Create beautiful pages
+## What Verity does
 
-Everything you need to create world-class documentation.
+<CardGroup cols={2}>
+  <Card title="Compliance command center" icon="gauge-high">
+    Dashboard with readiness scores computed from evidence status across all regulatory domains. Switch between programs, see per-domain scores and gap counts, and drill into criteria detail tables.
+  </Card>
+  <Card title="Bank-readiness scoring" icon="chart-line">
+    Maps regulatory requirements to scoring criteria by compliance domain, tracks evidence status, and computes readiness scores. BSA/AML covers 5 FFIEC pillars; Third-Party Oversight covers 8 OCC 2023-17 monitoring areas.
+  </Card>
+  <Card title="Regulatory reference library" icon="book">
+    Browse and search across FFIEC guidance, FinCEN advisories, OCC interagency guidance, and deficiency patterns. Semantic search powered by Voyage AI embeddings.
+  </Card>
+  <Card title="Examination parser" icon="file-import">
+    Upload a PDF request letter. The system parses each line item and maps it to FFIEC sections, regulatory pillars, and evidence types. Items stream in one-by-one as they're extracted.
+  </Card>
+  <Card title="Examination workflow tracker" icon="list-check">
+    Track evidence collection across your team. See progress by pillar, by assignee, by status, or by timeline. Upload evidence files against each request item.
+  </Card>
+  <Card title="Response archive" icon="box-archive">
+    Archive complete examination packages. Search across all past examinations. Track MRAs and their remediation.
+  </Card>
+</CardGroup>
 
-<Columns cols={2}>
-  <Card
-    title="Write with MDX"
-    icon="pen-fancy"
-    href="/essentials/markdown"
-  >
-    Use MDX to style your docs pages.
-  </Card>
-  <Card
-    title="Code samples"
-    icon="code"
-    href="/essentials/code"
-  >
-    Add sample code to demonstrate how to use your product.
-  </Card>
-  <Card
-    title="Images"
-    icon="image"
-    href="/essentials/images"
-  >
-    Display images and other media.
-  </Card>
-  <Card
-    title="Reusable snippets"
-    icon="recycle"
-    href="/essentials/reusable-snippets"
-  >
-    Write once and reuse across your docs.
-  </Card>
-</Columns>
+## Tech stack
 
-## Need inspiration?
-
-<Card
-  title="See complete examples"
-  icon="stars"
-  href="https://mintlify.com/customers"
->
-  Browse our showcase of exceptional documentation sites.
-</Card>
+| Layer | Technology |
+|-------|-----------|
+| Frontend + API | Next.js 16 (App Router) |
+| Database | Supabase (PostgreSQL + pgvector) |
+| ORM | Drizzle |
+| Auth | BetterAuth |
+| UI | shadcn/ui + Tailwind CSS v4 |
+| LLM | Vercel AI SDK |
+| Embeddings | Voyage AI (`voyage-law-2`) |
+| Background Jobs | Inngest |
+| Hosting | Vercel (US regions) |

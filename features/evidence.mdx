@@ -1,0 +1,77 @@
+---
+title: Evidence collection
+description: Upload evidence files, link documents to scoring criteria, and manage evidence across examinations
+---
+
+<img
+  src="/images/evidence-independent-testing-top.png"
+  alt="Evidence collection interface showing request items with file attachments"
+  style={{ borderRadius: '0.5rem' }}
+/>
+
+Evidence collection is the core workflow during an active examination. Team members upload files against request items, and the same evidence can be linked to scoring criteria to strengthen your readiness score.
+
+## Uploading evidence
+
+Each request item accepts file uploads directly. Supported file types:
+
+| Type | Extensions |
+|------|-----------|
+| Documents | PDF, DOCX, XLSX, CSV |
+| Images | PNG, JPG |
+
+Maximum file size is 50 MB per file. Multiple files per request item are supported.
+
+Files are stored securely in Supabase Storage with unique paths that prevent overwrites:
+
+```
+evidence/{orgId}/{examId}/{itemId}/{timestamp}-{uuid}-{filename}
+```
+
+## Evidence status
+
+Each scoring criterion tracks evidence status with four levels:
+
+| Status | Score contribution | Description |
+|--------|-------------------|-------------|
+| Sufficient | 100 points | Full evidence coverage |
+| Partial | 50 points | Some evidence, gaps remain |
+| Stale | 0 points | Evidence exists but is outdated |
+| Missing | 0 points | No evidence provided |
+
+<img
+  src="/images/evidence-training.png"
+  alt="Evidence status tracking across criteria"
+  style={{ borderRadius: '0.5rem' }}
+/>
+
+## Linking evidence to criteria
+
+Evidence can be linked to scoring criteria in two ways:
+
+### Manual linking
+
+From the domain detail page, expand a criterion and add evidence by selecting from your examination's uploaded files or providing an external URL.
+
+### Auto-matching
+
+Use the **Find Evidence** button to automatically scan an examination's evidence against criteria in the current domain. The system matches on regulatory source alignment and domain/pillar alignment. Auto-linked entries are labelled **AUTO** and can be removed if they don't belong.
+
+## Evidence sources
+
+Linked evidence entries include a source type:
+
+| Source type | Description |
+|-------------|-------------|
+| `evidence_attachment` | File uploaded against a request item |
+| `mra_evidence` | File uploaded as MRA remediation evidence |
+| `external_url` | Link to an external document or system |
+
+## Team workflow
+
+The examination dashboard shows evidence collection progress across multiple views:
+
+- **By pillar** — which regulatory domains have the most gaps
+- **By assignee** — workload distribution across your team
+- **By status** — how many items are not started, in progress, or complete
+- **By timeline** — items approaching their deadlines

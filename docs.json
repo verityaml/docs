@@ -1,48 +1,72 @@
 {
   "$schema": "https://mintlify.com/docs.json",
-  "theme": "mint",
-  "name": "Mint Starter Kit",
+  "theme": "almond",
+  "name": "Verity",
   "colors": {
-    "primary": "#16A34A",
-    "light": "#07C983",
-    "dark": "#15803D"
+    "primary": "#2A382E",
+    "light": "#2A382E",
+    "dark": "#F2F0EB"
+  },
+  "font": {
+    "headings": {
+      "family": "Fraunces",
+      "weight": 600
+    },
+    "body": {
+      "family": "Inter",
+      "weight": 400
+    }
   },
   "favicon": "/favicon.svg",
   "navigation": {
     "tabs": [
       {
-        "tab": "Guides",
+        "tab": "Product",
+        "groups": [
+          {
+            "group": "Overview",
+            "pages": [
+              "index",
+              "walkthrough"
+            ]
+          },
+          {
+            "group": "Features",
+            "pages": [
+              "features/dashboard",
+              "features/scoring",
+              "features/library",
+              "features/examinations",
+              "features/evidence",
+              "features/archive"
+            ]
+          }
+        ]
+      },
+      {
+        "tab": "Developers",
         "groups": [
           {
             "group": "Getting started",
             "pages": [
-              "index",
-              "quickstart",
-              "development"
+              "developers/quickstart",
+              "developers/docker"
             ]
           },
           {
-            "group": "Customization",
+            "group": "Architecture",
             "pages": [
-              "essentials/settings",
-              "essentials/navigation"
+              "developers/architecture",
+              "developers/data-model",
+              "developers/background-jobs"
             ]
           },
           {
-            "group": "Writing content",
+            "group": "Contributing",
             "pages": [
-              "essentials/markdown",
-              "essentials/code",
-              "essentials/images",
-              "essentials/reusable-snippets"
-            ]
-          },
-          {
-            "group": "AI tools",
-            "pages": [
-              "ai-tools/cursor",
-              "ai-tools/claude-code",
-              "ai-tools/windsurf"
+              "developers/conventions",
+              "developers/testing",
+              "developers/roadmap"
             ]
           }
         ]
@@ -51,18 +75,39 @@
         "tab": "API reference",
         "groups": [
           {
-            "group": "API documentation",
+            "group": "Overview",
             "pages": [
               "api-reference/introduction"
             ]
           },
           {
-            "group": "Endpoint examples",
+            "group": "Examinations",
             "pages": [
-              "api-reference/endpoint/get",
-              "api-reference/endpoint/create",
-              "api-reference/endpoint/delete",
-              "api-reference/endpoint/webhook"
+              "api-reference/examinations"
+            ]
+          },
+          {
+            "group": "Compliance programs",
+            "pages": [
+              "api-reference/compliance-programs"
+            ]
+          },
+          {
+            "group": "Knowledge base",
+            "pages": [
+              "api-reference/knowledge-base"
+            ]
+          },
+          {
+            "group": "MRAs",
+            "pages": [
+              "api-reference/mras"
+            ]
+          },
+          {
+            "group": "Organization",
+            "pages": [
+              "api-reference/organization"
             ]
           }
         ]
@@ -71,14 +116,14 @@
     "global": {
       "anchors": [
         {
-          "anchor": "Documentation",
-          "href": "https://mintlify.com/docs",
-          "icon": "book-open-cover"
+          "anchor": "App",
+          "href": "https://app.verityaml.com",
+          "icon": "browser"
         },
         {
-          "anchor": "Blog",
-          "href": "https://mintlify.com/blog",
-          "icon": "newspaper"
+          "anchor": "Demo",
+          "href": "https://demo.verityaml.com",
+          "icon": "play"
         }
       ]
     }
@@ -90,33 +135,19 @@
   "navbar": {
     "links": [
       {
-        "label": "Support",
-        "href": "mailto:hi@mintlify.com"
+        "label": "App",
+        "href": "https://app.verityaml.com"
       }
     ],
     "primary": {
       "type": "button",
-      "label": "Dashboard",
-      "href": "https://dashboard.mintlify.com"
+      "label": "Sign up",
+      "href": "https://app.verityaml.com/signup"
     }
-  },
-  "contextual": {
-    "options": [
-     "copy",
-     "view",
-     "chatgpt",
-     "claude",
-     "perplexity",
-     "mcp",
-     "cursor",
-     "vscode"
-   ]
   },
   "footer": {
     "socials": {
-      "x": "https://x.com/mintlify",
-      "github": "https://github.com/mintlify",
-      "linkedin": "https://linkedin.com/company/mintlify"
+      "github": "https://github.com/verity-aml"
     }
   }
 }

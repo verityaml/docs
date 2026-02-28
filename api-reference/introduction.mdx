@@ -1,33 +1,120 @@
 ---
-title: 'Introduction'
-description: 'Example section for showcasing API endpoints'
+title: API reference
+description: Authentication, request/response conventions, and error handling for the Verity REST API
 ---
 
-<Note>
-  If you're not looking to build API reference documentation, you can delete
-  this section by removing the api-reference folder.
-</Note>
-
-## Welcome
-
-There are two ways to build API documentation: [OpenAPI](https://mintlify.com/docs/api-playground/openapi/setup) and [MDX components](https://mintlify.com/docs/api-playground/mdx/configuration). For the starter kit, we are using the following OpenAPI specification.
-
-<Card
-  title="Plant Store Endpoints"
-  icon="leaf"
-  href="https://github.com/mintlify/starter/blob/main/api-reference/openapi.json"
->
-  View the OpenAPI specification file
-</Card>
+All API endpoints live as Next.js API routes at `/api/`. There is no separate backend server.
 
 ## Authentication
 
-All API endpoints are authenticated using Bearer tokens and picked up from the specification file.
+Every protected endpoint requires a valid BetterAuth session. The session is established via cookie-based authentication after login.
+
+```
+Browser → POST /api/auth/sign-in → Session cookie set
+       → Subsequent requests include session cookie automatically
+```
+
+API routes extract the session and organization context:
+
+```typescript
+const session = await getSession()    // Returns null if not authenticated
+const orgId = getOrgId(session)       // Extracts active organization ID
+```
+
+All tenant-scoped queries filter by `orgId` for multi-tenant isolation.
+
+## Request format
+
+### JSON body
+
+POST and PATCH endpoints accept JSON request bodies:
+
+```bash
+curl -X POST /api/examinations \
+  -H "Content-Type: application/json" \
+  -d '{"type": "regulatory", "examiner": "FDIC", "responseDeadline": "2026-03-15"}'
+```
+
+### File uploads
+
+Evidence and document upload endpoints accept `multipart/form-data`:
+
+```bash
+curl -X POST /api/examinations/EX-2026-001/upload \
+  -F "file=@request-letter.pdf"
+```
+
+Maximum file size: 50 MB. Allowed types: PDF, DOCX, XLSX, CSV, PNG, JPG.
+
+### Query parameters
+
+GET endpoints use query parameters for filtering and pagination:
+
+```bash
+GET /api/knowledge-base/browse?domain=bsa_aml&limit=20&offset=0
+GET /api/mras?status=open,remediation_in_progress
+```
+
+## Response format
+
+### Success
 
 ```json
-"security": [
-  {
-    "bearerAuth": []
+{
+  "data": {
+    "examination": {
+      "id": "EX-2026-001",
+      "name": "Q1 BSA Examination",
+      "status": "in_progress"
+    }
   }
-]
+}
 ```
+
+List endpoints wrap results in a named array:
+
+```json
+{
+  "data": {
+    "examinations": [...]
+  }
+}
+```
+
+### Errors
+
+```json
+{
+  "error": {
+    "code": "NOT_FOUND",
+    "message": "Examination not found"
+  }
+}
+```
+
+## Status codes
+
+| Code | Meaning |
+|------|---------|
+| 200 | Success |
+| 201 | Created |
+| 400 | Bad request — validation error or missing required fields |
+| 401 | Unauthorized — no valid session |
+| 403 | Forbidden — archived resource or insufficient permissions |
+| 404 | Not found — resource doesn't exist or doesn't belong to your org |
+| 409 | Conflict — duplicate resource or invalid status transition |
+| 500 | Internal server error |
+| 503 | Service unavailable — background service unavailable |
+
+## ID formats
+
+Verity uses human-readable IDs throughout:
+
+| Resource | Format | Example |
+|----------|--------|---------|
+| Examination | `EX-YYYY-NNN` | `EX-2026-001` |
+| Request item | `RI-NNN` | `RI-001` |
+| MRA | `MRA-YYYY-NNN` | `MRA-2026-001` |
+| Compliance program | `CP-YYYY-NNN` | `CP-2026-001` |
+
+IDs are globally unique across all organizations.

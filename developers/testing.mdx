@@ -1,0 +1,90 @@
+---
+title: Testing
+description: Unit tests with Vitest and end-to-end tests with Playwright
+---
+
+## Unit tests (Vitest)
+
+Unit tests run with Vitest across both packages:
+
+```bash
+# All unit tests
+npm test
+
+# Backend only
+npm run test -w backend
+
+# Frontend only
+npm run test:unit -w frontend
+```
+
+### API route test patterns
+
+API route tests mock `@verity/backend/schema` and `@verity/backend/db`. Adding new schema imports to routes requires updating mock factories.
+
+Mock `db.transaction` by defining the mock db inside the `vi.mock` factory to avoid hoisting issues:
+
+```typescript
+const db = {
+  select: ...,
+  transaction: async (fn) => fn(db)
+}
+return { db }
+```
+
+## E2E tests (Playwright)
+
+E2E tests are written with [Playwright](https://playwright.dev/) and live in `frontend/e2e/`.
+
+### Running tests
+
+```bash
+# Headless (CI-style)
+npm run test:e2e
+
+# With Playwright UI (recommended for local development)
+npm run test:e2e:ui
+
+# Headed browser (watch the browser run)
+npm run test:e2e:headed
+```
+
+The test runner starts the Next.js dev server automatically. Ensure your `.env.local` has `DATABASE_URL` and `SUPABASE_SERVICE_KEY` set so teardown can clean up test data.
+
+### Configuration
+
+Two Playwright projects in `frontend/playwright.config.ts`:
+
+| Project | Session state | Use case |
+|---------|--------------|----------|
+| `auth` | No auth | Auth flow tests (signup, login) |
+| `authenticated` | Pre-authenticated | Dashboard and protected route tests |
+
+### Test user management
+
+Tests create isolated `e2e-{timestamp}-{label}@test.verity.local` users and orgs, which are deleted from the database after every run by global teardown.
+
+```typescript
+// Use the helper — handles signup + set-active-org workaround
+import { signUpTestUser } from "e2e/helpers/signup"
+```
+
+### Supabase pooler workaround
+
+Transaction-mode pooler doesn't guarantee read-after-write consistency across connections. E2E tests use `toPass()` retry loops with page reloads at intervals `[2000, 3000, 4000, 5000]`.
+
+For negative assertions ("should NOT be visible"), put them inside the `toPass()` retry loop with page reload — the pooler may serve stale reads from a different connection.
+
+### Multi-step flows
+
+Use `test.describe.serial` with shared `Page` in `beforeAll` for flows that require sequential test execution.
+
+### Tips
+
+- Create resources via API in `beforeAll`, test UI interactions against them
+- Use `getByRole('heading', { name: '...' })` to disambiguate when nav links and page headings share text
+- Use `page.locator('select:has(option[value="submitted"])')` to target exam status select when multiple selects coexist
+
+## CI
+
+CI runs on every PR and push to `main` via `.github/workflows/e2e.yml`.

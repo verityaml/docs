@@ -1,0 +1,152 @@
+---
+title: Compliance programs
+description: Programs, domains, scoring criteria, evidence linking, and auto-matching
+---
+
+## List programs
+
+<ParamField path="method" type="GET">`/api/compliance-programs`</ParamField>
+
+Returns all compliance programs for the organization, each with its domains.
+
+<ResponseField name="data.programs" type="array">
+  Array of program objects. Each program includes:
+  - `id` — Human-readable ID (e.g., `CP-2026-001`)
+  - `regulationType` — `bsa_aml` or `third_party_oversight`
+  - `name` — Program display name
+  - `domains` — Array of domain objects with `id`, `category`, `label`, `score`
+</ResponseField>
+
+---
+
+## Get program
+
+<ParamField path="method" type="GET">`/api/compliance-programs/{id}`</ParamField>
+
+<ParamField path="id" type="string" required>
+  Program ID (e.g., `CP-2026-001`).
+</ParamField>
+
+<ResponseField name="data.program" type="object">
+  Program object with all its domains.
+</ResponseField>
+
+---
+
+## Get domain details
+
+<ParamField path="method" type="GET">`/api/compliance-programs/{id}/domains/{domainId}`</ParamField>
+
+<ParamField path="id" type="string" required>
+  Program ID.
+</ParamField>
+
+<ParamField path="domainId" type="string" required>
+  Domain ID.
+</ParamField>
+
+<ResponseField name="data.program" type="object">
+  Parent program.
+</ResponseField>
+
+<ResponseField name="data.domain" type="object">
+  Domain with `id`, `category`, `label`, `score`.
+</ResponseField>
+
+<ResponseField name="data.criteria" type="array">
+  Array of scoring criteria for this domain. Each criterion includes:
+  - `id` — Criterion ID
+  - `text` — What the regulation requires
+  - `regulatorySourceId` — FK to knowledge base
+  - `evidenceStatus` — `missing`, `stale`, `partial`, or `sufficient`
+  - `linkedEvidence` — JSONB array of linked evidence entries
+  - `reviewerNotes` — Free-text notes
+</ResponseField>
+
+---
+
+## Update scoring criterion
+
+<ParamField path="method" type="PATCH">`/api/compliance-programs/{id}/domains/{domainId}/criteria/{criteriaId}`</ParamField>
+
+Updates a scoring criterion's evidence status, notes, or linked evidence. Automatically recomputes the domain score.
+
+<ParamField body="evidenceStatus" type="string">
+  New evidence status. One of: `missing`, `stale`, `partial`, `sufficient`.
+</ParamField>
+
+<ParamField body="reviewerNotes" type="string">
+  Updated reviewer notes.
+</ParamField>
+
+<ParamField body="addEvidence" type="object">
+  Link new evidence to this criterion.
+
+  <ParamField body="addEvidence.sourceType" type="string" required>
+    One of: `evidence_attachment`, `mra_evidence`, `external_url`.
+  </ParamField>
+
+  <ParamField body="addEvidence.sourceId" type="string" required>
+    ID of the evidence source.
+  </ParamField>
+
+  <ParamField body="addEvidence.label" type="string" required>
+    Display label for the evidence.
+  </ParamField>
+</ParamField>
+
+<ParamField body="removeEvidence" type="object">
+  Unlink evidence from this criterion.
+
+  <ParamField body="removeEvidence.sourceType" type="string" required>
+    Source type of the evidence to remove.
+  </ParamField>
+
+  <ParamField body="removeEvidence.sourceId" type="string" required>
+    Source ID of the evidence to remove.
+  </ParamField>
+</ParamField>
+
+<ParamField body="acceptSuggestion" type="object">
+  Accept an auto-matched evidence suggestion.
+</ParamField>
+
+<ParamField body="dismissSuggestion" type="object">
+  Dismiss an auto-matched evidence suggestion.
+</ParamField>
+
+<ResponseField name="data.criterion" type="object">
+  Updated criterion.
+</ResponseField>
+
+<ResponseField name="data.domain" type="object">
+  Updated domain with recomputed score.
+</ResponseField>
+
+<Note>
+Maximum 50 evidence items per criterion.
+</Note>
+
+---
+
+## Trigger auto-match
+
+<ParamField path="method" type="POST">`/api/compliance-programs/{id}/auto-match`</ParamField>
+
+Triggers AI-powered evidence matching between an examination's evidence and the program's scoring criteria.
+
+<ParamField body="examinationId" type="string" required>
+  Examination ID to match evidence from.
+</ParamField>
+
+<ResponseField name="data.status" type="string">
+  `matching` — the background job has been queued.
+</ResponseField>
+
+<ResponseField name="data.programId" type="string">
+  The program being matched against.
+</ResponseField>
+
+<ResponseField name="data.examinationId" type="string">
+  The examination being matched from.
+</ResponseField>
