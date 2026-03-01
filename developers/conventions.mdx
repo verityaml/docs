@@ -108,7 +108,7 @@ if (typeof body !== "object" || body === null || Array.isArray(body)) return 400
 - Parser prompts and output schemas
 
 <Warning>
-Never hardcode pillar labels, pillar order, obligation types, or regulation type lists in components or API routes. Always import from `@verity/backend/config`.
+Never hardcode category labels, category order, obligation types, or regulation type lists in components or API routes. Always import from `@verity/backend/config`.
 </Warning>
 
 ## Design tokens
@@ -139,6 +139,7 @@ No hardcoded hex colors in components — always use design tokens.
 - Schema files are grouped by feature, named in kebab-case
 - All tenant-scoped tables must have `org_id` column (`text`, not UUID)
 - Knowledge base tables are not org-scoped
+- The column is `category`, not `pillar` — renamed across the entire codebase for multi-obligation-type support
 - Human-readable IDs: `EX-2026-001`, `RI-001`, `MRA-2026-001`
 - pgvector columns use `vector(1024)` dimension (matches Voyage AI output)
 - Embeddings: `inputType: 'query'` for search, `inputType: 'document'` for seeding

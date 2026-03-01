@@ -133,10 +133,14 @@ Maximum 50 evidence items per criterion.
 
 <ParamField path="method" type="POST">`/api/compliance-programs/{id}/auto-match`</ParamField>
 
-Triggers AI-powered evidence matching between an examination's evidence and the program's scoring criteria.
+Triggers AI-powered evidence matching between examinations' evidence and the program's scoring criteria. Supports batch matching across multiple examinations.
 
-<ParamField body="examinationId" type="string" required>
-  Examination ID to match evidence from.
+<ParamField body="examinationId" type="string">
+  Single examination ID to match evidence from. Backward compatible — use `examinationIds` for batch matching.
+</ParamField>
+
+<ParamField body="examinationIds" type="array">
+  Array of examination IDs to match evidence from. Use this for multi-exam batch matching.
 </ParamField>
 
 <ResponseField name="data.status" type="string">
@@ -145,8 +149,4 @@ Triggers AI-powered evidence matching between an examination's evidence and the 
 
 <ResponseField name="data.programId" type="string">
   The program being matched against.
-</ResponseField>
-
-<ResponseField name="data.examinationId" type="string">
-  The examination being matched from.
 </ResponseField>

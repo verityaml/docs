@@ -99,17 +99,21 @@ All linked evidence — whether added manually or auto-matched — is treated th
 
 ## Auto-matching: finding evidence across examinations
 
-**Where to find it:** The **Find Evidence** button in the domain detail page header.
+**Where to find it:** The **Find Evidence** button in the domain detail page header, or the **Run Gap Analysis** button on the dashboard.
 
 This is the bridge between your examination workflow and your compliance program scoring.
 
-When you click "Find Evidence," a dialog appears listing your organization's examinations. Select one, and the system scans that examination's request items and their attached evidence against the criteria in the current domain.
+When you click "Find Evidence," a dialog appears listing your organization's examinations with checkboxes. You can select individual examinations or use **Select All** to choose them all, then click **Match Selected**. The system scans each selected examination's request items and attached evidence against the criteria in the current domain.
+
+**From the dashboard:** The **Run Gap Analysis** button is always available between the readiness score and the domain grid. It populates scoring criteria (if not already present) and then matches evidence from all your examinations at once — a one-click way to refresh your entire program's evidence coverage.
 
 Matching works on two signals:
 1. **Regulatory source alignment** — if a request item and a criterion both reference the same FFIEC section or regulatory source, that's a strong match
-2. **Domain/pillar alignment** — if a request item's assigned pillar corresponds to the current domain, the evidence is likely relevant
+2. **Domain/pillar alignment** — if a request item's assigned category corresponds to the current domain, the evidence is likely relevant
 
 Matched evidence is **automatically linked** to the relevant criteria — you'll see a count appear ("Auto-linked 4 evidence items") once matching completes. Each auto-linked entry is labelled **AUTO** so it's easy to distinguish from manually added evidence.
+
+This is opt-out, not opt-in: the system attaches evidence it considers relevant, and you remove anything that doesn't belong. Use the **Remove** button on any linked entry to unlink it.
 
 <Tip>
 This turns examination evidence into reusable compliance proof. Evidence uploaded for one examination cycle can strengthen your readiness score across future cycles.
@@ -242,6 +246,26 @@ MRAs have their own lifecycle — from identified through remediation to closed 
 
 ---
 
+## Evidence linking: cross-obligation propagation
+
+Evidence links appear automatically on request items that match evidence from other obligations.
+
+When evidence is uploaded to a request item on one obligation, the system searches for semantically similar request items on *other* active obligations in the same org. If it finds a match (82%+ cosine similarity on the item embeddings), it creates an **evidence link** — a lightweight pointer that surfaces the existing evidence for human review.
+
+This works in two directions:
+- **Forward propagation** — uploading evidence triggers a search across other obligations
+- **Backfill** — parsing a new obligation triggers a search against all existing evidence
+
+On any request item that has linked evidence, you'll see an amber-bordered banner. Each link card shows the evidence file name, the source obligation and request item, the match confidence, and **Confirm** / **Reject** buttons.
+
+Confirmed links turn to a stone-colored card with a "Linked from EX-2026-001" badge. Rejected links disappear. The evidence count in the item header reflects both manual and confirmed linked evidence (e.g., "3 evidence (1 linked)").
+
+<Tip>
+Evidence linking works across regulation types. Evidence from a BSA/AML examination can link to a third-party oversight consent order if the underlying request items are semantically similar.
+</Tip>
+
+---
+
 ## The full loop
 
 Here's how all of this connects:
@@ -258,6 +282,9 @@ Here's how all of this connects:
   </Step>
   <Step title="Collect evidence">
     Your team **collects evidence** against each request item during the examination
+  </Step>
+  <Step title="Propagate evidence across obligations">
+    **Evidence linking** automatically propagates uploaded evidence to similar request items on other obligations — no duplicate uploads
   </Step>
   <Step title="Export the response package">
     When evidence is ready, **export the response package** as a PDF binder or pillar-organized ZIP archive and submit to the examiner

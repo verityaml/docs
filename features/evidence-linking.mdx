@@ -1,0 +1,63 @@
+---
+title: Evidence linking
+description: Cross-obligation evidence propagation — automatically link evidence to semantically similar request items across obligations
+---
+
+When evidence is uploaded to a request item on one obligation, the system searches for semantically similar request items on *other* active obligations in the same organization. If it finds a match (82%+ cosine similarity on the item embeddings), it creates an **evidence link** — a lightweight pointer that surfaces the existing evidence for human review.
+
+## How it works
+
+Evidence linking operates in two directions:
+
+| Direction | Trigger | What happens |
+|-----------|---------|-------------|
+| **Forward propagation** | Evidence is uploaded to a request item | System searches other active obligations for similar items and creates links |
+| **Backfill** | A new obligation is parsed | System searches all existing evidence from other obligations for matches against the new items |
+
+Both directions use pgvector cosine similarity on the request item embeddings. The 82% threshold ensures only strong semantic matches surface — reducing noise while catching genuine overlaps.
+
+<Tip>
+Evidence linking works across regulation types. Evidence from a BSA/AML examination can link to a third-party oversight consent order if the underlying request items are semantically similar.
+</Tip>
+
+## The evidence link banner
+
+On any request item that has linked evidence from another obligation, you'll see an amber-bordered banner above the manual evidence section. Each link card shows:
+
+- The evidence file name
+- The source obligation and request item (e.g., "EX-2026-001 / RI-005")
+- The match confidence percentage
+- **Confirm** and **Reject** buttons
+
+Confirmed links turn to a stone-colored card with a "Linked from EX-2026-001" badge. Rejected links disappear. The evidence count in the item header reflects both manual and confirmed linked evidence (e.g., "3 evidence (1 linked)").
+
+## "Also linked to" indicators
+
+Below each evidence attachment on the source side, you'll see where that evidence has been linked:
+
+```
+Also linked to:
+· Consent Order (CO-2024-001) · CO-007 — Confirmed
+· Third-Party Review (TP-2026-001) · TP-003 — Pending
+```
+
+Click any entry to navigate to the target obligation's request item.
+
+## Sidebar badge
+
+Obligations with pending evidence links (auto-applied, not yet reviewed) show an amber dot next to their ID in the sidebar. This helps your team prioritize review — the badge disappears once all links are confirmed or rejected.
+
+## Link lifecycle
+
+```
+auto_applied → confirmed
+auto_applied → rejected
+```
+
+Links are created automatically when the system detects a match. Your team reviews each link and either confirms (evidence is relevant) or rejects (false positive). There is no manual link creation — the system handles discovery, humans handle validation.
+
+### Limits
+
+- Maximum 5 cross-links per evidence upload
+- Only active (non-archived) obligations are considered for matching
+- Links are scoped to the organization — no cross-tenant matching

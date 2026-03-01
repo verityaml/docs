@@ -1,0 +1,100 @@
+---
+title: Evidence links
+description: Cross-obligation evidence linking — query, confirm, and reject auto-applied evidence links
+---
+
+Evidence links are automatically created when evidence uploaded to one obligation matches semantically similar request items on other active obligations. These endpoints let you query and manage those links.
+
+## List evidence links for a request item
+
+<ParamField path="method" type="GET">`/api/request-items/{itemId}/evidence-links`</ParamField>
+
+Returns all evidence links targeting a specific request item.
+
+<ParamField path="itemId" type="string" required>
+  Request item UUID.
+</ParamField>
+
+<ParamField query="status" type="string">
+  Filter by link status. Comma-separated values: `auto_applied`, `confirmed`, `rejected`.
+</ParamField>
+
+<ResponseField name="data.links" type="array">
+  Array of evidence link objects. Each includes:
+  - `id` — Link UUID
+  - `sourceEvidenceId` — The evidence attachment being linked
+  - `sourceItemId` — The request item the evidence was uploaded to
+  - `sourceExaminationId` — The source obligation ID
+  - `targetItemId` — The request item being linked to
+  - `targetExaminationId` — The target obligation ID
+  - `similarity` — Cosine similarity score (0.82–1.0)
+  - `status` — `auto_applied`, `confirmed`, or `rejected`
+  - `createdAt` — When the link was created
+  - `reviewedAt` — When the link was confirmed or rejected (null if pending)
+  - `evidence` — Nested evidence attachment details (fileName, fileSize, mimeType)
+  - `sourceExamination` — Nested source obligation details (id, name)
+  - `sourceItem` — Nested source request item details (itemNumber, originalText)
+</ResponseField>
+
+---
+
+## Confirm or reject an evidence link
+
+<ParamField path="method" type="PATCH">`/api/evidence-links/{linkId}`</ParamField>
+
+Updates the status of an evidence link. Forward-only transitions from `auto_applied`.
+
+<ParamField path="linkId" type="string" required>
+  Evidence link UUID.
+</ParamField>
+
+<ParamField body="status" type="string" required>
+  New status. One of: `confirmed`, `rejected`.
+</ParamField>
+
+<ResponseField name="data.link" type="object">
+  The updated evidence link with `reviewedAt` timestamp set.
+</ResponseField>
+
+<Warning>
+Status transitions are forward-only from `auto_applied`. You cannot change a `confirmed` link back to `auto_applied` or vice versa.
+</Warning>
+
+---
+
+## Get evidence link count for an obligation
+
+<ParamField path="method" type="GET">`/api/examinations/{examId}/evidence-link-count`</ParamField>
+
+Returns the count of pending (auto-applied) evidence links for an obligation. Used for the sidebar badge.
+
+<ParamField path="examId" type="string" required>
+  Examination/obligation ID (e.g., `EX-2026-001`).
+</ParamField>
+
+<ResponseField name="data.count" type="number">
+  Number of `auto_applied` (pending review) evidence links targeting items in this obligation.
+</ResponseField>
+
+---
+
+## Get outbound links for an evidence attachment
+
+<ParamField path="method" type="GET">`/api/evidence/{evidenceId}/links`</ParamField>
+
+Returns all outbound evidence links originating from a specific evidence attachment. Used for the "Also linked to" indicators.
+
+<ParamField path="evidenceId" type="string" required>
+  Evidence attachment UUID.
+</ParamField>
+
+<ResponseField name="data.links" type="array">
+  Array of outbound link objects. Each includes:
+  - `id` — Link UUID
+  - `targetItemId` — The linked request item
+  - `targetExaminationId` — The target obligation
+  - `similarity` — Match confidence
+  - `status` — `auto_applied`, `confirmed`, or `rejected`
+  - `targetExamination` — Nested obligation details (id, name)
+  - `targetItem` — Nested request item details (itemNumber, originalText)
+</ResponseField>

@@ -22,7 +22,8 @@ Organization (BetterAuth)
 ├── Examination (EX-2026-001, globally unique PK)
 │   ├── ExaminationUpload (parse_status: pending → processing → completed)
 │   ├── RequestItem (parsed line items, embedding vector(1024))
-│   │   └── EvidenceAttachment (file_path OR external_url)
+│   │   ├── EvidenceAttachment (file_path OR external_url)
+│   │   └── EvidenceLink (cross-obligation link, status: auto_applied → confirmed/rejected)
 │   ├── MRA (MRA-2026-001, status lifecycle)
 │   │   ├── MraRequestItem (junction → RequestItem)
 │   │   └── MraRemediationEvidence (file uploads)
@@ -53,8 +54,8 @@ Lexicographic `max(id)` breaks past 999 — `EX-2026-999` > `EX-2026-1000` in te
 
 Three-tier hierarchy: **Program** → **Domain** → **Criteria**.
 
-- Programs are scoped by `regulation_type` — `bsa_aml` maps to 5 FFIEC pillars, `third_party_oversight` maps to 8 OCC 2023-17 areas
-- Domains correspond to regulatory categories from `REGULATION_CONFIG`
+- Programs are scoped by `regulation_type` — `bsa_aml` maps to 5 FFIEC categories, `third_party_oversight` maps to 8 OCC 2023-17 areas
+- Domains correspond to regulatory categories from `REGULATION_CONFIG` (the column is `category`, not `pillar`)
 - Criteria have an `evidence_status` enum: `missing | stale | partial | sufficient`
 
 ### Score formula

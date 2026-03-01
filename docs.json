@@ -38,6 +38,7 @@
               "features/library",
               "features/examinations",
               "features/evidence",
+              "features/evidence-linking",
               "features/archive"
             ]
           }
@@ -102,6 +103,12 @@
             "group": "MRAs",
             "pages": [
               "api-reference/mras"
+            ]
+          },
+          {
+            "group": "Evidence links",
+            "pages": [
+              "api-reference/evidence-links"
             ]
           },
           {

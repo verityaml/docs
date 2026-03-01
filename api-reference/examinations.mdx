@@ -143,8 +143,8 @@ Transitions an archived examination back to `in_progress`. Idempotent — if alr
   The examiner's request text.
 </ParamField>
 
-<ParamField body="pillar" type="string" required>
-  FFIEC pillar or regulatory domain (e.g., `internal_controls`, `cdd_kyc`).
+<ParamField body="category" type="string" required>
+  Regulatory category (e.g., `internal_controls`, `cdd_kyc`). Valid categories are defined per regulation type in `REGULATION_CONFIG`.
 </ParamField>
 
 <ParamField body="ffiecSection" type="string">
@@ -165,8 +165,8 @@ Transitions an archived examination back to `in_progress`. Idempotent — if alr
   Updated request text.
 </ParamField>
 
-<ParamField body="pillar" type="string">
-  Updated pillar assignment.
+<ParamField body="category" type="string">
+  Updated category assignment.
 </ParamField>
 
 <ParamField body="assigneeId" type="string">
@@ -178,7 +178,7 @@ Transitions an archived examination back to `in_progress`. Idempotent — if alr
 </ParamField>
 
 <ParamField body="status" type="string">
-  Item status (e.g., `not_started`, `in_progress`, `complete`).
+  Item status: `not_started`, `in_progress`, `uploaded`, `needs_rework`, `reviewed`, or `ready`.
 </ParamField>
 
 <ParamField body="notes" type="string">
@@ -249,6 +249,22 @@ Uploads an examination request letter for AI parsing. Triggers the `parse-examin
 
 <ResponseField name="data.status" type="string">
   Initial status: `pending`.
+</ResponseField>
+
+---
+
+## Get evidence link count
+
+<ParamField path="method" type="GET">`/api/examinations/{examId}/evidence-link-count`</ParamField>
+
+Returns the count of pending (auto-applied) evidence links for an obligation. Used for the sidebar badge.
+
+<ParamField path="examId" type="string" required>
+  Examination/obligation ID.
+</ParamField>
+
+<ResponseField name="data.count" type="number">
+  Number of `auto_applied` (pending review) evidence links targeting items in this obligation.
 </ResponseField>
 
 ---

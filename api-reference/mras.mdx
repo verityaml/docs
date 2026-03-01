@@ -20,7 +20,7 @@ Returns all MRAs for the organization, enriched with examination names.
   - `id` — Human-readable ID (e.g., `MRA-2026-001`)
   - `title` — Finding title
   - `description` — Finding description
-  - `pillar` — Regulatory domain
+  - `category` — Regulatory category
   - `status` — `open`, `remediation_in_progress`, or `closed`
   - `issuedDate` — When the finding was issued
   - `examinationId` — Parent examination
@@ -47,8 +47,8 @@ Creates a new MRA for an archived examination.
   Detailed finding description.
 </ParamField>
 
-<ParamField body="pillar" type="string" required>
-  Regulatory pillar (e.g., `internal_controls`, `cdd_kyc`).
+<ParamField body="category" type="string" required>
+  Regulatory category (e.g., `internal_controls`, `cdd_kyc`).
 </ParamField>
 
 <ParamField body="issuedDate" type="string">

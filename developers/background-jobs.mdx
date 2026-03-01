@@ -1,9 +1,9 @@
 ---
 title: Background jobs
-description: Inngest step functions for examination parsing and evidence auto-matching
+description: Inngest step functions for examination parsing, evidence auto-matching, and cross-obligation evidence propagation
 ---
 
-Verity uses [Inngest](https://www.inngest.com/) for background jobs. Two functions handle long-running operations that exceed Vercel's function timeout limits.
+Verity uses [Inngest](https://www.inngest.com/) for background jobs. Four functions handle long-running operations that exceed Vercel's function timeout limits.
 
 ## parse-examination
 
@@ -49,9 +49,23 @@ Adding a payment method to Voyage AI unlocks standard rate limits and the sleep 
 Matches examination evidence against scoring criteria using two signals:
 
 1. **Regulatory source alignment** — if a request item and a criterion both reference the same FFIEC section or regulatory source
-2. **Domain/pillar alignment** — if a request item's assigned pillar corresponds to the current domain
+2. **Domain/category alignment** — if a request item's assigned category corresponds to the current domain
 
-Results appear as suggestions (`suggested: true` in linked evidence) requiring human review — the system proposes, humans decide.
+Evidence is automatically linked to matching criteria (opt-out model). Users can remove auto-linked entries that don't belong.
+
+Accepts `examinationIds` array for batch matching across multiple examinations in a single run (backward compatible with single `examinationId`).
+
+## propagate-evidence
+
+**Event:** `evidence/uploaded`
+
+Forward propagation — when evidence is uploaded to a request item, this function searches for semantically similar request items on other active obligations in the same org using pgvector cosine similarity (0.82 threshold). Creates up to 5 evidence links per upload with `auto_applied` status for human review.
+
+## backfill-evidence-links
+
+**Event:** `obligation/parsed`
+
+Backfill — when a new obligation is parsed, this function searches all existing evidence from other obligations for matches against the new items. Uses the same 0.82 cosine similarity threshold and creates `auto_applied` evidence links.
 
 ## Configuration
 
