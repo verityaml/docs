@@ -2,6 +2,7 @@
   "$schema": "https://mintlify.com/docs.json",
   "theme": "almond",
   "name": "Verity",
+  "subdomain": "verity",
   "colors": {
     "primary": "#2A382E",
     "light": "#2A382E",
