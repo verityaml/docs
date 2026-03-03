@@ -33,8 +33,7 @@ export function MobileNav({ pathname }: MobileNavProps) {
           />
           <div className="fixed inset-y-0 left-0 z-50 w-72 overflow-y-auto bg-paper p-6 shadow-xl">
             <div className="mb-6 flex items-center justify-between">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src="/logo/light.svg" alt="Verity" className="h-7" />
+              <span className="font-heading text-xl font-semibold uppercase tracking-wide text-forest">Verity.</span>
               <button onClick={close} aria-label="Close navigation">
                 <X className="h-5 w-5 text-ink/50" />
               </button>

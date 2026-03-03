@@ -11,9 +11,8 @@ export function Navbar({ pathname }: NavbarProps) {
   return (
     <header className="sticky top-0 z-30 border-b border-clay/20 bg-paper/95 backdrop-blur">
       <div className="mx-auto flex h-14 max-w-7xl items-center px-4 lg:px-6">
-        <Link href="/" className="mr-8 flex items-center gap-2 no-underline">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="/logo/light.svg" alt="Verity" className="h-7" />
+        <Link href="/" className="mr-8 font-heading text-xl font-semibold uppercase tracking-wide text-forest no-underline">
+          Verity.
         </Link>
 
         <nav className="hidden items-center gap-1 md:flex">
