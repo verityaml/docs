@@ -7,7 +7,7 @@ function unauthorized(): Response {
   });
 }
 
-export const onRequest: PagesFunction<{ DOCS_PASSWORD: string }> = async (context) => {
+export async function onRequest(context: { request: Request; env: Record<string, string>; next: () => Promise<Response> }) {
   const password = context.env.DOCS_PASSWORD;
   if (!password) return context.next();
 
@@ -20,4 +20,4 @@ export const onRequest: PagesFunction<{ DOCS_PASSWORD: string }> = async (contex
   if (pass !== password) return unauthorized();
 
   return context.next();
-};
+}
