@@ -1,0 +1,128 @@
+---
+title: Developing with Claude Code
+description: AI-assisted development workflow — specs, skills, agents, hooks, and session lifecycle
+---
+
+Verity uses [Claude Code](https://claude.com/claude-code) for AI-assisted development. The `.claude/` directory in the project repo contains all configuration — specs, skills (slash commands), agents, and hooks.
+
+## Starting a session
+
+Run `/session-start` at the beginning of every session. This invokes the `context-loader` agent, which reads all specs, SPECLOG, git log, and CHANGELOG to produce a prioritised briefing of what's in progress and what to work on next.
+
+## Specs
+
+Feature specifications live in `.claude/specs/`. Each spec directory contains:
+
+| File | Purpose |
+|------|---------|
+| `requirements.md` | What to build — user stories, acceptance criteria |
+| `design.md` | How to build it — architecture, data model, API design |
+| `tasks.md` | Implementation checklist, phased |
+
+To create a new spec, use the templates at `.claude/specs/{requirements,design,tasks}.md`.
+
+Check [SPECLOG.md](https://github.com/verity-aml/verity/blob/main/SPECLOG.md) for the current implementation status and which spec to work on next. Specs are worked in order: Platform → Design System → Auth → Knowledge Base → Parser → Dashboard → Archive.
+
+## Skills (slash commands)
+
+### Project
+
+| Command | Description |
+|---------|-------------|
+| `/session-start` | Load project context (runs context-loader agent) |
+| `/spec-interview` | Deep interview about a spec, then write the final version |
+| `/update-docs` | Update all project documentation after changes |
+
+### Git and PRs
+
+| Command | Description |
+|---------|-------------|
+| `/commit` | Create a git commit |
+| `/commit-push-pr` | Commit, push, and open a PR |
+| `/code-review` | Code review a pull request |
+| `/review-pr` | Comprehensive multi-agent PR review |
+
+### Development workflow
+
+| Command | Description |
+|---------|-------------|
+| `/feature-dev` | Guided feature development with codebase analysis |
+| `/brainstorming` | Explore requirements and design before writing code |
+| `/writing-plans` | Plan multi-step tasks from specs |
+| `/executing-plans` | Execute plans with review checkpoints |
+| `/test-driven-development` | TDD: write tests first, then implement |
+| `/systematic-debugging` | Structured debugging workflow |
+| `/verification-before-completion` | Verify claims with evidence before marking done |
+| `/finishing-a-development-branch` | Decide how to integrate completed work |
+
+### Code quality
+
+| Command | Description |
+|---------|-------------|
+| `/requesting-code-review` | Request review of completed work |
+| `/simplify` | Review changed code for reuse, quality, and efficiency |
+| `/revise-claude-md` | Update CLAUDE.md with session learnings |
+| `/hookify` | Create hooks to prevent unwanted behaviours |
+
+## Agents
+
+| Agent | When to use | Description |
+|-------|-------------|-------------|
+| `context-loader` | Start of session | Reads specs, SPECLOG, git log, CHANGELOG. Produces a prioritised briefing. |
+| `doc-updater` | End of session | Updates docs, SPECLOG, CHANGELOG, and task tracking after work is done. |
+| `browser` | Visual testing | Browser automation for screenshots, navigation, form filling, and visual verification. |
+| `code-reviewer` | Pre-commit (automatic) | Reviews staged changes against CLAUDE.md conventions, active spec, and codebase patterns. Returns PASS/BLOCKED verdict. |
+
+## Hooks (automatic)
+
+These run automatically via `.claude/settings.json` — no manual invocation needed:
+
+- **Prettier** auto-formats JS/TS files after edits
+- **TypeScript** type-checks after editing `.ts`/`.tsx` files
+- **console.log** warnings after edits and at end of each response
+- **tmux** reminders for long-running commands; blocks dev server outside tmux
+- **Git push** review reminder before pushing
+- **Review gate** blocks `git commit` until staged changes pass the `code-reviewer` agent; bypass with `[skip-review]` in commit message, or `docs:`/`chore:`/`style:` prefix, or md-only changes
+- **Doc guard** blocks creation of random `.md` files (use README/CLAUDE/SPECLOG/CHANGELOG)
+- **Strategic compact** suggests `/compact` at logical intervals to manage context
+
+## Suggested workflow
+
+<Steps>
+  <Step title="Start the session">
+    Run `/session-start` to get a briefing of current status, active specs, and next tasks.
+  </Step>
+  <Step title="Pick up work from the spec">
+    Check SPECLOG for the active spec, then open its `tasks.md`. Work through phases in order — mark tasks `[x]` with a date as you complete them.
+  </Step>
+  <Step title="Plan before coding">
+    For non-trivial features, run `/brainstorming` to explore requirements, then `/writing-plans` to design the implementation approach. Get approval before writing code.
+  </Step>
+  <Step title="Implement with TDD">
+    Use `/test-driven-development` for new features — write tests first, then implement. For bug fixes, use `/systematic-debugging` to find the root cause before writing a fix.
+  </Step>
+  <Step title="Verify before claiming done">
+    Run `/verification-before-completion` — this enforces running the build, tests, and type checks before marking work as complete. Evidence before assertions.
+  </Step>
+  <Step title="Review and commit">
+    The review gate hook automatically runs the `code-reviewer` agent when you commit. If it blocks, fix the issues and commit again. You can also run `/requesting-code-review` proactively.
+  </Step>
+  <Step title="Update docs and finish">
+    Run `/update-docs` to sync SPECLOG, CHANGELOG, and task tracking. Then `/finishing-a-development-branch` to decide whether to merge, open a PR, or clean up.
+  </Step>
+</Steps>
+
+## Keeping docs in sync
+
+Documentation updates are part of every task, not a separate chore.
+
+| File | When to update |
+|------|---------------|
+| `tasks.md` | Mark `[x]` with date immediately when a task is done. Add new tasks as `[ ]` when discovered. |
+| `SPECLOG.md` | When a spec moves to "In Progress" or "Complete". |
+| `CHANGELOG.md` | For every user-facing change. Add under `[Unreleased]` as Added, Changed, or Fixed. |
+| `CLAUDE.md` | When architecture, commands, project structure, env vars, or tooling change. |
+
+<Tip>
+Run `/update-docs` at the end of every session to catch anything missed — the doc-updater agent syncs all tracking files automatically.
+</Tip>

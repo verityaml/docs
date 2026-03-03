@@ -60,6 +60,12 @@ export const navigation: NavTab[] = [
         ],
       },
       {
+        group: 'Workflow',
+        pages: [
+          { title: 'Developing with Claude Code', href: '/developers/claude-code' },
+        ],
+      },
+      {
         group: 'Contributing',
         pages: [
           { title: 'Conventions', href: '/developers/conventions' },
