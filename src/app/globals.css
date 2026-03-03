@@ -1,0 +1,21 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    @apply bg-paper text-ink font-body;
+  }
+}
+
+@layer components {
+  .sidebar-link {
+    @apply block px-3 py-1.5 text-sm rounded-md transition-colors;
+  }
+  .sidebar-link:hover {
+    @apply bg-forest/5;
+  }
+  .sidebar-link-active {
+    @apply bg-forest/10 text-forest font-medium;
+  }
+}
