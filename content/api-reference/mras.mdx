@@ -1,23 +1,27 @@
 ---
-title: MRAs
-description: Matters Requiring Attention — create, track, and remediate examination findings
+title: Remediation items
+description: Remediation items — create, track, and remediate examination findings
 ---
 
-MRAs (Matters Requiring Attention) track examination findings and their remediation. They are created from archived examinations and linked to specific request items.
+Remediation items track examination findings and their remediation. They are created from archived examinations and linked to specific request items.
 
-## List MRAs
+<Note>
+Remediation items were previously called "MRAs" (Matters Requiring Attention). The API routes have been updated to `/api/remediation-items/`. IDs use the format `REM-2026-001`.
+</Note>
 
-<ParamField path="method" type="GET">`/api/mras`</ParamField>
+## List remediation items
 
-Returns all MRAs for the organization, enriched with examination names.
+<ParamField path="method" type="GET">`/api/remediation-items`</ParamField>
+
+Returns all remediation items for the organization, enriched with examination names.
 
 <ParamField query="status" type="string">
   Filter by status (comma-separated). Valid values: `open`, `remediation_in_progress`, `closed`.
 </ParamField>
 
-<ResponseField name="data.mras" type="array">
-  Array of MRA objects. Each includes:
-  - `id` — Human-readable ID (e.g., `MRA-2026-001`)
+<ResponseField name="data.remediationItems" type="array">
+  Array of remediation item objects. Each includes:
+  - `id` — Human-readable ID (e.g., `REM-2026-001`)
   - `title` — Finding title
   - `description` — Finding description
   - `category` — Regulatory category
@@ -29,11 +33,11 @@ Returns all MRAs for the organization, enriched with examination names.
 
 ---
 
-## Create MRA
+## Create remediation item
 
-<ParamField path="method" type="POST">`/api/examinations/{examId}/mras`</ParamField>
+<ParamField path="method" type="POST">`/api/examinations/{examId}/remediation-items`</ParamField>
 
-Creates a new MRA for an archived examination.
+Creates a new remediation item for an archived examination.
 
 <ParamField path="examId" type="string" required>
   Examination ID. Must be in `archived` status.
@@ -48,7 +52,7 @@ Creates a new MRA for an archived examination.
 </ParamField>
 
 <ParamField body="category" type="string" required>
-  Regulatory category (e.g., `internal_controls`, `cdd_kyc`).
+  Regulatory category (e.g., `internal_controls`, `cdd_kyc`). Uses the regulation type's categories.
 </ParamField>
 
 <ParamField body="issuedDate" type="string">
@@ -59,18 +63,18 @@ Creates a new MRA for an archived examination.
   Array of request item IDs from the examination that led to this finding. At least one required.
 </ParamField>
 
-<ResponseField name="data.mra" type="object">
-  The created MRA with auto-generated ID (e.g., `MRA-2026-001`).
+<ResponseField name="data.remediationItem" type="object">
+  The created remediation item with auto-generated ID (e.g., `REM-2026-001`).
 </ResponseField>
 
 ---
 
-## Update MRA
+## Update remediation item
 
-<ParamField path="method" type="PATCH">`/api/mras/{mraId}`</ParamField>
+<ParamField path="method" type="PATCH">`/api/remediation-items/{itemId}`</ParamField>
 
-<ParamField path="mraId" type="string" required>
-  MRA ID (e.g., `MRA-2026-001`).
+<ParamField path="itemId" type="string" required>
+  Remediation item ID (e.g., `REM-2026-001`).
 </ParamField>
 
 <ParamField body="title" type="string">
@@ -90,14 +94,14 @@ Creates a new MRA for an archived examination.
 </ParamField>
 
 <Warning>
-Status transitions are forward-only. You cannot move an MRA back to a previous status.
+Status transitions are forward-only. You cannot move a remediation item back to a previous status.
 </Warning>
 
 ---
 
 ## List remediation evidence
 
-<ParamField path="method" type="GET">`/api/mras/{mraId}/evidence`</ParamField>
+<ParamField path="method" type="GET">`/api/remediation-items/{itemId}/evidence`</ParamField>
 
 <ResponseField name="data.evidence" type="array">
   Array of remediation evidence files with `id`, `fileName`, `filePath`, `fileSize`, `mimeType`, `createdAt`.
@@ -107,7 +111,7 @@ Status transitions are forward-only. You cannot move an MRA back to a previous s
 
 ## Upload remediation evidence
 
-<ParamField path="method" type="POST">`/api/mras/{mraId}/evidence`</ParamField>
+<ParamField path="method" type="POST">`/api/remediation-items/{itemId}/evidence`</ParamField>
 
 Upload a file demonstrating remediation progress.
 
@@ -123,6 +127,6 @@ Upload a file demonstrating remediation progress.
 
 ## Delete remediation evidence
 
-<ParamField path="method" type="DELETE">`/api/mras/{mraId}/evidence/{evidenceId}`</ParamField>
+<ParamField path="method" type="DELETE">`/api/remediation-items/{itemId}/evidence/{evidenceId}`</ParamField>
 
 Deletes a remediation evidence file and cleans up from storage.

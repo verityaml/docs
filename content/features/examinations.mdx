@@ -7,16 +7,21 @@ While the dashboard and scoring system are proactive — measuring readiness bef
 
 ## Creating an examination
 
-Click **New Obligation** in the sidebar to create a new examination record. Enter the basic details — title, examiner, regulation type, due date — and you'll land on the examination detail page.
+Click **New Obligation** in the sidebar to create a new examination record. Enter the basic details — title, examiner, regulation type, obligation type, due date — and you'll land on the examination detail page.
+
+The **obligation type** matters: "Examination" is the default, but you can also select "Consent Order" for enforcement actions. When you select Consent Order, additional fields appear for severity and deadline tracking.
 
 ## Parsing the request letter
 
-Upload the PDF of the examination request letter. The system uses AI to parse every line item from the document. Each extracted item includes:
+Upload the PDF of the examination request letter or consent order document. The system uses AI to parse every line item from the document. Each extracted item includes:
 
 - The examiner's request text
 - The FFIEC pillar or regulatory domain it maps to
+- A **scoring criterion key** linking the item to a specific criterion in your compliance program (e.g., `ic-01`, `tr-03`)
 - The type of evidence that satisfies it
 - Common deficiencies from published enforcement actions
+
+For consent orders, each item additionally includes a color-coded **severity badge** (critical, high, moderate, low) and **deadline** information (calendar or business days).
 
 Items stream in one by one as they're parsed. The BSA officer reviews each one — AI proposes the mapping, the human confirms or adjusts.
 
@@ -26,9 +31,24 @@ AI is used for classification and retrieval only — never generation of complia
 
 ## Assigning and tracking
 
-Each request item can be assigned to a team member with a deadline. The examination dashboard shows progress by pillar, by assignee, and by status.
+Each request item can be assigned to a team member with a deadline. The examination detail page has a **progress summary bar** at the top — total completion percentage, per-domain mini progress bars, days remaining, and an overdue item count.
 
-Status progression: items move from **not started** → **in progress** → **complete** as evidence is gathered and reviewed. The examination advances from "preparing" to "in progress" automatically as work begins.
+**Six dashboard tabs** let you slice the data:
+
+| Tab | Description |
+|-----|-------------|
+| All Items | Full list |
+| By Pillar | Grouped by regulatory domain with progress per group |
+| By Reference | Grouped by FFIEC section with clickable links to the library |
+| By Status | Items grouped by workflow status |
+| By Assignee | Items grouped by team member |
+| Timeline | Color-coded countdown badges (green: more than 7d, amber: 3-7d, red: under 3d, OVERDUE) |
+
+Status progression: items move from **not started** → **in progress** → **uploaded** → **needs rework** → **reviewed** → **ready**. The examination advances from "preparing" to "in progress" automatically when the first item is updated.
+
+Overdue items show a red left border and an "OVERDUE" pill. Items due within three days get an amber border.
+
+Each request item has a **History tab** — an audit trail of every status change, evidence upload, assignee change, and note edit, logged with who did it and when.
 
 ## Evidence upload
 

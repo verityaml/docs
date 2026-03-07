@@ -1,6 +1,6 @@
 ---
-title: Archive and MRAs
-description: Archive completed examinations, search across past cycles, and track Matters Requiring Attention
+title: Archive and remediation
+description: Archive completed examinations, search across past cycles, and track remediation items
 ---
 
 <img
@@ -19,31 +19,31 @@ The archive search lets you query across all past examinations. Looking for how 
 This is the "institutional memory" that most compliance teams lack. The second examination cycle takes less time because you can reference what worked before.
 </Tip>
 
-## MRA tracking
+## Remediation item tracking
 
-If the examination results in Matters Requiring Attention (MRAs), track them directly from the archived examination.
+If the examination results in findings requiring follow-up, track them as **remediation items** directly from the archived examination.
 
-### Creating an MRA
+### Creating a remediation item
 
-From an archived examination, click **Create MRA**. Each MRA requires:
+From an archived examination, click **Create Remediation Item**. Each item requires:
 - A title describing the finding
 - At least one linked request item from the examination
-- The regulatory pillar it relates to
+- The regulatory category it relates to
 
-MRAs are assigned human-readable IDs like `MRA-2026-001`.
+Remediation items are assigned human-readable IDs like `REM-2026-001`.
 
-### MRA lifecycle
+### Remediation lifecycle
 
 ```
 open → remediation_in_progress → closed
 ```
 
-Status transitions are forward-only — an MRA moves from identified through active remediation to closed. Each MRA records:
+Status transitions are forward-only — an item moves from identified through active remediation to closed. Each remediation item records:
 
 | Field | Description |
 |-------|-------------|
 | Finding text | The examiner's finding |
-| Category | Regulatory category |
+| Category | Regulatory category (uses the regulation type's categories) |
 | Status | Current lifecycle stage |
 | Issued date | When the finding was issued |
 | Remediation evidence | Files uploaded to demonstrate remediation |
@@ -51,7 +51,11 @@ Status transitions are forward-only — an MRA moves from identified through act
 
 ### Remediation evidence
 
-Upload evidence files directly against each MRA to demonstrate remediation progress. The same file types and size limits apply as examination evidence (PDF, DOCX, XLSX, CSV, PNG, JPG — max 50 MB).
+Upload evidence files directly against each remediation item to demonstrate progress. The same file types and size limits apply as examination evidence (PDF, DOCX, XLSX, CSV, PNG, JPG — max 50 MB).
+
+<Note>
+When you create a new examination, an **open remediation items banner** on the create page shows how many items from previous examinations are still unresolved.
+</Note>
 
 ## Reopening archived examinations
 

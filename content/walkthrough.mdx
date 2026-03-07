@@ -42,7 +42,13 @@ Below the score, **domain cards** break down readiness by compliance area. For a
 
 If you see a domain card with gaps — say CDD/KYC at 60% with two missing criteria — that's the system telling you where to focus *before* the examination letter arrives.
 
-**The Priority Gaps panel** lists the highest-priority unfilled criteria across all domains, ranked by regulatory importance. This is your team's to-do list, derived directly from the regulatory requirements.
+**The Priority Gaps** panel in the sidebar lists the highest-priority unfilled criteria across all domains, ranked by regulatory importance. This is your team's to-do list, derived directly from the regulatory requirements.
+
+On the right, a **Quick Links** sidebar provides fast navigation to Active Obligations, the Response Archive, the Reference Library, and Settings. Each domain card also shows an **evidence count** alongside gap counts.
+
+### Score snapshots
+
+Below Priority Gaps, the **Snapshots** section lets you capture point-in-time records of your program's scores. Click **Save Snapshot**, optionally add a label, and confirm. Click any snapshot row to expand its domain breakdown. With two or more snapshots, expand **Compare Snapshots** for a side-by-side diff table with color-coded deltas.
 
 ### Switching programs
 
@@ -77,23 +83,21 @@ Each row shows:
 
 ### Updating evidence status
 
-The status column is a dropdown, not a static label. Click it to change a criterion's evidence status. The change takes effect immediately — you'll see the domain score at the top of the page update in real time.
+The status column is a dropdown, not a static label. Click it and a modal prompts for an optional reason ("Updated after board review," "Waiting on Q4 minutes"). The domain score at the top of the page updates in real time.
 
-The score formula is straightforward: each "sufficient" criterion contributes 100 points, each "partial" contributes 50, and everything else contributes zero. Divide by total criteria, and that's your domain score.
+Criteria with a **REQUIRES REVIEW** warning have been auto-matched with evidence by the system. The warning clears when you change the status or add reviewer notes.
 
-### Reviewer notes
+### Evidence and history tabs
 
-Click **Expand** on any criterion to reveal the detail section. The notes textarea lets your team add context — "Waiting on updated board minutes from Q4," "Policy document needs legal sign-off," etc. Notes auto-save after a one-second pause. You'll see a "Saving..." indicator followed by "Saved" to confirm.
+Click **Expand** on any criterion to reveal two tabs: **Evidence** and **History**.
 
-### Linked evidence
+The **Evidence** tab shows reviewer notes (auto-saved after a one-second pause) and linked evidence documents — each with its source type, an **AUTO** label on system-matched entries, and a **Remove** button.
 
-Below the notes, you'll see any evidence documents linked to the criterion. Each entry shows:
-- The document label
-- Its source type (attachment, MRA evidence, or external URL)
-- An **AUTO** label on entries linked by the auto-match system
-- A **Remove** button to unlink the entry
+The **History** tab is the audit trail — every change to this criterion logged with who, when, and why. Filter by change type (status, evidence, notes).
 
-All linked evidence — whether added manually or auto-matched — is treated the same way. If the auto-match system has linked evidence that doesn't belong, just remove it.
+### Domain-level evidence upload
+
+Above the criteria table, a drag-and-drop **upload zone** lets you upload evidence directly to the domain. After upload, files are auto-suggested against all criteria in the domain. Use the **Link Evidence** dropdown on any criterion to manually assign unlinked files.
 
 ---
 
@@ -153,27 +157,30 @@ While the dashboard and scoring system are proactive — measuring readiness bef
 
 ### Creating an examination
 
-Click **New Obligation** to create a new examination record. Enter the basic details — title, examiner, regulation type, due date — and you'll land on the examination detail page.
+Click **New Obligation** to create a new examination record. Enter the basic details — title, examiner, regulation type, obligation type, due date. The obligation type matters: "Examination" is the default, but you can select "Consent Order" for enforcement actions with severity and deadline tracking.
 
 ### Parsing the request letter
 
-Upload the PDF of the examination request letter. The system uses AI to parse every line item from the document. Each extracted item includes:
+Upload the PDF of the examination request letter or consent order document. Each extracted item includes:
 - The examiner's request text
 - The FFIEC pillar or regulatory domain it maps to
+- A **scoring criterion key** (e.g., `ic-01`, `tr-03`) linking the item to a specific scoring criterion
 - The type of evidence that satisfies it
-- Common deficiencies from published enforcement actions
+- Common deficiencies from enforcement actions
 
-Items stream in one by one as they're parsed. The BSA officer reviews each one — AI proposes the mapping, the human confirms or adjusts.
+For consent orders, items also include color-coded **severity badges** (critical/high/moderate/low) and **deadline** information.
+
+Items stream in one by one. The BSA officer reviews each one — AI proposes the mapping, the human confirms or adjusts.
 
 ### Assigning and tracking
 
-Each request item can be assigned to a team member with a deadline. The examination dashboard shows progress by pillar, by assignee, and by status. Team members upload evidence directly against each request item.
+Each request item can be assigned to a team member with a deadline. The examination dashboard has six tabs: All Items, By Pillar, **By Reference** (grouped by FFIEC section with library links), By Status, By Assignee, and Timeline.
 
-Status progression is straightforward: items move from "not started" through "in progress" to "complete" as evidence is gathered and reviewed. The examination advances from "preparing" to "in progress" automatically as work begins.
+Status progression: items move from "not started" through "in progress," "uploaded," "needs rework," "reviewed," to "ready." Each item has a **History tab** logging every change.
 
 ### Evidence upload
 
-Each request item accepts file uploads — PDFs, CSVs, images. Files are stored securely and linked to the specific item they satisfy. Multiple files per item are supported.
+Each request item accepts file uploads — PDFs, CSVs, images (max 50 MB). Files are stored securely and linked to the specific item. Multiple files per item are supported.
 
 ---
 
@@ -234,15 +241,47 @@ The archive search lets you query across all past examinations. Looking for how 
 This is the "institutional memory" that most compliance teams lack. The second examination cycle takes less time because you can reference what worked before.
 </Tip>
 
-### MRA tracking
+### Remediation item tracking
 
-If the examination results in Matters Requiring Attention (MRAs), track them directly from the archived examination. Each MRA records:
-- The finding text
-- Severity and status
-- Remediation evidence and timeline
+If the examination results in findings requiring follow-up, click **Create Remediation Item**. Each item records:
+- The finding text and regulatory category
+- Status lifecycle: open → remediation in progress → closed
+- Remediation evidence uploads
 - Links back to the original request items
 
-MRAs have their own lifecycle — from identified through remediation to closed — and their progress is tracked alongside the overall examination record.
+Remediation items use IDs like `REM-2026-001`. When you create a new examination, an **open remediation items banner** shows how many are still unresolved from previous examinations.
+
+### Reopening
+
+If you need to revisit an archived examination, click **Reopen Examination**. A confirmation dialog asks you to confirm, then it transitions back to "In Progress" and becomes editable again.
+
+---
+
+## The evidence library
+
+**Where to find it:** Click **Evidence** in the navigation bar.
+
+This is the centralised view of every piece of evidence in your organisation — uploaded through examinations, domain uploads, or directly to the library.
+
+The evidence table shows each file with its **source type badge** (EXAM, DOMAIN, or LIBRARY), the context where it was uploaded, how many scoring criteria it's linked to, upload date, and who uploaded it.
+
+Upload files directly using the drag-and-drop zone at the top. Files land with a LIBRARY source type — available for linking to any scoring criteria across any domain.
+
+Filter the table using source type pills, the domain dropdown, or filename search. Download any file via a signed URL. Delete library-sourced files with automatic criteria cleanup and score recomputation.
+
+---
+
+## Readiness report export
+
+**Where to find it:** Click **Export Report** in the Quick Links sidebar on the dashboard.
+
+The readiness report preview page shows:
+- A **cover page** with the program name, regulation type, and current readiness score
+- An **executive summary** with score breakdown and domain score table
+- **Per-domain sections** with every criterion, its status (color-coded dots), evidence count, and reviewer notes
+- An **evidence appendix** listing all linked evidence across domains
+
+Export as **PDF** (formatted report) or **CSV** (flat criteria table for spreadsheet analysis). The CSV includes columns for Domain, Domain Score, Criterion Key, Criterion, Status, Evidence Count, and Reviewer Notes.
 
 ---
 
@@ -293,10 +332,13 @@ Here's how all of this connects:
     After the examination, the **auto-match** system links that evidence back to your scoring criteria, strengthening your readiness score
   </Step>
   <Step title="Track findings">
-    **Findings and MRAs** feed back into the compliance program as gaps to address
+    **Remediation items** from examination findings feed back into the compliance program as gaps to address
   </Step>
   <Step title="Build institutional memory">
-    The **archive** preserves everything for the next cycle, and the **library** provides the regulatory grounding throughout
+    The **archive** preserves everything for the next cycle, the **evidence library** provides an org-wide view, and the **reference library** provides regulatory grounding throughout
+  </Step>
+  <Step title="Audit everything">
+    The **audit trail** records every change — who did what, when, and why — across the entire system
   </Step>
 </Steps>
 

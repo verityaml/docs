@@ -38,11 +38,27 @@ The domain detail page lists every scoring criterion, each one mapped to a speci
 | Evidence count | How many documents are linked |
 | Evidence status | Missing, Stale, Partial, or Sufficient |
 
-The status column is a dropdown — click to change it and the domain score updates immediately.
+Each row also shows the **criterion definition key** (e.g., `ic-01`, `tr-03`) in the Source column above the regulatory source link, making it easy to cross-reference with parsed examination items.
 
-## Reviewer notes
+The status column is a dropdown — click to change it. A modal prompts for an optional reason ("Updated after board review," "Waiting on Q4 minutes") and the domain score updates immediately.
 
-Click **Expand** on any criterion to reveal the detail section. The notes textarea lets your team add context — "Waiting on updated board minutes from Q4," "Policy document needs legal sign-off," etc. Notes auto-save after a one-second pause.
+<Warning>
+Criteria with a **REQUIRES REVIEW** warning beneath the status dropdown have been auto-matched with evidence and set to "sufficient" by the system, but no human has confirmed them yet. The warning clears when you change the status or add reviewer notes.
+</Warning>
+
+## Reviewer notes and history
+
+Click **Expand** on any criterion to reveal two tabs: **Evidence** and **History**.
+
+The **Evidence** tab shows reviewer notes (auto-saved after a one-second pause) and linked evidence documents.
+
+The **History** tab is the audit trail — a scrollable, filterable log of every change to this criterion. Who changed the status, when, and why. System-generated entries from auto-match are logged as "System." Filter by change type (status, evidence, notes) to find what you need.
+
+## Domain-level evidence upload
+
+Above the criteria table, a **drag-and-drop upload zone** lets you upload evidence files directly to the domain without going through an examination workflow. Multiple files are supported with per-file progress indicators.
+
+After upload, the system auto-suggests the uploaded evidence against all criteria in the domain. Unlinked files appear in an expandable section, and you can manually assign them to specific criteria using the **Link Evidence** dropdown on any criterion's Evidence tab.
 
 ## Linked evidence
 
@@ -54,7 +70,7 @@ Click **Expand** on any criterion to reveal the detail section. The notes textar
 
 Below the notes, you'll see evidence documents linked to the criterion. Each entry shows:
 - The document label
-- Its source type (attachment, MRA evidence, or external URL)
+- Its source type (examination, domain upload, library, or remediation)
 - An **AUTO** label on entries linked by the auto-match system
 - A **Remove** button to unlink the entry
 
@@ -68,10 +84,10 @@ From the dashboard, the **Run Gap Analysis** button matches evidence from all ex
 
 Matching uses two signals:
 
-1. **Regulatory source alignment** — request item and criterion both reference the same FFIEC section
-2. **Domain/category alignment** — request item's assigned category corresponds to the current domain
+1. **Direct criterion key** — if a request item has a scoring criterion key (like `ic-01`) that matches a criterion's definition key, that's an exact match
+2. **Regulatory source alignment** — if a request item and a criterion both reference the same FFIEC section, the evidence is relevant
 
-Evidence is automatically linked to matching criteria (opt-out model). Each auto-linked entry is labelled **AUTO** — remove anything that doesn't belong.
+When evidence is auto-linked, the system sets the criterion's status to **Sufficient** and recomputes the domain score. The **REQUIRES REVIEW** warning appears until a human confirms. This is opt-out, not opt-in — the system attaches evidence it considers relevant, and you remove anything that doesn't belong.
 
 <Tip>
 Auto-matching turns examination evidence into reusable compliance proof. Evidence uploaded for one examination cycle can strengthen your readiness score across future cycles.
