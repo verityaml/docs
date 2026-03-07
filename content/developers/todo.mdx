@@ -1,38 +1,43 @@
 ---
-title: Roadmap
-description: Planned features and tracked improvements beyond the current build
+title: Build tracker
+description: Active build items, planned features, and infrastructure improvements
 ---
 
-## Spec status
-
-All 20 feature specs are tracked in the main repository's `SPECLOG.md`. Current status as of March 2026:
-
-| Spec | Status |
-|------|--------|
-| Platform | Complete |
-| Design System | Complete |
-| Auth & Tenancy | Complete |
-| Knowledge Base | Complete |
-| Exam Parser | Complete |
-| Examination Workflow Tracker | Complete |
-| Response Archive | Complete |
-| Docker Demo | Complete |
-| Bank-Readiness Scoring | Complete |
-| Regulatory Reference Library | Complete |
-| Evidence-Scoring Integration | Complete |
-| Report Generation | Complete |
-| Consent Order Parsing | Complete |
-| Evidence Linking | Complete |
-| Control Center Update | Complete |
-| Audit Trail | Complete |
-| Domain Evidence Upload | Complete |
-| Score Snapshots | Complete |
-| Evidence Library | In Progress |
-| Readiness Report Export | Complete |
+Track what's being built, what's next, and what's deferred. This page mirrors the main repository's `TODO.md` and is updated via the `/sync-from-app` skill.
 
 ---
 
-## Planned — post-partnership
+## Active — Runway Partnership
+
+Partnership start: March 3, 2026. 60-day review: ~May 2. End: ~June 1.
+
+### Domain-level evidence upload — Complete
+
+Multi-file upload directly on domain detail pages. Supports drag-and-drop and maps files to the parent domain's scoring criteria.
+
+### Score history snapshots — Complete
+
+Point-in-time score capture with comparison mode. View how readiness scores change over time across domains.
+
+### Evidence library — In progress
+
+Centralised org-wide evidence view with context-free upload, filters, download, and delete. Schema, API, and UI are complete. Remaining:
+
+- Unit tests for API routes (GET list, POST upload, DELETE, GET download)
+- E2E tests (upload, filter, delete, download)
+- Extract shared upload component from `EvidenceUploadSection` and `DomainUploadZone`
+
+### Readiness report export — Complete
+
+Export compliance readiness reports as PDF binders or pillar-organised ZIP archives from the dashboard.
+
+### Create program wizard + editing — Complete
+
+Self-service program creation for any regulation type in `REGULATION_CONFIG`. Includes a 4-step wizard (regulation type selection, domain configuration, criteria preview with template population, baseline assessment), programs management page, and program settings page with rename, domain toggle, and delete.
+
+---
+
+## Planned — Post-partnership
 
 ### Evidence table rename
 
@@ -43,7 +48,7 @@ Rename `evidence_attachments` to `evidence` in a cleanup migration. Pure naming 
 - Container-level lifecycle: `issued` &rarr; `remediation_in_progress` &rarr; node-level closure &rarr; `order_lifted`
 - Different from examination lifecycle — container never fully archives
 - Cross-department assignment for findings spanning multiple business lines
-- Recurring deadline support via Inngest scheduled functions (call reports quarterly, attestations monthly)
+- Recurring deadline support via Inngest scheduled functions
 
 ### Schema rename: examinations to obligations
 

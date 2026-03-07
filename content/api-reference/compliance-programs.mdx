@@ -129,6 +129,142 @@ Maximum 50 evidence items per criterion.
 
 ---
 
+## Create program
+
+<ParamField path="method" type="POST">`/api/compliance-programs`</ParamField>
+
+Creates a new compliance program with domains and optional criteria from `SCORING_CRITERIA_DEFINITIONS`.
+
+<ParamField body="name" type="string" required>
+  Program display name.
+</ParamField>
+
+<ParamField body="regulationType" type="string" required>
+  Regulation type from `REGULATION_CONFIG` (e.g., `bsa_aml`, `third_party_oversight`).
+</ParamField>
+
+<ParamField body="domains" type="array">
+  Array of domain keys to include. Defaults to all categories for the regulation type.
+</ParamField>
+
+<ParamField body="includeCriteria" type="boolean">
+  Whether to populate criteria from `SCORING_CRITERIA_DEFINITIONS`. Defaults to `true`.
+</ParamField>
+
+<ParamField body="baselineStatuses" type="object">
+  Optional map of criterion definition keys to initial evidence statuses for baseline assessment.
+</ParamField>
+
+<ResponseField name="data.program" type="object">
+  The created program with domains and criteria.
+</ResponseField>
+
+---
+
+## Update program
+
+<ParamField path="method" type="PATCH">`/api/compliance-programs/{id}`</ParamField>
+
+Update program name or add/remove domains.
+
+<ParamField body="name" type="string">
+  Updated program name.
+</ParamField>
+
+<ParamField body="addDomains" type="array">
+  Domain keys to add.
+</ParamField>
+
+<ParamField body="removeDomains" type="array">
+  Domain keys to remove.
+</ParamField>
+
+---
+
+## Delete program
+
+<ParamField path="method" type="DELETE">`/api/compliance-programs/{id}`</ParamField>
+
+Deletes a program with FK cascade cleanup of domains and criteria.
+
+---
+
+## List score snapshots
+
+<ParamField path="method" type="GET">`/api/compliance-programs/{id}/snapshots`</ParamField>
+
+Returns cursor-paginated score snapshots for a program.
+
+<ParamField query="cursor" type="string">
+  Cursor for pagination.
+</ParamField>
+
+<ResponseField name="data.snapshots" type="array">
+  Array of snapshot objects with `id` (e.g., `SNAP-2026-001`), `label`, `programScore`, `domainData` (JSONB), and `createdAt`.
+</ResponseField>
+
+---
+
+## Create score snapshot
+
+<ParamField path="method" type="POST">`/api/compliance-programs/{id}/snapshots`</ParamField>
+
+Captures a point-in-time snapshot of the program's scores.
+
+<ParamField body="label" type="string">
+  Optional label (e.g., "Partnership Baseline", "Pre-60-Day Review").
+</ParamField>
+
+---
+
+## Generate readiness report
+
+<ParamField path="method" type="POST">`/api/compliance-programs/{id}/report/generate`</ParamField>
+
+Generates a PDF or CSV readiness report and uploads to Supabase Storage.
+
+<ParamField body="format" type="string" required>
+  `pdf` or `csv`.
+</ParamField>
+
+<ResponseField name="data.url" type="string">
+  Signed download URL (1-hour expiry).
+</ResponseField>
+
+---
+
+## Domain evidence
+
+<ParamField path="method" type="POST">`/api/compliance-programs/{id}/domains/{domainId}/evidence`</ParamField>
+
+Upload evidence files directly to a domain. Multipart form data with multiple files.
+
+<ParamField path="method" type="GET">`/api/compliance-programs/{id}/domains/{domainId}/evidence`</ParamField>
+
+List domain evidence. Supports `?unlinked=true` filter.
+
+<ParamField path="method" type="DELETE">`/api/compliance-programs/{id}/domains/{domainId}/evidence/{evidenceId}`</ParamField>
+
+Delete domain evidence with cascade cleanup from criteria JSONB.
+
+---
+
+## Criterion audit trail
+
+<ParamField path="method" type="GET">`/api/compliance-programs/{id}/domains/{domainId}/criteria/{criteriaId}/audit`</ParamField>
+
+Returns cursor-paginated audit entries for a scoring criterion.
+
+<ParamField query="cursor" type="string">
+  Cursor for pagination.
+</ParamField>
+
+<ParamField query="type" type="string">
+  Filter by change type: `status`, `evidence`, `notes`.
+</ParamField>
+
+---
+
 ## Trigger auto-match
 
 <ParamField path="method" type="POST">`/api/compliance-programs/{id}/auto-match`</ParamField>

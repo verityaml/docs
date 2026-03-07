@@ -35,7 +35,7 @@ export const navigation: NavTab[] = [
           { title: 'Examinations', href: '/features/examinations' },
           { title: 'Evidence collection', href: '/features/evidence' },
           { title: 'Evidence linking', href: '/features/evidence-linking' },
-          { title: 'Archive and MRAs', href: '/features/archive' },
+          { title: 'Archive and remediation', href: '/features/archive' },
         ],
       },
     ],
@@ -70,6 +70,7 @@ export const navigation: NavTab[] = [
         pages: [
           { title: 'Conventions', href: '/developers/conventions' },
           { title: 'Testing', href: '/developers/testing' },
+          { title: 'Build tracker', href: '/developers/todo' },
           { title: 'Roadmap', href: '/developers/roadmap' },
         ],
       },
@@ -104,9 +105,9 @@ export const navigation: NavTab[] = [
         ],
       },
       {
-        group: 'MRAs',
+        group: 'Remediation items',
         pages: [
-          { title: 'MRAs', href: '/api-reference/mras' },
+          { title: 'Remediation items', href: '/api-reference/mras' },
         ],
       },
       {

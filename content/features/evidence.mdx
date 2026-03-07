@@ -57,6 +57,20 @@ From the domain detail page, expand a criterion and add evidence by selecting fr
 
 Use the **Find Evidence** button to automatically scan an examination's evidence against criteria in the current domain. The system matches on regulatory source alignment and domain/pillar alignment. Auto-linked entries are labelled **AUTO** and can be removed if they don't belong.
 
+## Evidence library
+
+The **Evidence Library** at `/evidence` is a centralised org-wide view of all evidence — uploaded through examinations, domain uploads, or directly to the library.
+
+The evidence table shows each file with its **source type badge** (EXAM, DOMAIN, or LIBRARY), the context where it was uploaded, how many scoring criteria it's linked to, upload date, and who uploaded it.
+
+**Upload files directly** using the drag-and-drop zone at the top. Files land with a LIBRARY source type and no parent context — available for linking to any scoring criteria across any domain.
+
+**Filter** using source type pills (toggle Exam, Domain, Library), the domain dropdown, or filename search. **Download** any file via a 5-minute signed URL. **Delete** library-sourced files with automatic JSONB cleanup across scoring criteria and score recomputation.
+
+## Domain-level upload
+
+Evidence can also be uploaded directly on domain detail pages via a multi-file drag-and-drop zone. Files land with a DOMAIN source type and are automatically suggested against all criteria in that domain.
+
 ## Evidence sources
 
 Linked evidence entries include a source type:
@@ -64,7 +78,9 @@ Linked evidence entries include a source type:
 | Source type | Description |
 |-------------|-------------|
 | `evidence_attachment` | File uploaded against a request item |
-| `mra_evidence` | File uploaded as MRA remediation evidence |
+| `domain_upload` | File uploaded directly on a domain detail page |
+| `library` | File uploaded context-free to the evidence library |
+| `remediation` | File uploaded as remediation evidence |
 | `external_url` | Link to an external document or system |
 
 ## Team workflow
@@ -75,3 +91,4 @@ The examination dashboard shows evidence collection progress across multiple vie
 - **By assignee** — workload distribution across your team
 - **By status** — how many items are not started, in progress, or complete
 - **By timeline** — items approaching their deadlines
+- **By reference** — grouped by FFIEC section with links to the regulatory library
