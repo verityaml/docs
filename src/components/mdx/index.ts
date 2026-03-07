@@ -5,6 +5,8 @@ import { Steps, Step } from './steps';
 import { CodeGroup } from './code-group';
 import { ParamField } from './param-field';
 import { ResponseField } from './response-field';
+import { CurrentArchDiagram } from './architecture-diagram';
+import { AWSArchDiagram } from './aws-architecture-diagram';
 
 export const mdxComponents: MDXComponents = {
   Note,
@@ -17,4 +19,6 @@ export const mdxComponents: MDXComponents = {
   CodeGroup,
   ParamField,
   ResponseField,
+  CurrentArchDiagram,
+  AWSArchDiagram,
 };
