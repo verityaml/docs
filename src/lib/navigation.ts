@@ -55,7 +55,6 @@ export const navigation: NavTab[] = [
         group: 'Architecture',
         pages: [
           { title: 'Architecture', href: '/developers/architecture' },
-          { title: 'Architecture diagrams', href: '/developers/architecture-diagrams' },
           { title: 'Data model', href: '/developers/data-model' },
           { title: 'Background jobs', href: '/developers/background-jobs' },
           { title: 'AWS migration', href: '/developers/aws-migration' },

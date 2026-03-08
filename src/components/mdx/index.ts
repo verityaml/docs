@@ -7,6 +7,7 @@ import { ParamField } from './param-field';
 import { ResponseField } from './response-field';
 import { CurrentArchDiagram } from './architecture-diagram';
 import { AWSArchDiagram } from './aws-architecture-diagram';
+import { AWSDetailedDiagram } from './aws-detailed-diagram';
 
 export const mdxComponents: MDXComponents = {
   Note,
@@ -21,4 +22,5 @@ export const mdxComponents: MDXComponents = {
   ResponseField,
   CurrentArchDiagram,
   AWSArchDiagram,
+  AWSDetailedDiagram,
 };

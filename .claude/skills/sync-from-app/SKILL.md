@@ -13,6 +13,24 @@ Use when the user says `/sync-from-app`, "sync the docs", "update docs from app"
 
 ## Process
 
+### Phase 0 — Check for new merged PRs (gate)
+
+Before doing any heavy reading, check GitHub for merged PRs newer than the last checkpoint.
+
+1. Read the `Last merged PR checked` value from memory (`MEMORY.md` sync state section). If missing, default to `0`.
+2. Run:
+   ```bash
+   cd /Users/callumke/Projects/verity && gh pr list --repo verityaml/verity --state merged --json number,title,mergedAt --limit 20
+   ```
+3. Filter the results: any PR with `number` greater than the checkpoint is new.
+4. **If no new PRs** — output a one-line summary and stop:
+   > "No new merged PRs since #N. Docs are up to date."
+5. **If new PRs exist** — list them, then pull the latest code before proceeding:
+   ```bash
+   cd /Users/callumke/Projects/verity && git pull --ff-only
+   ```
+6. At the end of the sync (Phase 5), update memory with the highest merged PR number.
+
 ### Phase 1 — Read source-of-truth files from the main repo
 
 Read these files from the main Verity repo and hold their contents in context:
@@ -126,12 +144,18 @@ cd /Users/callumke/Projects/verity/frontend && npx playwright test --global-setu
 
 If screenshot capture fails for any page (e.g., no seeded data, auth expired), log the failure but continue with other pages. Report all failures at the end.
 
-### Phase 5 — Summary
+### Phase 5 — Summary and checkpoint update
 
-After all updates, output a summary:
+After all updates:
+
+1. **Update the memory checkpoint** — edit `MEMORY.md` to set `Last merged PR checked` to the highest PR number from Phase 0. Also update `Last sync` date and `Main repo commit` hash.
+2. Output a summary:
 
 ```
 ## Docs sync complete
+
+### New PRs since last check
+- [list of merged PRs that triggered this sync]
 
 ### Pages updated
 - [list of modified MDX files with brief description of changes]

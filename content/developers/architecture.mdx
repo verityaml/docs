@@ -1,35 +1,45 @@
 ---
 title: Architecture
-description: System overview, monorepo structure, authentication, deployment, and key design decisions
+description: System overview, interactive diagrams, monorepo structure, authentication, and key design decisions
+---
+
+## Current production stack
+
+Verity runs on **Vercel** (compute), **Supabase** (Postgres + Storage), and **Inngest** (4 background jobs), with Voyage AI for embeddings, Claude for document parsing, and Resend for email. Estimated cost: **~$50-60/mo**.
+
+Click any service box for details and cost breakdown.
+
+<CurrentArchDiagram />
+
+### Service breakdown
+
+| Service | Role | Cost |
+|---------|------|------|
+| Vercel | Next.js hosting, SSR, API routes, preview deploys | ~$20/mo |
+| Supabase PostgreSQL | Database with pgvector, RLS, transaction-mode pooler | ~$25/mo |
+| Supabase Storage | Evidence files, exam uploads, reports (50MB max) | Included |
+| Inngest | 4 background functions with step-based execution | Free tier |
+| Voyage AI | voyage-law-2 embeddings (1024-dim), legal domain | Free tier |
+| Anthropic Claude | Document parsing via Vercel AI SDK (~50 parses/mo) | ~$5-15/mo |
+| Resend | Transactional email (password resets, invitations) | Free tier |
+| GitHub Actions | PR checks only (lint, test, build) — no deploy | Free tier |
+
+### Request flows
+
+```
+Page load:    Browser → Vercel → proxy.ts (cookie check) → Server Component → Drizzle → Supabase PG
+Static asset: Browser → Vercel edge (cached)
+API call:     Browser → Vercel → API route → BetterAuth session → Drizzle → Supabase PG
+Background:   API route → inngest.send() → Inngest step functions → Voyage AI / Claude / Supabase PG
+```
+
+For the target AWS architecture, see [AWS migration](/developers/aws-migration).
+
 ---
 
 ## System overview
 
 Verity is a **monorepo with no separate backend server**. The `backend/` package is a shared library (Drizzle schema, config, background jobs, utilities). All HTTP endpoints live as Next.js API routes inside `frontend/src/app/api/`. The two packages share types and config at build time via npm workspaces.
-
-```
-                                  ┌─────────────────────────────────┐
-                                  │          Vercel (US)            │
-                                  │                                 │
-  Browser ───────────────────────►│  Next.js 16 App Router          │
-                                  │  ├── Server Components (pages)  │
-                                  │  ├── API Routes (REST)          │
-                                  │  └── proxy.ts (session gate)    │
-                                  │                                 │
-                                  │  Inngest Functions              │
-                                  │  (parse-examination,            │
-                                  │   auto-match-evidence)          │
-                                  └──────┬──────┬──────┬────────────┘
-                                         │      │      │
-                          ┌──────────────┘      │      └──────────────┐
-                          ▼                     ▼                     ▼
-                   ┌─────────────┐     ┌──────────────┐      ┌──────────────┐
-                   │  Supabase   │     │  Voyage AI   │      │  Claude /    │
-                   │  PostgreSQL │     │  Embeddings  │      │  OpenAI      │
-                   │  + pgvector │     │  (voyage-    │      │  (via Vercel │
-                   │  + Storage  │     │   law-2)     │      │   AI SDK)    │
-                   └─────────────┘     └──────────────┘      └──────────────┘
-```
 
 **Key constraint:** LLM usage is classification and retrieval only. Never generation of compliance content. All AI outputs require human review.
 
