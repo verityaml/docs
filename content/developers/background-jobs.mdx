@@ -1,15 +1,148 @@
 ---
-title: Background jobs
-description: Inngest step functions for examination parsing, evidence auto-matching, and cross-obligation evidence propagation
+title: Evidence pipeline
+description: How evidence flows through Verity — from file upload to scoring criteria — through parsing, matching, propagation, and scoring
 ---
 
-Verity uses [Inngest](https://www.inngest.com/) for background jobs. Four functions handle long-running operations that exceed Vercel's function timeout limits.
+How evidence flows through Verity — from file upload to scoring criteria. Covers the five pipeline stages, matching logic, and the Inngest background jobs that power them.
 
-## parse-examination
+## Core concepts
+
+**Evidence is never evaluated.** Verity does not read, embed, or analyze evidence files. Evidence is opaque — a PDF, CSV, or image that a user attaches. All matching is based on the metadata of the things evidence is attached to, not the evidence content itself.
+
+**Matching is transitive.** If a user attaches evidence to request item X, and item X maps to scoring criterion Y, then that evidence is linked to criterion Y. The system asks "what does this item map to?" and copies the item's attachments along for the ride.
+
+**Three entity types form the pipeline:**
+
+| Entity | What it is | Has embeddings? |
+|--------|-----------|-----------------|
+| **Request item** | A parsed line item from an examination letter (e.g., "Provide CDD policies") | Yes — generated at parse time |
+| **Scoring criterion** | A compliance requirement within a domain (e.g., "CDD program documented") | No |
+| **Evidence attachment** | An uploaded file (PDF, CSV, image) | No — completely opaque |
+
+---
+
+## Pipeline overview
+
+<EvidencePipelineDiagram />
+
+---
+
+## Step 1: Examination parsing
+
+When a user uploads a PDF, CSV, or image to an examination, the `parse-examination` Inngest function extracts structured request items.
+
+<Steps>
+  <Step title="Download file">
+    Download the uploaded file from Supabase Storage and mark the upload as "processing".
+  </Step>
+  <Step title="Parse with Claude">
+    Stream-parse with Claude Sonnet using regulation-specific system prompts from `REGULATION_CONFIG`.
+  </Step>
+  <Step title="Record item count">
+    Save the total count so the UI can poll for progress.
+  </Step>
+  <Step title="Process each item">
+    For each extracted item: generate an embedding via Voyage AI (`voyage-law-2`, 1024 dimensions), search the knowledge base using that same embedding (no extra API call), and insert the request item with `guidance_notes` and `common_deficiencies` from the KB match.
+  </Step>
+  <Step title="Trigger backfill">
+    Send the `obligation/parsed` event to kick off backward backfill (step 4).
+  </Step>
+</Steps>
+
+Each item runs as a separate Inngest step so Vercel's 60-second function timeout is never exceeded. Steps use `onConflictDoNothing` for idempotency — at-least-once semantics means steps can retry after successful writes.
+
+<Note>
+Voyage AI's free tier allows 3 requests per minute. A 22-second sleep is inserted between per-item steps to stay within this limit. Adding a payment method to Voyage AI unlocks standard rate limits and removes the need for the sleep — parsing 28 items would drop from ~10 minutes to under 2 minutes.
+</Note>
+
+The embedding captures the *regulatory meaning* of the item's text (e.g., "Provide your CDD policies and procedures"). This embedding is reused later for cross-obligation similarity matching — it is never regenerated.
+
+---
+
+## Step 2: Evidence attachment
+
+Evidence can be attached in two places:
+
+**To an examination request item** — the user uploads a file responding to a specific parsed item. This creates an `evidence_attachments` row with `source_type: 'examination'` and a foreign key to the request item.
+
+**To a compliance domain** — the user uploads evidence directly to a domain (e.g., the **Training** pillar) without tying it to a specific exam item. This creates an `evidence_attachments` row with `source_type: 'domain_upload'` and a foreign key to the domain.
+
+In both cases, the file is stored in Supabase Storage. The attachment record is metadata only.
+
+---
+
+## Step 3: Auto-match
+
+Auto-matching links request items to scoring criteria using structured rules. It runs within a single obligation.
+
+For each scoring criterion, the matcher checks every request item using a priority cascade:
+
+1. **Definition key match** (most precise) — the criterion's `definitionKey` equals the item's `scoringCriterionKey`. If both have keys but they don't match, the item is skipped entirely with no fallback.
+2. **Regulatory source match** (structural) — both reference the same FFIEC section in the knowledge base.
+3. **Category/domain alignment** (broadest) — the item's assigned category corresponds to the criterion's domain (e.g., item is categorized as "training" and criterion belongs to the **Training** domain).
+
+When a match is found at any priority level, **all evidence attachments on that request item** are linked to the criterion via its `linked_evidence` JSONB array. The criterion's `evidence_status` is set to `sufficient`.
+
+This is the transitive link. The matcher never examines the evidence file — it only asks "does this item structurally match this criterion?" If yes, the item's attachments come along.
+
+### Domain upload path
+
+Simpler: every file uploaded directly to a domain is linked to **all criteria in that domain** as suggestions (`suggested: true`). Status is promoted to `partial` only if the criterion is currently `missing`. The user must manually accept or dismiss.
+
+---
+
+## Step 4: Propagate and backfill
+
+This is where embeddings are used for cross-obligation linking. Two complementary flows handle the two directions:
+
+### Forward propagation
+
+When evidence is uploaded to a request item, the `propagate-evidence` function loads the source item's stored embedding (no new Voyage call), queries all request items on other unarchived examinations using `cosineDistance`, and creates cross-links in the `evidence_links` table for items with similarity at or above 0.82. A maximum of 5 cross-links are created per upload.
+
+### Backward backfill
+
+When a new examination is parsed, the `backfill-evidence-links` function runs the reverse — for each newly parsed item, it finds similar items on existing examinations that already have evidence and links that evidence to the new items.
+
+### Auto-match vs propagate
+
+| | Auto-match (step 3) | Propagate/backfill (step 4) |
+|---|---|---|
+| **What it matches** | Request items to scoring criteria | Request items to request items |
+| **Matching method** | Structured (keys, source IDs, categories) | Semantic (embedding cosine similarity) |
+| **Scope** | Within one obligation's program | Across different examinations |
+| **Evidence flow** | Item attachments to criteria JSONB | Creates `evidence_links` rows |
+| **Threshold** | N/A (exact match or category) | Cosine similarity at or above 0.82 |
+
+---
+
+## Step 5: Score recomputation
+
+After auto-match or evidence status changes, domain scores are recomputed:
+
+```
+domain_score = ((sufficient_count * 100) + (partial_count * 50)) / total_criteria
+```
+
+| Status | Points |
+|--------|--------|
+| `sufficient` | 100 |
+| `partial` | 50 |
+| `stale` | 0 (counts as missing for scoring) |
+| `missing` | 0 |
+
+Recomputation is triggered by the Inngest function after modifying criteria, or inline by API routes that change evidence status.
+
+---
+
+## Background jobs
+
+Verity uses [Inngest](https://www.inngest.com/) for background jobs. Four functions handle the pipeline stages that exceed Vercel's function timeout limits. Functions live in `backend/src/inngest/` and are triggered via events sent from API routes.
+
+### parse-examination
 
 **Event:** `exam/parse.requested`
 
-Parses uploaded examination request letters into structured request items.
+Parses uploaded examination request letters into structured request items with embeddings and KB enrichment. See step 1 above for the full flow.
 
 <Steps>
   <Step title="validate-upload">
@@ -25,56 +158,34 @@ Parses uploaded examination request letters into structured request items.
     Save count for UI progress polling
   </Step>
   <Step title="save-item-{i} (per item)">
-    For each parsed item: generate embedding → search KB for FFIEC match → search for deficiency patterns → insert request item
+    For each parsed item: generate embedding, search KB for FFIEC match, search for deficiency patterns, insert request item
   </Step>
   <Step title="mark-completed">
     Update upload status to "completed"
   </Step>
 </Steps>
 
-Each item is a separate Inngest step so Vercel's 60-second function timeout is never exceeded. Steps use `onConflictDoNothing` for idempotency — at-least-once semantics means steps can retry after successful writes.
-
-### Rate limiting
-
-Voyage AI free tier is 3 requests per minute. `step.sleep("rate-limit-N", "22s")` is inserted between per-item steps.
-
-<Note>
-Adding a payment method to Voyage AI unlocks standard rate limits and the sleep can be removed — parsing 28 items would drop from ~10 minutes to under 2 minutes.
-</Note>
-
-## auto-match-evidence
+### auto-match-evidence
 
 **Event:** `scoring/auto-match.requested`
 
-Matches examination evidence against scoring criteria using two signals:
+Matches examination evidence against scoring criteria using the priority cascade (definition key, regulatory source, category). Accepts an `examinationIds` array for batch matching across multiple examinations.
 
-1. **Regulatory source alignment** — if a request item and a criterion both reference the same FFIEC section or regulatory source
-2. **Domain/category alignment** — if a request item's assigned category corresponds to the current domain
-
-Evidence is automatically linked to matching criteria (opt-out model). Users can remove auto-linked entries that don't belong.
-
-Accepts `examinationIds` array for batch matching across multiple examinations in a single run (backward compatible with single `examinationId`).
-
-## propagate-evidence
+### propagate-evidence
 
 **Event:** `evidence/uploaded`
 
-Forward propagation — when evidence is uploaded to a request item, this function searches for semantically similar request items on other active obligations in the same org using pgvector cosine similarity (0.82 threshold). Creates up to 5 evidence links per upload with `auto_applied` status for human review.
+Forward propagation — finds semantically similar request items on other active examinations using pgvector cosine similarity (0.82 threshold). Creates up to 5 evidence links per upload with `auto_applied` status for human review.
 
-## backfill-evidence-links
+### backfill-evidence-links
 
 **Event:** `obligation/parsed`
 
-Backfill — when a new obligation is parsed, this function searches all existing evidence from other obligations for matches against the new items. Uses the same 0.82 cosine similarity threshold and creates `auto_applied` evidence links.
+Backward backfill — when a new examination is parsed, searches all existing evidence from other examinations for matches against the new items. Uses the same 0.82 cosine similarity threshold.
 
-## Configuration
-
-Inngest functions live in `backend/src/inngest/`. The Inngest dev server runs alongside Next.js during development. Functions are triggered via events sent from API routes.
-
-The webhook endpoint is at `/api/inngest/route.ts` and must be listed in `proxy.ts` `publicPaths` to bypass auth.
+### Triggering from an API route
 
 ```typescript
-// Triggering from an API route
 import { inngest } from "@verity/backend/inngest"
 
 await inngest.send({
@@ -82,3 +193,29 @@ await inngest.send({
   data: { uploadId, examinationId, orgId }
 })
 ```
+
+The webhook endpoint is at `/api/inngest/route.ts` and must be listed in `proxy.ts` `publicPaths` to bypass auth.
+
+---
+
+## Where embeddings live
+
+| Location | Generated when | Used for |
+|----------|---------------|----------|
+| `request_items.embedding` | Exam parsing (Voyage AI, `inputType: "document"`) | KB enrichment during parse, cross-obligation propagation |
+| KB tables (4 tables) `.embedding` | Seed time (`npm run db:seed`) | Semantic search in **Reference Library**, item enrichment during parse |
+
+Evidence files have no embeddings. They are opaque files. All intelligence comes from the metadata on the entities they are attached to.
+
+---
+
+## Configuration
+
+| Setting | Location | Value |
+|---------|----------|-------|
+| Embedding model | `backend/src/lib/embeddings.ts` | `voyage-law-2` (1024 dimensions) |
+| Cross-link similarity threshold | `backend/src/config/evidence-propagation.ts` | 0.82 |
+| Max cross-links per upload | `backend/src/config/evidence-propagation.ts` | 5 |
+| KB search similarity threshold | `backend/src/lib/knowledge-search.ts` | 0.3 (default) |
+| Rate limit delay | Inngest step functions | 22 seconds (Voyage free tier: 3 RPM) |
+| Vector index type | PostgreSQL | HNSW on `vector(1024)` columns |
