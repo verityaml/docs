@@ -8,6 +8,7 @@ import { ResponseField } from './response-field';
 import { CurrentArchDiagram } from './architecture-diagram';
 import { AWSArchDiagram } from './aws-architecture-diagram';
 import { AWSDetailedDiagram } from './aws-detailed-diagram';
+import { EvidencePipelineDiagram } from './evidence-pipeline-diagram';
 
 export const mdxComponents: MDXComponents = {
   Note,
@@ -23,4 +24,5 @@ export const mdxComponents: MDXComponents = {
   CurrentArchDiagram,
   AWSArchDiagram,
   AWSDetailedDiagram,
+  EvidencePipelineDiagram,
 };
