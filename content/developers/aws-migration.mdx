@@ -62,7 +62,7 @@ The target stack replaces Vercel, Supabase, Inngest, and Resend with AWS-native 
 | CloudWatch | $3.00 |
 | CodePipeline + CodeBuild | $1.50 |
 | Bedrock (~50 parses/mo) | $5-15 |
-| Route 53 | $0.50 |
+| Cloudflare DNS (existing) | $0 |
 | **Total** | **~$120-150/mo** |
 
 <Note>
@@ -152,7 +152,7 @@ Self-mutating CodePipeline — updates itself when `infra/` changes. ManualAppro
 
 ### Phase 8: Blue-green cutover
 
-Switch DNS from Vercel CNAME to CloudFront distribution. Verify all flows. Rollback plan: switch DNS back (sessions survive — same domain, BetterAuth cookies are domain-scoped).
+Switch Cloudflare CNAME from Vercel to CloudFront distribution (proxy off, DNS-only mode). Verify all flows. Rollback plan: switch CNAME back to `cname.vercel-dns.com` (~60s). Sessions survive — same domain, BetterAuth cookies are domain-scoped.
 
 ---
 

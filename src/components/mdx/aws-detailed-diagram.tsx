@@ -94,8 +94,8 @@ function Zn({ x, y, w, h, label, color, sub }: {
 function OverviewView() {
   return (
     <svg viewBox="0 0 1080 760" style={{ width: "100%" }}>
-      <Zn x={10} y={5} w={1060} h={68} label="EDGE — CLOUDFRONT + WAF" color={C.blue} />
-      <SB x={30} y={30} w={130} h={34} name="Route 53" detail="app.verityaml.com" color={C.blue} icon="◎" />
+      <Zn x={10} y={5} w={1060} h={68} label="EDGE — CLOUDFLARE DNS + CLOUDFRONT + WAF" color={C.blue} />
+      <SB x={30} y={30} w={130} h={34} name="Cloudflare DNS" detail="app.verityaml.com" color={C.blue} icon="◎" />
       <SB x={175} y={30} w={130} h={34} name="CloudFront" detail="CDN + Shield + cache" color={C.blue} icon="◈" />
       <SB x={320} y={30} w={110} h={34} name="WAF" detail="OWASP Top 10" color={C.red} icon="⊘" />
       <SB x={445} y={30} w={90} h={34} name="ACM" detail="TLS certs" color={C.blue} icon="⊗" />
@@ -158,7 +158,7 @@ function OverviewView() {
       <text x={30} y={682} fontSize={9} fill={C.dim} fontFamily={MONO}>ECS $9.50 • ALB $16.50 • RDS $13 • NAT $34 • CF ~$3 • WAF ~$6 • S3 $0.25 • SQS $0.01 • Lambda $0.10 • Secrets $2 • CW $3 • Bedrock $5-15</text>
 
       <Zn x={10} y={708} w={1060} h={45} label="CDK SINGLE STACK + CDK PIPELINES (SELF-MUTATING)" color={C.pink} />
-      <text x={30} y={735} fontSize={9} fill={C.pink} fontFamily={MONO}>One stack: VPC + RDS + S3 + SQS(×8) + ECR + ALB + CF + WAF + ECS + Lambda(×4) + StepFn + Secrets + ACM + R53</text>
+      <text x={30} y={735} fontSize={9} fill={C.pink} fontFamily={MONO}>One stack: VPC + RDS + S3 + SQS(×8) + ECR + ALB + CF + WAF + ECS + Lambda(×4) + StepFn + Secrets + ACM (DNS on Cloudflare)</text>
       <text x={30} y={748} fontSize={9} fill={C.pink} fontFamily={MONO}>CDK Pipelines: Source → synth → cdk-nag → Staging (auto) → ManualApproval → Production</text>
     </svg>
   );
@@ -168,7 +168,7 @@ function NetworkView() {
   return (
     <svg viewBox="0 0 1080 580" style={{ width: "100%" }}>
       <Zn x={10} y={5} w={1060} h={50} label="EDGE" color={C.blue} />
-      <text x={200} y={35} fontSize={11} fill={C.text} fontFamily={MONO}>Browser → Route 53 → CloudFront (CDN + Shield) → WAF (OWASP) → ALB (origin, HTTPS-only)</text>
+      <text x={200} y={35} fontSize={11} fill={C.text} fontFamily={MONO}>Browser → Cloudflare DNS → CloudFront (CDN + Shield) → WAF (OWASP) → ALB (origin, HTTPS-only)</text>
 
       <Zn x={10} y={62} w={1060} h={510} label="VPC: 10.0.0.0/16 • us-east-1" color={C.green} sub="CloudFront → ALB: custom origin, HTTPS-only. sg-alb inbound: CloudFront managed prefix list only." />
 
@@ -206,7 +206,7 @@ function NetworkView() {
       <text x={560} y={505} fontSize={9} fill={C.text} fontFamily={MONO} fontWeight="600">sg-alb uses CloudFront managed prefix list</text>
       <text x={560} y={520} fontSize={9} fill={C.dim} fontFamily={SANS}>ALB not directly accessible from internet — only CloudFront IPs inbound.</text>
       <text x={560} y={535} fontSize={9} fill={C.dim} fontFamily={SANS}>WAF rules evaluated at edge before traffic reaches VPC.</text>
-      <text x={560} y={550} fontSize={9} fill={C.dim} fontFamily={SANS}>DNS cutover: CNAME → CloudFront distribution, not ALB directly.</text>
+      <text x={560} y={550} fontSize={9} fill={C.dim} fontFamily={SANS}>DNS cutover: Cloudflare CNAME → CloudFront distribution, proxy off. Not ALB directly.</text>
 
       <Cn x1={130} y1={180} x2={170} y2={230} color={C.blue} label="target group" />
       <Cn x1={170} y1={310} x2={170} y2={398} color={C.cyan} label=":5432" />
@@ -376,10 +376,10 @@ function CICDView() {
       <Cn x1={430} y1={262} x2={445} y2={262} color={C.yellow} />
       <Cn x1={625} y1={262} x2={640} y2={262} color={C.orange} />
 
-      <Zn x={10} y={298} w={1060} h={140} label="DNS CUTOVER — BLUE-GREEN VIA CLOUDFRONT" color={C.green} sub="Vercel stays live as rollback. DNS switch points to CloudFront distribution." />
+      <Zn x={10} y={298} w={1060} h={140} label="DNS CUTOVER — BLUE-GREEN VIA CLOUDFRONT (CLOUDFLARE CNAME SWITCH)" color={C.green} sub="Vercel stays live as rollback. Cloudflare CNAME switch points to CloudFront distribution. Proxy off (DNS-only)." />
       <SB x={25} y={332} w={240} h={44} name="1. TTL → 60s" detail="24h before cutover" color={C.orange} icon="◎" />
       <SB x={280} y={332} w={240} h={44} name="2. Final data sync" detail="pg_dump + s3 sync" color={C.cyan} icon="⊞" />
-      <SB x={535} y={332} w={250} h={44} name="3. Switch DNS" detail="CNAME → d1234.cloudfront.net" color={C.green} icon="⇌" />
+      <SB x={535} y={332} w={250} h={44} name="3. Switch Cloudflare" detail="CNAME → d1234.cloudfront.net" color={C.green} icon="⇌" />
       <SB x={800} y={332} w={255} h={44} name="4. Verify full flow" detail="Auth, upload, parse, evidence" color={C.green} icon="◉" />
       <Cn x1={265} y1={354} x2={280} y2={354} color={C.orange} />
       <Cn x1={520} y1={354} x2={535} y2={354} color={C.cyan} />
