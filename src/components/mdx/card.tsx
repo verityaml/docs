@@ -35,7 +35,7 @@ export function Card({ title, icon, href, children }: CardProps) {
         </div>
       )}
       <h3 className="mb-1 font-heading text-base font-semibold text-forest">{title}</h3>
-      {children && <p className="text-sm text-ink/70">{children}</p>}
+      {children && <div className="text-sm text-ink/70">{children}</div>}
     </div>
   );
 

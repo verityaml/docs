@@ -5,13 +5,17 @@ description: Migration plan from Vercel + Supabase + Inngest to AWS-native servi
 
 Verity is migrating from Vercel + Supabase + Inngest to AWS-native services. This page covers the target architecture, the 8-phase migration plan, and cost analysis. The migration is funded by $5k-25k in AWS credits.
 
-For the current production architecture, see [Architecture diagrams](/developers/architecture-diagrams).
+For the current production architecture, see [Architecture](/developers/architecture).
 
 ## Target architecture
 
 The target stack replaces Vercel, Supabase, Inngest, and Resend with AWS-native services. It adds **CloudFront** (CDN), **AWS WAF** (application firewall), and **Shield Standard** (DDoS protection) at the edge. Estimated cost: **~$120-150/mo** (covered by AWS credits).
 
 <AWSArchDiagram />
+
+### Detailed infrastructure view
+
+<AWSDetailedDiagram />
 
 ### Key decisions
 

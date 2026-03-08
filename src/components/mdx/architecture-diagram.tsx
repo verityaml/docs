@@ -22,12 +22,14 @@ const COLORS = {
 function ServiceBox({ x, y, width = 140, height = 80, color, label, sublabel, onClick }: {
   x: number; y: number; width?: number; height?: number; color: string; label: string; sublabel?: string; onClick?: () => void;
 }) {
+  const labelY = sublabel ? y + height * 0.48 : y + height * 0.56;
+  const subY = y + height * 0.72;
   return (
     <g style={{ cursor: onClick ? "pointer" : "default" }} onClick={onClick}>
       <rect x={x} y={y} width={width} height={height} rx={8} fill={COLORS.white} stroke={color} strokeWidth={2} />
       <rect x={x} y={y} width={width} height={4} rx={2} fill={color} />
-      <text x={x + width / 2} y={y + (sublabel ? 38 : 45)} textAnchor="middle" fontSize={12} fontWeight={600} fill={COLORS.ink} fontFamily="Inter, system-ui, sans-serif">{label}</text>
-      {sublabel && <text x={x + width / 2} y={y + 55} textAnchor="middle" fontSize={10} fill="#666" fontFamily="Inter, system-ui, sans-serif">{sublabel}</text>}
+      <text x={x + width / 2} y={labelY} textAnchor="middle" fontSize={12} fontWeight={600} fill={COLORS.ink} fontFamily="Inter, system-ui, sans-serif">{label}</text>
+      {sublabel && <text x={x + width / 2} y={subY} textAnchor="middle" fontSize={10} fill="#666" fontFamily="Inter, system-ui, sans-serif">{sublabel}</text>}
     </g>
   );
 }
@@ -35,9 +37,11 @@ function ServiceBox({ x, y, width = 140, height = 80, color, label, sublabel, on
 function ZoneBox({ x, y, width, height, label, color, borderColor, children }: {
   x: number; y: number; width: number; height: number; label: string; color: string; borderColor: string; children: React.ReactNode;
 }) {
+  const labelWidth = label.length * 10 + 20;
   return (
     <g>
       <rect x={x} y={y} width={width} height={height} rx={10} fill={color} stroke={borderColor} strokeWidth={2} />
+      <rect x={x + 4} y={y + 2} width={labelWidth} height={22} rx={4} fill={color} />
       <text x={x + 14} y={y + 20} fontSize={11} fontWeight={700} fill={borderColor} fontFamily="JetBrains Mono, monospace" letterSpacing={0.5}>{label}</text>
       {children}
     </g>
@@ -131,8 +135,8 @@ export function CurrentArchDiagram() {
 
   return (
     <div className="not-prose my-6">
-      <svg viewBox="0 0 1060 770" style={{ width: "100%", background: COLORS.white, borderRadius: 12, border: `1px solid ${COLORS.stone}` }}>
-        <rect width="1060" height="770" fill={COLORS.white} rx={12} />
+      <svg viewBox="0 0 1060 784" style={{ width: "100%", background: COLORS.white, borderRadius: 12, border: `1px solid ${COLORS.stone}` }}>
+        <rect width="1060" height="784" fill={COLORS.white} rx={12} />
 
         <text x={530} y={30} textAnchor="middle" fontSize={13} fontWeight={600} fill={COLORS.ink} fontFamily="Inter, system-ui, sans-serif">Browser</text>
         <Arrow x1={530} y1={36} x2={530} y2={56} color={COLORS.forest} />
@@ -141,7 +145,7 @@ export function CurrentArchDiagram() {
         <CostBadge x={540} y={60} cost="Free" />
         <Arrow x1={530} y1={138} x2={530} y2={158} label="CNAME" color={COLORS.forest} />
 
-        <ZoneBox x={60} y={160} width={940} height={280} label="VERCEL (US REGION)" color="#FAFAF9" borderColor={COLORS.vercel}>
+        <ZoneBox x={60} y={160} width={940} height={294} label="VERCEL (US REGION)" color="#FAFAF9" borderColor={COLORS.vercel}>
           <ServiceBox x={380} y={192} width={300} height={90} color={COLORS.vercel} label="Next.js 16 App Router" sublabel="SSR + API Routes + proxy.ts" onClick={() => setSelected("vercel")} />
           <CostBadge x={620} y={194} cost="~$20/mo" />
 
@@ -159,52 +163,52 @@ export function CurrentArchDiagram() {
           </g>
           <Arrow x1={240} y1={293} x2={378} y2={260} label="session + org" color={COLORS.forest} />
 
-          <ZoneBox x={80} y={340} width={900} height={86} label="INNGEST (4 BACKGROUND FUNCTIONS)" color="#EEF2FF" borderColor={COLORS.inngest}>
-            <ServiceBox x={100} y={358} width={170} height={55} color={COLORS.inngest} label="parse-examination" sublabel="~7min, rate-limited" onClick={() => setSelected("parse")} />
-            <ServiceBox x={290} y={358} width={170} height={55} color={COLORS.inngest} label="auto-match-evidence" sublabel="key > source > category" onClick={() => setSelected("automatch")} />
-            <ServiceBox x={480} y={358} width={170} height={55} color={COLORS.inngest} label="propagate-evidence" sublabel="forward similarity" onClick={() => setSelected("propagate")} />
-            <ServiceBox x={670} y={358} width={170} height={55} color={COLORS.inngest} label="backfill-links" sublabel="reverse similarity" onClick={() => setSelected("backfill")} />
-            <CostBadge x={860} y={360} cost="Free" />
+          <ZoneBox x={80} y={340} width={900} height={100} label="INNGEST (4 BACKGROUND FUNCTIONS)" color="#EEF2FF" borderColor={COLORS.inngest}>
+            <ServiceBox x={100} y={368} width={170} height={55} color={COLORS.inngest} label="parse-examination" sublabel="~7min, rate-limited" onClick={() => setSelected("parse")} />
+            <ServiceBox x={290} y={368} width={170} height={55} color={COLORS.inngest} label="auto-match-evidence" sublabel="key > source > category" onClick={() => setSelected("automatch")} />
+            <ServiceBox x={480} y={368} width={170} height={55} color={COLORS.inngest} label="propagate-evidence" sublabel="forward similarity" onClick={() => setSelected("propagate")} />
+            <ServiceBox x={670} y={368} width={170} height={55} color={COLORS.inngest} label="backfill-links" sublabel="reverse similarity" onClick={() => setSelected("backfill")} />
+            <CostBadge x={860} y={372} cost="Free" />
           </ZoneBox>
           <Arrow x1={530} y1={282} x2={530} y2={338} label="events" color={COLORS.inngest} />
         </ZoneBox>
 
-        <ZoneBox x={60} y={478} width={400} height={160} label="SUPABASE" color="#F0FDF4" borderColor={COLORS.supabase}>
-          <ServiceBox x={80} y={508} width={170} height={70} color={COLORS.supabase} label="PostgreSQL 16" sublabel="pgvector + RLS + pooler" onClick={() => setSelected("supabase")} />
-          <CostBadge x={190} y={510} cost="~$25/mo" />
-          <ServiceBox x={270} y={508} width={170} height={70} color={COLORS.supabase} label="Storage" sublabel="Evidence files (50MB max)" onClick={() => setSelected("storage")} />
-          <CostBadge x={380} y={510} cost="Incl." />
+        <ZoneBox x={60} y={492} width={400} height={160} label="SUPABASE" color="#F0FDF4" borderColor={COLORS.supabase}>
+          <ServiceBox x={80} y={522} width={170} height={70} color={COLORS.supabase} label="PostgreSQL 16" sublabel="pgvector + RLS + pooler" onClick={() => setSelected("supabase")} />
+          <CostBadge x={190} y={524} cost="~$25/mo" />
+          <ServiceBox x={270} y={522} width={170} height={70} color={COLORS.supabase} label="Storage" sublabel="Evidence files (50MB max)" onClick={() => setSelected("storage")} />
+          <CostBadge x={380} y={524} cost="Incl." />
         </ZoneBox>
-        <Arrow x1={400} y1={440} x2={260} y2={476} label="Drizzle ORM" color={COLORS.supabase} />
+        <Arrow x1={400} y1={454} x2={260} y2={490} label="Drizzle ORM" color={COLORS.supabase} />
 
-        <ServiceBox x={520} y={500} width={160} height={70} color={COLORS.voyageai} label="Voyage AI" sublabel="voyage-law-2 (1024d)" onClick={() => setSelected("voyageai")} />
-        <CostBadge x={620} y={502} cost="Free" />
-        <ServiceBox x={720} y={500} width={160} height={70} color={COLORS.anthropic} label="Claude Sonnet 4.6" sublabel="Vercel AI SDK" onClick={() => setSelected("anthropic")} />
-        <CostBadge x={820} y={502} cost="$5-15" />
-        <ServiceBox x={920} y={500} width={120} height={70} color={COLORS.resend} label="Resend" sublabel="Transactional email" onClick={() => setSelected("resend")} />
-        <CostBadge x={960} y={502} cost="Free" />
+        <ServiceBox x={520} y={514} width={160} height={70} color={COLORS.voyageai} label="Voyage AI" sublabel="voyage-law-2 (1024d)" onClick={() => setSelected("voyageai")} />
+        <CostBadge x={620} y={516} cost="Free" />
+        <ServiceBox x={720} y={514} width={160} height={70} color={COLORS.anthropic} label="Claude Sonnet 4.6" sublabel="Vercel AI SDK" onClick={() => setSelected("anthropic")} />
+        <CostBadge x={820} y={516} cost="$5-15" />
+        <ServiceBox x={900} y={514} width={140} height={70} color={COLORS.resend} label="Resend" sublabel="Transactional email" onClick={() => setSelected("resend")} />
+        <CostBadge x={980} y={516} cost="Free" />
 
-        <Arrow x1={530} y1={440} x2={580} y2={498} label="embed" color={COLORS.voyageai} />
-        <Arrow x1={600} y1={440} x2={780} y2={498} label="parse PDF" color={COLORS.anthropic} />
-        <Arrow x1={680} y1={440} x2={960} y2={498} dashed label="email" color="#999" />
+        <Arrow x1={530} y1={454} x2={580} y2={512} label="embed" color={COLORS.voyageai} />
+        <Arrow x1={600} y1={454} x2={780} y2={512} label="parse PDF" color={COLORS.anthropic} />
+        <Arrow x1={680} y1={454} x2={950} y2={512} dashed label="email" color="#999" />
 
-        <ZoneBox x={60} y={670} width={940} height={86} label="CI/CD" color="#F5F5F4" borderColor="#666">
-          <ServiceBox x={80} y={692} width={200} height={50} color={COLORS.vercel} label="Vercel Auto-Deploy" sublabel="Push main → prod, PR → preview" />
-          <ServiceBox x={320} y={692} width={200} height={50} color="#333" label="GitHub Actions" sublabel="PR: lint + test + build" onClick={() => setSelected("github")} />
-          <CostBadge x={460} y={694} cost="Free" />
+        <ZoneBox x={60} y={684} width={940} height={86} label="CI/CD" color="#F5F5F4" borderColor="#666">
+          <ServiceBox x={80} y={706} width={200} height={50} color={COLORS.vercel} label="Vercel Auto-Deploy" sublabel="main → prod, PR → preview" />
+          <ServiceBox x={320} y={706} width={200} height={50} color="#333" label="GitHub Actions" sublabel="lint + test + build" onClick={() => setSelected("github")} />
+          <CostBadge x={460} y={708} cost="Free" />
         </ZoneBox>
 
-        <rect x={520} y={610} width={460} height={40} rx={6} fill="#FFF8E1" stroke="#FFB74D" strokeWidth={1} />
-        <text x={530} y={628} fontSize={10} fontWeight={600} fill={COLORS.ink} fontFamily="Inter, system-ui, sans-serif">LLM constraint: Classification and retrieval only. Never generation of compliance content.</text>
-        <text x={530} y={643} fontSize={10} fill="#888" fontFamily="Inter, system-ui, sans-serif">All AI outputs require human review before acceptance.</text>
+        <rect x={520} y={624} width={460} height={40} rx={6} fill="#FFF8E1" stroke="#FFB74D" strokeWidth={1} />
+        <text x={530} y={642} fontSize={10} fontWeight={600} fill={COLORS.ink} fontFamily="Inter, system-ui, sans-serif">LLM constraint: Classification and retrieval only. No content generation.</text>
+        <text x={530} y={657} fontSize={10} fill="#888" fontFamily="Inter, system-ui, sans-serif">All AI outputs require human review before acceptance.</text>
 
         <rect x={870} y={160} width={120} height={48} rx={8} fill={COLORS.forest} />
         <text x={930} y={180} textAnchor="middle" fontSize={11} fontWeight={600} fill={COLORS.white} fontFamily="Inter, system-ui, sans-serif">Est. Total</text>
         <text x={930} y={200} textAnchor="middle" fontSize={16} fontWeight={700} fill={COLORS.highlight} fontFamily="JetBrains Mono, monospace">~$50-60/mo</text>
 
-        <ElbowArrow x1={185} y1={413} x2={185} y2={476} label="read/write" color={COLORS.supabase} />
-        <ElbowArrow x1={375} y1={413} x2={600} y2={498} midY={460} label="embed items" color={COLORS.voyageai} />
-        <ElbowArrow x1={185} y1={413} x2={800} y2={498} midY={468} color={COLORS.anthropic} />
+        <ElbowArrow x1={185} y1={427} x2={185} y2={490} label="read/write" color={COLORS.supabase} />
+        <ElbowArrow x1={375} y1={427} x2={600} y2={512} midY={474} label="embed items" color={COLORS.voyageai} />
+        <ElbowArrow x1={185} y1={427} x2={800} y2={512} midY={482} color={COLORS.anthropic} />
       </svg>
 
       {selected && CURRENT_DETAILS[selected] && (
