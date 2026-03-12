@@ -5,7 +5,7 @@ description: Planned features and tracked improvements beyond the current build
 
 ## Spec status
 
-All 20 feature specs are tracked in the main repository's `SPECLOG.md`. Current status as of March 2026:
+All 24 feature specs are tracked in the main repository's `SPECLOG.md`. Current status as of March 2026:
 
 | Spec | Status |
 |------|--------|
@@ -16,7 +16,7 @@ All 20 feature specs are tracked in the main repository's `SPECLOG.md`. Current 
 | Exam Parser | Complete |
 | Examination Workflow Tracker | Complete |
 | Response Archive | Complete |
-| Docker Demo | Complete |
+| ~~Docker Demo~~ | Removed |
 | Bank-Readiness Scoring | Complete |
 | Regulatory Reference Library | Complete |
 | Evidence-Scoring Integration | Complete |
@@ -27,14 +27,20 @@ All 20 feature specs are tracked in the main repository's `SPECLOG.md`. Current 
 | Audit Trail | Complete |
 | Domain Evidence Upload | Complete |
 | Score Snapshots | Complete |
-| Evidence Library | In Progress (tests remaining) |
+| Evidence Library | Complete |
 | Readiness Report Export | Complete |
+| AWS Infrastructure | Complete |
+| AWS Database Migration | Complete |
+| AWS Storage Migration | Complete |
+| Desktop App | In Progress |
 
 ---
 
 ## AWS migration
 
 Migration from Vercel + Supabase + Inngest to AWS-native services (ECS Fargate, RDS, S3, SQS+Lambda, Bedrock, SES). 8-phase plan over ~5 weeks, funded by $5k-25k in AWS credits. Adds CloudFront CDN, AWS WAF, and CDK Pipelines for IaC.
+
+**Phases 1-3** are complete. AWS staging is live at `staging.verityaml.com` with ECS Fargate, RDS PostgreSQL (pgvector), CloudFront, and CDK Pipelines. Phase 3 added a dual-provider storage abstraction — S3 for AWS deployments, Supabase Storage for Vercel — selected by environment variables.
 
 See the full [AWS migration plan](/developers/aws-migration) for architecture diagrams, cost analysis, and phase details.
 
