@@ -34,13 +34,16 @@ const TABS = [
 function SB({ x, y, w = 150, h = 52, name, detail, color, port, icon }: {
   x: number; y: number; w?: number; h?: number; name: string; detail: string; color: string; port?: string; icon?: string;
 }) {
+  const nameY = y + h * 0.42;
+  const detailY = y + h * 0.75;
+  const iconY = nameY;
   return (
     <g>
       <rect x={x} y={y} width={w} height={h} rx={5} fill={C.card} stroke={color + "50"} strokeWidth={1} />
       <rect x={x} y={y} width={4} height={h} rx={2} fill={color} />
-      {icon && <text x={x + 14} y={y + 20} fontSize={12} fill={color}>{icon}</text>}
-      <text x={x + (icon ? 30 : 14)} y={y + 20} fontSize={11} fill={C.text} fontWeight="600" fontFamily={MONO}>{name}</text>
-      <text x={x + (icon ? 30 : 14)} y={y + 36} fontSize={9} fill={C.dim} fontFamily={SANS}>{detail}</text>
+      {icon && <text x={x + 14} y={iconY} fontSize={12} fill={color}>{icon}</text>}
+      <text x={x + (icon ? 30 : 14)} y={nameY} fontSize={11} fill={C.text} fontWeight="600" fontFamily={MONO}>{name}</text>
+      {detail && <text x={x + (icon ? 30 : 14)} y={detailY} fontSize={9} fill={C.dim} fontFamily={SANS}>{detail}</text>}
       {port && (
         <g>
           <rect x={x + w - 38} y={y + 4} width={34} height={16} rx={3} fill={color + "20"} stroke={color + "40"} strokeWidth={0.5} />
@@ -93,312 +96,319 @@ function Zn({ x, y, w, h, label, color, sub }: {
 
 function OverviewView() {
   return (
-    <svg viewBox="0 0 1080 760" style={{ width: "100%" }}>
-      <Zn x={10} y={5} w={1060} h={68} label="EDGE — CLOUDFLARE DNS + CLOUDFRONT + WAF" color={C.blue} />
-      <SB x={30} y={30} w={130} h={34} name="Cloudflare DNS" detail="app.verityaml.com" color={C.blue} icon="◎" />
-      <SB x={175} y={30} w={130} h={34} name="CloudFront" detail="CDN + Shield + cache" color={C.blue} icon="◈" />
-      <SB x={320} y={30} w={110} h={34} name="WAF" detail="OWASP Top 10" color={C.red} icon="⊘" />
-      <SB x={445} y={30} w={90} h={34} name="ACM" detail="TLS certs" color={C.blue} icon="⊗" />
-      <SB x={550} y={30} w={140} h={34} name="ALB" detail="Origin for CF" color={C.blue} icon="⇌" port=":443" />
-      <Cn x1={160} y1={47} x2={175} y2={47} color={C.blue} />
-      <Cn x1={305} y1={47} x2={320} y2={47} color={C.blue} />
-      <Cn x1={430} y1={47} x2={445} y2={47} color={C.blue} />
-      <Cn x1={535} y1={47} x2={550} y2={47} color={C.blue} />
-      <SB x={720} y={30} w={160} h={34} name="CDK Pipelines" detail="Self-mutating deploy" color={C.pink} icon="◇" />
-      <SB x={895} y={30} w={160} h={34} name="GitHub Actions" detail="App CI + OIDC → ECR" color={C.orange} icon="⬡" />
+    <svg viewBox="0 0 800 880" style={{ width: "100%" }}>
+      {/* EDGE */}
+      <Zn x={10} y={5} w={760} h={68} label="EDGE — CLOUDFLARE DNS + CLOUDFRONT + WAF" color={C.blue} />
+      <SB x={25} y={30} w={105} h={34} name="CF DNS" detail="verityaml.com" color={C.blue} icon="◎" />
+      <SB x={140} y={30} w={110} h={34} name="CloudFront" detail="CDN + Shield" color={C.blue} icon="◈" />
+      <SB x={260} y={30} w={78} h={34} name="WAF" detail="OWASP" color={C.red} icon="⊘" />
+      <SB x={348} y={30} w={75} h={34} name="ACM" detail="TLS" color={C.blue} icon="⊗" />
+      <SB x={433} y={30} w={100} h={34} name="ALB" detail="Origin" color={C.blue} icon="⇌" port=":443" />
+      <Cn x1={130} y1={47} x2={140} y2={47} color={C.blue} />
+      <Cn x1={250} y1={47} x2={260} y2={47} color={C.blue} />
+      <Cn x1={338} y1={47} x2={348} y2={47} color={C.blue} />
+      <Cn x1={423} y1={47} x2={433} y2={47} color={C.blue} />
+      <SB x={555} y={30} w={130} h={34} name="CDK Pipes" detail="Self-mutating" color={C.pink} icon="◇" />
 
-      <Zn x={10} y={81} w={1060} h={460} label="VPC — 10.0.0.0/16 • US-EAST-1 • 1 NAT GATEWAY ($34/mo)" color={C.green} sub="CloudFront → ALB (origin, HTTPS-only). No direct internet access to ALB — sg-alb allows CloudFront IPs only." />
+      {/* VPC */}
+      <Zn x={10} y={81} w={760} h={440} label="VPC — 10.0.0.0/16 • US-EAST-1 • NAT GW ($34/mo)" color={C.green} sub="CloudFront → ALB (origin, HTTPS-only). sg-alb allows CloudFront IPs only." />
 
-      <Zn x={25} y={115} w={440} h={210} label="PRIVATE SUBNET — COMPUTE" color={C.green} sub="ECS Fargate: 0.25 vCPU, 512MB ($9.50/mo)" />
-      <SB x={40} y={148} w={200} h={48} name="Next.js 16 (ECS)" detail="App Router + API Routes + SSR" color={C.green} icon="▲" port=":3000" />
-      <SB x={250} y={148} w={200} h={48} name="BetterAuth" detail="Sessions, RBAC, org tenancy" color={C.cyan} icon="⊡" />
-      <SB x={40} y={208} w={200} h={48} name="Lambda: auto-match" detail="Evidence matching (300s)" color={C.purple} icon="⟳" />
-      <SB x={250} y={208} w={200} h={48} name="Lambda: propagate" detail="Cross-obligation (60s)" color={C.purple} icon="⟳" />
-      <SB x={40} y={268} w={200} h={28} name="Lambda: backfill" detail="Evidence links (120s)" color={C.purple} icon="⟳" />
-      <SB x={250} y={268} w={200} h={28} name="Lambda: parse steps" detail="SM activities (30-300s)" color={C.purple} icon="⟳" />
-      <Cn x1={620} y1={65} x2={140} y2={148} color={C.blue} label="target group :3000" />
+      {/* Compute */}
+      <Zn x={25} y={115} w={380} h={210} label="PRIVATE — COMPUTE" color={C.green} sub="ECS Fargate: 0.25 vCPU, 512MB ($9.50/mo)" />
+      <SB x={40} y={148} w={170} h={48} name="Next.js 16 (ECS)" detail="App Router + SSR" color={C.green} icon="▲" port=":3000" />
+      <SB x={220} y={148} w={170} h={48} name="BetterAuth" detail="Sessions, RBAC, org" color={C.cyan} icon="⊡" />
+      <SB x={40} y={208} w={170} h={48} name="Lambda: auto-match" detail="Evidence (300s)" color={C.purple} icon="⟳" />
+      <SB x={220} y={208} w={170} h={48} name="Lambda: propagate" detail="Cross-exam (60s)" color={C.purple} icon="⟳" />
+      <SB x={40} y={268} w={170} h={28} name="Lambda: backfill" detail="Links (120s)" color={C.purple} icon="⟳" />
+      <SB x={220} y={268} w={170} h={28} name="Lambda: parse" detail="SM steps (30-300s)" color={C.purple} icon="⟳" />
+      <Cn x1={483} y1={65} x2={130} y2={148} color={C.blue} label="target group :3000" />
 
-      <Zn x={480} y={115} w={310} h={210} label="SQS + STEP FUNCTIONS" color={C.purple} />
-      <SB x={495} y={138} w={140} h={38} name="SQS: parse" detail="+ DLQ" color={C.purple} icon="◈" />
-      <SB x={645} y={138} w={130} h={38} name="SQS: match" detail="+ DLQ" color={C.purple} icon="◈" />
-      <SB x={495} y={184} w={140} h={38} name="SQS: backfill" detail="+ DLQ" color={C.purple} icon="◈" />
-      <SB x={645} y={184} w={130} h={38} name="SQS: email" detail="+ DLQ" color={C.purple} icon="◈" />
-      <SB x={495} y={233} w={280} h={48} name="Step Functions: ExamParsing" detail="Lookup → Validate → Bedrock → Map → Complete" color={C.purple} icon="⟳" />
-      <Cn x1={450} y1={232} x2={495} y2={157} color={C.purple} label="SendMessage" />
+      {/* SQS */}
+      <Zn x={420} y={115} w={340} h={210} label="SQS + STEP FUNCTIONS" color={C.purple} />
+      <SB x={435} y={138} w={155} h={38} name="SQS: parse" detail="+ DLQ" color={C.purple} icon="◈" />
+      <SB x={600} y={138} w={145} h={38} name="SQS: match" detail="+ DLQ" color={C.purple} icon="◈" />
+      <SB x={435} y={184} w={155} h={38} name="SQS: backfill" detail="+ DLQ" color={C.purple} icon="◈" />
+      <SB x={600} y={184} w={145} h={38} name="SQS: email" detail="+ DLQ" color={C.purple} icon="◈" />
+      <SB x={435} y={233} w={310} h={48} name="Step Fn: ExamParsing" detail="Lookup → Validate → Bedrock → Map" color={C.purple} icon="⟳" />
+      <Cn x1={395} y1={232} x2={435} y2={157} color={C.purple} label="SendMessage" />
 
-      <Zn x={25} y={338} w={765} h={190} label="PRIVATE SUBNET — DATA" color={C.cyan} />
-      <SB x={40} y={363} w={235} h={48} name="RDS PostgreSQL 16" detail="db.t4g.micro, 20GB, pgvector ($13/mo)" color={C.cyan} icon="⊞" port=":5432" />
-      <SB x={285} y={363} w={240} h={48} name="S3: verity-files-prod" detail="SSE-S3, block public, 365d Glacier" color={C.cyan} icon="◫" />
-      <SB x={535} y={363} w={240} h={48} name="ECR" detail="Container images (SHA-tagged)" color={C.orange} icon="◧" />
-      <SB x={40} y={421} w={235} h={48} name="pgvector + HNSW" detail="4 KB tables, 1024-dim embeddings" color={C.cyan} icon="◈" />
-      <SB x={285} y={421} w={240} h={48} name="Drizzle ORM" detail="DATABASE_URL → RDS direct" color={C.cyan} icon="⇌" />
-      <text x={40} y={491} fontSize={8} fill={C.dim} fontFamily={MONO}>No RDS Proxy • No ElastiCache • HNSW indexes transfer from Supabase intact</text>
-      <Cn x1={140} y1={298} x2={157} y2={363} color={C.cyan} label=":5432" />
-      <Cn x1={340} y1={298} x2={405} y2={363} color={C.cyan} label="S3 SDK" />
+      {/* Data */}
+      <Zn x={25} y={338} w={735} h={170} label="PRIVATE — DATA" color={C.cyan} />
+      <SB x={40} y={363} w={225} h={44} name="RDS Postgres 16" detail="t4g.micro, pgvector ($13)" color={C.cyan} icon="⊞" port=":5432" />
+      <SB x={275} y={363} w={230} h={44} name="S3: verity-files" detail="SSE-S3, 365d Glacier" color={C.cyan} icon="◫" />
+      <SB x={515} y={363} w={235} h={44} name="ECR" detail="SHA-tagged images" color={C.orange} icon="◧" />
+      <SB x={40} y={417} w={225} h={44} name="pgvector + HNSW" detail="4 KB tables, 1024-dim" color={C.cyan} icon="◈" />
+      <SB x={275} y={417} w={230} h={44} name="Drizzle ORM" detail="DATABASE_URL → RDS" color={C.cyan} icon="⇌" />
+      <text x={40} y={483} fontSize={8} fill={C.dim} fontFamily={MONO}>No RDS Proxy • No ElastiCache • HNSW indexes from Supabase</text>
+      <Cn x1={130} y1={298} x2={157} y2={363} color={C.cyan} label=":5432" />
+      <Cn x1={310} y1={298} x2={405} y2={363} color={C.cyan} label="S3 SDK" />
 
-      <Zn x={805} y={115} w={255} h={413} label="SECURITY" color={C.red} />
-      <SB x={820} y={138} w={225} h={36} name="Secrets Manager" detail="DB, auth, Voyage key ($2)" color={C.red} icon="⊘" />
-      <SB x={820} y={182} w={225} h={36} name="Security Groups" detail="CF→ALB→ECS→RDS" color={C.green} icon="⊡" />
-      <SB x={820} y={226} w={225} h={36} name="CloudTrail" detail="Free tier, account-level" color={C.orange} icon="◉" />
-      <SB x={820} y={270} w={225} h={36} name="CW Alarms (×6)" detail="CPU, 5xx, DLQ, storage, tasks" color={C.orange} icon="⊛" />
-      <SB x={820} y={314} w={225} h={36} name="IAM Roles" detail="ECS task + Lambda exec" color={C.red} icon="⊛" />
-      <SB x={820} y={358} w={225} h={36} name="NAT Gateway" detail="1 AZ ($34) or inst ($3)" color={C.green} icon="⬡" />
-      <SB x={820} y={402} w={225} h={36} name="Budget Alarm" detail="80% monthly spend" color={C.yellow} icon="⊙" />
-      <SB x={820} y={446} w={225} h={36} name="WAF + CF Logs" detail="→ S3 for SOC 2 CC6.6" color={C.orange} icon="◎" />
-      <SB x={820} y={490} w={225} h={36} name="CDK Pipeline History" detail="→ CC8.1 change mgmt" color={C.pink} icon="◇" />
+      {/* Security — horizontal row */}
+      <Zn x={10} y={530} w={760} h={75} label="SECURITY + MONITORING" color={C.red} />
+      <SB x={25} y={553} w={135} h={38} name="Secrets Mgr" detail="DB, auth ($2)" color={C.red} icon="⊘" />
+      <SB x={170} y={553} w={130} h={38} name="Sec Groups" detail="CF→ALB→ECS→RDS" color={C.green} icon="⊡" />
+      <SB x={310} y={553} w={120} h={38} name="CloudTrail" detail="Free tier" color={C.orange} icon="◉" />
+      <SB x={440} y={553} w={140} h={38} name="CW Alarms ×6" detail="CPU, 5xx, DLQ" color={C.orange} icon="⊛" />
+      <SB x={590} y={553} w={160} h={38} name="WAF+CF Logs" detail="SOC 2 CC6.6" color={C.orange} icon="◎" />
 
-      <Zn x={10} y={551} w={1060} h={97} label="EXTERNAL" color={C.dim} />
-      <SB x={30} y={575} w={210} h={48} name="Bedrock (Claude)" detail="Vision parsing, IAM auth ($5-15)" color={C.amber} icon="◈" />
-      <SB x={255} y={575} w={195} h={48} name="Voyage AI (kept)" detail="voyage-law-2 1024d, via NAT" color={C.dim} icon="⊹" />
-      <SB x={465} y={575} w={140} h={48} name="SES" detail="Replaces Resend" color={C.dim} icon="✉" />
-      <text x={625} y={595} fontSize={9} fill={C.green} fontFamily={MONO}>Bedrock: no API key (IAM). Voyage: legal-domain quality worth keeping.</text>
-      <text x={625} y={610} fontSize={9} fill={C.dim} fontFamily={MONO}>Fallback: Anthropic API key in Secrets Manager during transition.</text>
+      {/* External */}
+      <Zn x={10} y={615} w={760} h={75} label="EXTERNAL" color={C.dim} />
+      <SB x={25} y={638} w={175} h={38} name="Bedrock (Claude)" detail="IAM auth ($5-15)" color={C.amber} icon="◈" />
+      <SB x={210} y={638} w={170} h={38} name="Voyage AI (kept)" detail="voyage-law-2 1024d" color={C.dim} icon="⊹" />
+      <SB x={390} y={638} w={115} h={38} name="SES" detail="Replaces Resend" color={C.dim} icon="✉" />
+      <text x={520} y={653} fontSize={9} fill={C.green} fontFamily={MONO}>Bedrock: IAM, no API key.</text>
+      <text x={520} y={668} fontSize={9} fill={C.dim} fontFamily={MONO}>Voyage: legal-domain quality.</text>
 
-      <Zn x={10} y={656} w={1060} h={45} label="COST: ~$120-150/mo (COVERED BY AWS CREDITS)" color={C.yellow} />
-      <text x={30} y={682} fontSize={9} fill={C.dim} fontFamily={MONO}>ECS $9.50 • ALB $16.50 • RDS $13 • NAT $34 • CF ~$3 • WAF ~$6 • S3 $0.25 • SQS $0.01 • Lambda $0.10 • Secrets $2 • CW $3 • Bedrock $5-15</text>
+      {/* Cost */}
+      <Zn x={10} y={700} w={760} h={40} label="COST: ~$120-150/mo (AWS CREDITS)" color={C.yellow} />
+      <text x={30} y={724} fontSize={7.5} fill={C.dim} fontFamily={MONO}>ECS $9.50 • ALB $16.50 • RDS $13 • NAT $34 • CF ~$3 • WAF ~$6 • S3+SQS+Λ ~$1 • Bedrock $5-15</text>
 
-      <Zn x={10} y={708} w={1060} h={45} label="CDK SINGLE STACK + CDK PIPELINES (SELF-MUTATING)" color={C.pink} />
-      <text x={30} y={735} fontSize={9} fill={C.pink} fontFamily={MONO}>One stack: VPC + RDS + S3 + SQS(×8) + ECR + ALB + CF + WAF + ECS + Lambda(×4) + StepFn + Secrets + ACM (DNS on Cloudflare)</text>
-      <text x={30} y={748} fontSize={9} fill={C.pink} fontFamily={MONO}>CDK Pipelines: Source → synth → cdk-nag → Staging (auto) → ManualApproval → Production</text>
+      {/* CDK */}
+      <Zn x={10} y={748} w={760} h={50} label="CDK SINGLE STACK + CDK PIPELINES" color={C.pink} />
+      <text x={30} y={773} fontSize={7.5} fill={C.pink} fontFamily={MONO}>VPC + RDS + S3 + SQS(×8) + ECR + ALB + CF + WAF + ECS + Lambda(×4) + StepFn + ACM</text>
+      <text x={30} y={786} fontSize={7.5} fill={C.pink} fontFamily={MONO}>CDK Pipelines: Source → synth → cdk-nag → Staging → Approval → Production</text>
+
+      {/* GitHub Actions label */}
+      <text x={30} y={810} fontSize={9} fill={C.orange} fontFamily={MONO}>GitHub Actions: App CI (lint, test, OIDC → ECR, ECS deploy)</text>
     </svg>
   );
 }
 
 function NetworkView() {
   return (
-    <svg viewBox="0 0 1080 580" style={{ width: "100%" }}>
-      <Zn x={10} y={5} w={1060} h={50} label="EDGE" color={C.blue} />
-      <text x={200} y={35} fontSize={11} fill={C.text} fontFamily={MONO}>Browser → Cloudflare DNS → CloudFront (CDN + Shield) → WAF (OWASP) → ALB (origin, HTTPS-only)</text>
+    <svg viewBox="0 0 780 580" style={{ width: "100%" }}>
+      <Zn x={7} y={5} w={765} h={50} label="EDGE" color={C.blue} />
+      <text x={148} y={35} fontSize={10} fill={C.text} fontFamily={MONO}>Browser → CF DNS → CloudFront → WAF → ALB (HTTPS)</text>
 
-      <Zn x={10} y={62} w={1060} h={510} label="VPC: 10.0.0.0/16 • us-east-1" color={C.green} sub="CloudFront → ALB: custom origin, HTTPS-only. sg-alb inbound: CloudFront managed prefix list only." />
+      <Zn x={7} y={62} w={765} h={510} label="VPC: 10.0.0.0/16 • us-east-1" color={C.green} sub="CloudFront → ALB: HTTPS-only origin. sg-alb: CF prefix list only." />
 
-      <Zn x={30} y={95} w={505} h={465} label="AZ-A (us-east-1a)" color={C.blue} />
-      <Zn x={45} y={118} w={475} h={75} label="PUBLIC SUBNET A • 10.0.1.0/24" color={C.blue} />
-      <SB x={60} y={142} w={140} h={38} name="ALB (ENI)" detail="Origin for CloudFront" color={C.blue} icon="⇌" port=":443" />
-      <SB x={215} y={142} w={160} h={38} name="NAT Gateway" detail="Single AZ ($34/mo)" color={C.green} icon="⬡" />
-      <text x={390} y={161} fontSize={8} fill={C.dim} fontFamily={MONO}>No bastion initially</text>
+      <Zn x={22} y={95} w={365} h={465} label="AZ-A (us-east-1a)" color={C.blue} />
+      <Zn x={33} y={118} w={342} h={75} label="PUBLIC SUBNET A • 10.0.1.0/24" color={C.blue} />
+      <SB x={44} y={142} w={100} h={38} name="ALB (ENI)" detail="Origin" color={C.blue} icon="⇌" port=":443" />
+      <SB x={155} y={142} w={115} h={38} name="NAT Gateway" detail="Single AZ ($34)" color={C.green} icon="⬡" />
+      <text x={282} y={161} fontSize={8} fill={C.dim} fontFamily={MONO}>No bastion</text>
 
-      <Zn x={45} y={203} w={475} h={160} label="PRIVATE SUBNET A — COMPUTE • 10.0.10.0/24" color={C.green} />
-      <SB x={60} y={230} w={220} h={46} name="ECS: verity-app" detail="Next.js standalone container" color={C.green} icon="▲" port=":3000" />
-      <SB x={295} y={230} w={210} h={46} name="Lambda (×4)" detail="VPC-attached, sg-lambda" color={C.purple} icon="⟳" />
-      <text x={60} y={298} fontSize={8} fill={C.dim} fontFamily={MONO}>sg-ecs: in :3000 from sg-alb • out: :5432 (RDS), :443 (NAT)</text>
-      <text x={60} y={310} fontSize={8} fill={C.dim} fontFamily={MONO}>sg-lambda: no inbound • out: :5432 (RDS), :443 (NAT)</text>
-      <text x={60} y={325} fontSize={8} fill={C.dim} fontFamily={MONO}>sg-alb: in :443 from CloudFront prefix list ONLY</text>
+      <Zn x={33} y={203} w={342} h={160} label="PRIVATE A — COMPUTE • 10.0.10.0/24" color={C.green} />
+      <SB x={44} y={230} w={158} h={46} name="ECS: verity" detail="Next.js standalone" color={C.green} icon="▲" port=":3000" />
+      <SB x={212} y={230} w={152} h={46} name="Lambda (×4)" detail="VPC, sg-lambda" color={C.purple} icon="⟳" />
+      <text x={44} y={298} fontSize={7.5} fill={C.dim} fontFamily={MONO}>sg-ecs: in :3000 from sg-alb • out: :5432, :443</text>
+      <text x={44} y={310} fontSize={7.5} fill={C.dim} fontFamily={MONO}>sg-lambda: no inbound • out: :5432, :443</text>
+      <text x={44} y={325} fontSize={7.5} fill={C.dim} fontFamily={MONO}>sg-alb: in :443 from CF prefix list ONLY</text>
 
-      <Zn x={45} y={373} w={475} h={100} label="PRIVATE SUBNET A — DATA • 10.0.20.0/24" color={C.cyan} />
-      <SB x={60} y={398} w={220} h={46} name="RDS PostgreSQL 16" detail="db.t4g.micro, 20GB gp3" color={C.cyan} icon="⊞" port=":5432" />
-      <SB x={295} y={398} w={210} h={46} name="pgvector + HNSW" detail="4 KB tables, 1024-dim" color={C.cyan} icon="◈" />
-      <text x={60} y={460} fontSize={8} fill={C.dim} fontFamily={MONO}>sg-rds: in :5432 from sg-ecs + sg-lambda only</text>
+      <Zn x={33} y={373} w={342} h={100} label="PRIVATE A — DATA • 10.0.20.0/24" color={C.cyan} />
+      <SB x={44} y={398} w={158} h={46} name="RDS Postgres 16" detail="t4g.micro, 20GB" color={C.cyan} icon="⊞" port=":5432" />
+      <SB x={212} y={398} w={152} h={46} name="pgvector+HNSW" detail="4 KB, 1024-dim" color={C.cyan} icon="◈" />
+      <text x={44} y={460} fontSize={8} fill={C.dim} fontFamily={MONO}>sg-rds: in :5432 from sg-ecs + sg-lambda</text>
 
-      <Zn x={545} y={95} w={510} h={375} label="AZ-B (us-east-1b)" color={C.blue} />
-      <Zn x={560} y={118} w={480} h={75} label="PUBLIC SUBNET B • 10.0.2.0/24" color={C.blue} />
-      <SB x={575} y={142} w={140} h={38} name="ALB (ENI)" detail="Cross-zone LB" color={C.blue} icon="⇌" />
-      <text x={730} y={161} fontSize={8} fill={C.dim} fontFamily={MONO}>No NAT in AZ-b yet</text>
+      <Zn x={394} y={95} w={367} h={375} label="AZ-B (us-east-1b)" color={C.blue} />
+      <Zn x={405} y={118} w={345} h={75} label="PUBLIC SUBNET B • 10.0.2.0/24" color={C.blue} />
+      <SB x={416} y={142} w={100} h={38} name="ALB (ENI)" detail="Cross-zone LB" color={C.blue} icon="⇌" />
+      <text x={528} y={161} fontSize={8} fill={C.dim} fontFamily={MONO}>No NAT in AZ-b</text>
 
-      <Zn x={560} y={203} w={480} h={110} label="PRIVATE B — COMPUTE • 10.0.11.0/24 (RESERVED)" color={C.green} />
-      <text x={575} y={248} fontSize={10} fill={C.dim} fontFamily={MONO}>{"Empty — scale target when min tasks > 1"}</text>
-      <text x={575} y={265} fontSize={9} fill={C.dim} fontFamily={SANS}>ECS auto-places across AZs when desiredCount increases</text>
+      <Zn x={405} y={203} w={345} h={110} label="PRIVATE B — COMPUTE • 10.0.11.0/24" color={C.green} />
+      <text x={416} y={248} fontSize={9} fill={C.dim} fontFamily={MONO}>{"Empty — scale when tasks > 1"}</text>
+      <text x={416} y={265} fontSize={8} fill={C.dim} fontFamily={SANS}>ECS auto-places across AZs when desiredCount increases</text>
 
-      <Zn x={560} y={323} w={480} h={70} label="PRIVATE B — DATA • 10.0.21.0/24 (RESERVED)" color={C.cyan} />
-      <text x={575} y={365} fontSize={10} fill={C.dim} fontFamily={MONO}>RDS Multi-AZ standby (if enabled, +$13/mo)</text>
+      <Zn x={405} y={323} w={345} h={70} label="PRIVATE B — DATA • 10.0.21.0/24" color={C.cyan} />
+      <text x={416} y={365} fontSize={9} fill={C.dim} fontFamily={MONO}>RDS Multi-AZ standby (if enabled, +$13/mo)</text>
 
-      <Zn x={545} y={480} w={510} h={85} label="KEY: CLOUDFRONT SECURITY BENEFIT" color={C.blue} />
-      <text x={560} y={505} fontSize={9} fill={C.text} fontFamily={MONO} fontWeight="600">sg-alb uses CloudFront managed prefix list</text>
-      <text x={560} y={520} fontSize={9} fill={C.dim} fontFamily={SANS}>ALB not directly accessible from internet — only CloudFront IPs inbound.</text>
-      <text x={560} y={535} fontSize={9} fill={C.dim} fontFamily={SANS}>WAF rules evaluated at edge before traffic reaches VPC.</text>
-      <text x={560} y={550} fontSize={9} fill={C.dim} fontFamily={SANS}>DNS cutover: Cloudflare CNAME → CloudFront distribution, proxy off. Not ALB directly.</text>
+      <Zn x={394} y={480} w={367} h={85} label="KEY: CLOUDFRONT SECURITY" color={C.blue} />
+      <text x={405} y={505} fontSize={8.5} fill={C.text} fontFamily={MONO} fontWeight="600">sg-alb uses CloudFront managed prefix list</text>
+      <text x={405} y={520} fontSize={8} fill={C.dim} fontFamily={SANS}>ALB not directly accessible — only CloudFront IPs inbound.</text>
+      <text x={405} y={535} fontSize={8} fill={C.dim} fontFamily={SANS}>WAF rules evaluated at edge before traffic reaches VPC.</text>
+      <text x={405} y={550} fontSize={8} fill={C.dim} fontFamily={SANS}>DNS cutover: CF CNAME → CloudFront dist, proxy off.</text>
 
-      <Cn x1={130} y1={180} x2={170} y2={230} color={C.blue} label="target group" />
-      <Cn x1={170} y1={310} x2={170} y2={398} color={C.cyan} label=":5432" />
+      <Cn x1={96} y1={180} x2={126} y2={230} color={C.blue} label="target group" />
+      <Cn x1={126} y1={310} x2={126} y2={398} color={C.cyan} label=":5432" />
     </svg>
   );
 }
 
 function DataFlowView() {
   return (
-    <svg viewBox="0 0 1080 620" style={{ width: "100%" }}>
-      <text x={20} y={20} fontSize={12} fill={C.cyan} fontFamily={MONO} fontWeight="700">DATA FLOW: EXAM PARSING (SQS + STEP FUNCTIONS + BEDROCK)</text>
-      <text x={20} y={36} fontSize={9} fill={C.dim} fontFamily={SANS}>Inngest parse-examination → Step Functions SM (or single 15-min Lambda). Bedrock Claude via @ai-sdk/amazon-bedrock.</text>
+    <svg viewBox="0 0 780 630" style={{ width: "100%" }}>
+      <text x={15} y={20} fontSize={11} fill={C.cyan} fontFamily={MONO} fontWeight="700">DATA FLOW: EXAM PARSING (SQS + STEP FN + BEDROCK)</text>
+      <text x={15} y={36} fontSize={8} fill={C.dim} fontFamily={SANS}>Inngest parse-examination → Step Functions SM (or single 15-min Lambda). Bedrock Claude via @ai-sdk/amazon-bedrock.</text>
 
-      <Zn x={10} y={48} w={240} h={90} label="1. UPLOAD" color={C.green} />
-      <SB x={25} y={72} w={210} h={26} name="Browser POST" detail="multipart/form-data" color={C.text} icon="◎" />
-      <SB x={25} y={106} w={210} h={26} name="API: /upload" detail="Validate, store, create record" color={C.green} icon="▲" />
-      <Zn x={260} y={48} w={240} h={90} label="2. STORE" color={C.cyan} />
-      <SB x={275} y={72} w={210} h={26} name="S3: PutObject" detail="PDF → SSE-S3" color={C.cyan} icon="◫" />
-      <SB x={275} y={106} w={210} h={26} name="RDS: INSERT" detail="exam status=parsing" color={C.cyan} icon="⊞" />
-      <Cn x1={235} y1={119} x2={275} y2={85} color={C.cyan} />
-      <Zn x={510} y={48} w={260} h={90} label="3. TRIGGER" color={C.purple} />
-      <SB x={525} y={72} w={230} h={26} name="SQS: SendMessage" detail="or StartExecution(SM)" color={C.purple} icon="◈" />
-      <SB x={525} y={106} w={230} h={26} name="Payload: examId + s3Key" detail="→ Lambda consumer" color={C.purple} icon="⟳" />
-      <Cn x1={485} y1={119} x2={525} y2={85} color={C.purple} />
+      <Zn x={7} y={48} w={178} h={100} label="1. UPLOAD" color={C.green} />
+      <SB x={18} y={72} w={155} h={34} name="Browser POST" detail="multipart" color={C.text} icon="◎" />
+      <SB x={18} y={112} w={155} h={34} name="API: /upload" detail="Validate, store" color={C.green} icon="▲" />
+      <Zn x={192} y={48} w={178} h={100} label="2. STORE" color={C.cyan} />
+      <SB x={203} y={72} w={155} h={34} name="S3: PutObject" detail="PDF → SSE-S3" color={C.cyan} icon="◫" />
+      <SB x={203} y={112} w={155} h={34} name="RDS: INSERT" detail="status=parsing" color={C.cyan} icon="⊞" />
+      <Cn x1={174} y1={129} x2={203} y2={89} color={C.cyan} />
+      <Zn x={377} y={48} w={185} h={100} label="3. TRIGGER" color={C.purple} />
+      <SB x={388} y={72} w={163} h={34} name="SQS: SendMsg" detail="StartExecution" color={C.purple} icon="◈" />
+      <SB x={388} y={112} w={163} h={34} name="examId+s3Key" detail="→ Lambda" color={C.purple} icon="⟳" />
+      <Cn x1={359} y1={129} x2={388} y2={89} color={C.purple} />
 
-      <Zn x={10} y={150} w={1060} h={155} label="4. STEP FUNCTIONS STATE MACHINE" color={C.purple} sub="Or single 15-min Lambda: 20 items × 22s rate limit = ~7 min. Start simple, add SM if needed." />
-      <SB x={25} y={185} w={120} h={40} name="LookupConfig" detail="Lambda 30s" color={C.purple} icon="⬡" />
-      <SB x={158} y={185} w={120} h={40} name="Validate" detail="Lambda 30s" color={C.green} icon="⊡" />
-      <SB x={291} y={185} w={155} h={40} name="DownloadParse" detail="Bedrock Claude 300s" color={C.amber} icon="◈" />
-      <Cn x1={145} y1={205} x2={158} y2={205} color={C.purple} />
-      <Cn x1={278} y1={205} x2={291} y2={205} color={C.purple} />
-      <Zn x={460} y={178} w={260} h={64} label="MAP STATE (per item)" color={C.amber} />
-      <SB x={475} y={202} w={110} h={32} name="Wait(22s)" detail="Voyage rate limit" color={C.orange} icon="⊙" />
-      <SB x={598} y={202} w={110} h={32} name="SaveItem" detail="Embed+KB+INSERT" color={C.cyan} icon="⊞" />
-      <Cn x1={446} y1={205} x2={475} y2={218} color={C.purple} />
-      <Cn x1={585} y1={218} x2={598} y2={218} color={C.cyan} />
-      <SB x={735} y={185} w={110} h={40} name="Complete" detail="Lambda 30s" color={C.green} icon="◉" />
-      <SB x={858} y={185} w={120} h={40} name="Backfill" detail="SQS trigger" color={C.purple} icon="◈" />
-      <Cn x1={720} y1={209} x2={735} y2={205} color={C.purple} />
-      <Cn x1={845} y1={205} x2={858} y2={205} color={C.purple} />
-      <text x={25} y={250} fontSize={8} fill={C.dim} fontFamily={MONO}>{"Bedrock: bedrock(\"us.anthropic.claude-sonnet-4-6-v1\") via @ai-sdk/amazon-bedrock"}</text>
-      <text x={25} y={264} fontSize={8} fill={C.dim} fontFamily={MONO}>Voyage AI: voyage-law-2, 1024-dim embeddings. 22s rate limit. Through NAT Gateway.</text>
-      <text x={25} y={278} fontSize={8} fill={C.dim} fontFamily={MONO}>{"Error: Step Functions Retry(3x) per state. Catch → SQS DLQ → CW Alarm (DLQ depth > 0)."}</text>
+      <Zn x={7} y={160} w={765} h={155} label="4. STEP FUNCTIONS STATE MACHINE" color={C.purple} sub="Or single 15-min Lambda: 20 items × 22s = ~7 min. Start simple, add SM if needed." />
+      <SB x={18} y={195} w={95} h={40} name="Lookup" detail="Λ 30s" color={C.purple} icon="⬡" />
+      <SB x={123} y={195} w={95} h={40} name="Validate" detail="Λ 30s" color={C.green} icon="⊡" />
+      <SB x={228} y={195} w={100} h={40} name="Parse" detail="Bedrock 300s" color={C.amber} icon="◈" />
+      <Cn x1={113} y1={215} x2={123} y2={215} color={C.purple} />
+      <Cn x1={218} y1={215} x2={228} y2={215} color={C.purple} />
+      <Zn x={340} y={188} w={192} h={64} label="MAP STATE (per item)" color={C.amber} />
+      <SB x={351} y={212} w={81} h={32} name="Wait 22s" detail="" color={C.orange} icon="⊙" />
+      <SB x={442} y={212} w={81} h={32} name="Save" detail="" color={C.cyan} icon="⊞" />
+      <Cn x1={328} y1={215} x2={351} y2={228} color={C.purple} />
+      <Cn x1={433} y1={228} x2={442} y2={228} color={C.cyan} />
+      <SB x={544} y={195} w={95} h={40} name="Complete" detail="Λ 30s" color={C.green} icon="◉" />
+      <SB x={649} y={195} w={95} h={40} name="Backfill" detail="SQS msg" color={C.purple} icon="◈" />
+      <Cn x1={533} y1={219} x2={544} y2={215} color={C.purple} />
+      <Cn x1={639} y1={215} x2={649} y2={215} color={C.purple} />
+      <text x={18} y={260} fontSize={7.5} fill={C.dim} fontFamily={MONO}>{"Bedrock: bedrock(\"us.anthropic.claude-sonnet-4-6-v1\") via @ai-sdk/amazon-bedrock"}</text>
+      <text x={18} y={274} fontSize={7.5} fill={C.dim} fontFamily={MONO}>Voyage AI: voyage-law-2, 1024-dim. 22s rate limit. Through NAT Gateway.</text>
+      <text x={18} y={288} fontSize={7.5} fill={C.dim} fontFamily={MONO}>{"Error: Step Fn Retry(3x) per state. Catch → SQS DLQ → CW Alarm."}</text>
 
-      <text x={20} y={325} fontSize={12} fill={C.cyan} fontFamily={MONO} fontWeight="700">3 SQS-DRIVEN LAMBDAS (REPLACING INNGEST)</text>
-      <Zn x={10} y={335} w={350} h={110} label="AUTO-MATCH EVIDENCE" color={C.purple} />
-      <SB x={25} y={359} w={150} h={36} name="SQS: match" detail="+ DLQ" color={C.purple} icon="◈" />
-      <SB x={185} y={359} w={160} h={36} name="Lambda: 300s" detail="Embed+pgvector match" color={C.purple} icon="⟳" />
-      <Cn x1={175} y1={377} x2={185} y2={377} color={C.purple} />
-      <SB x={25} y={404} w={320} h={32} name="Voyage embed → cosine → INSERT" detail="" color={C.cyan} icon="⊞" />
+      <text x={15} y={335} fontSize={11} fill={C.cyan} fontFamily={MONO} fontWeight="700">3 SQS-DRIVEN LAMBDAS (REPLACING INNGEST)</text>
+      <Zn x={7} y={345} w={250} h={110} label="AUTO-MATCH EVIDENCE" color={C.purple} />
+      <SB x={18} y={369} w={108} h={36} name="SQS: match" detail="+ DLQ" color={C.purple} icon="◈" />
+      <SB x={134} y={369} w={112} h={36} name="Lambda 300s" detail="pgvector" color={C.purple} icon="⟳" />
+      <Cn x1={126} y1={387} x2={134} y2={387} color={C.purple} />
+      <SB x={18} y={414} w={228} h={32} name="Voyage embed → cosine → INS" detail="" color={C.cyan} icon="⊞" />
 
-      <Zn x={370} y={335} w={340} h={110} label="PROPAGATE EVIDENCE" color={C.purple} />
-      <SB x={385} y={359} w={150} h={36} name="SQS: propagate" detail="+ DLQ" color={C.purple} icon="◈" />
-      <SB x={545} y={359} w={150} h={36} name="Lambda: 60s" detail="Cross-obligation" color={C.purple} icon="⟳" />
-      <Cn x1={535} y1={377} x2={545} y2={377} color={C.purple} />
-      <SB x={385} y={404} w={310} h={32} name="Find similar → create pending_review" detail="" color={C.cyan} icon="⊞" />
+      <Zn x={265} y={345} w={245} h={110} label="PROPAGATE EVIDENCE" color={C.purple} />
+      <SB x={276} y={369} w={108} h={36} name="SQS: propagate" detail="+ DLQ" color={C.purple} icon="◈" />
+      <SB x={392} y={369} w={108} h={36} name="Lambda 60s" detail="Cross-exam" color={C.purple} icon="⟳" />
+      <Cn x1={384} y1={387} x2={392} y2={387} color={C.purple} />
+      <SB x={276} y={414} w={222} h={32} name="Find similar → pending" detail="" color={C.cyan} icon="⊞" />
 
-      <Zn x={720} y={335} w={350} h={110} label="BACKFILL LINKS" color={C.purple} />
-      <SB x={735} y={359} w={150} h={36} name="SQS: backfill" detail="+ DLQ" color={C.purple} icon="◈" />
-      <SB x={895} y={359} w={160} h={36} name="Lambda: 120s" detail="Link evidence" color={C.purple} icon="⟳" />
-      <Cn x1={885} y1={377} x2={895} y2={377} color={C.purple} />
-      <SB x={735} y={404} w={320} h={32} name="Match existing evidence → auto-link" detail="" color={C.cyan} icon="⊞" />
+      <Zn x={518} y={345} w={252} h={110} label="BACKFILL LINKS" color={C.purple} />
+      <SB x={529} y={369} w={108} h={36} name="SQS: backfill" detail="+ DLQ" color={C.purple} icon="◈" />
+      <SB x={645} y={369} w={115} h={36} name="Lambda 120s" detail="Link evid" color={C.purple} icon="⟳" />
+      <Cn x1={637} y1={387} x2={645} y2={387} color={C.purple} />
+      <SB x={529} y={414} w={230} h={32} name="Match existing → link" detail="" color={C.cyan} icon="⊞" />
 
-      <Zn x={10} y={458} w={1060} h={150} label="MIGRATION MAP: INNGEST → AWS" color={C.orange} />
-      <text x={30} y={485} fontSize={9} fill={C.orange} fontFamily={MONO} fontWeight="600">New file: backend/src/queue/index.ts — SQS send abstraction replacing inngest.send()</text>
-      <text x={30} y={505} fontSize={9} fill={C.dim} fontFamily={MONO}>6 call sites: examinations/upload, evidence/route, items/evidence, auto-match, domains/evidence, parse-examination</text>
-      <text x={30} y={525} fontSize={9} fill={C.orange} fontFamily={MONO} fontWeight="600">Pattern mapping:</text>
-      <text x={30} y={543} fontSize={9} fill={C.dim} fontFamily={MONO}>{"inngest.send(\"exam/parse\")         → sqs.sendMessage(parse-queue, payload)"}</text>
-      <text x={30} y={560} fontSize={9} fill={C.dim} fontFamily={MONO}>{"step.run(\"embed-item\")              → Lambda handler (remove step.run wrapper)"}</text>
-      <text x={30} y={577} fontSize={9} fill={C.dim} fontFamily={MONO}>{"step.sleep(\"rate-limit\", \"22s\")     → Step Functions Wait(22s) OR await sleep(22000)"}</text>
-      <text x={30} y={594} fontSize={9} fill={C.dim} fontFamily={MONO}>{"Inngest dashboard                   → Step Functions console + CloudWatch Logs"}</text>
+      <Zn x={7} y={468} w={765} h={150} label="MIGRATION MAP: INNGEST → AWS" color={C.orange} />
+      <text x={22} y={495} fontSize={8.5} fill={C.orange} fontFamily={MONO} fontWeight="600">New: backend/src/queue/index.ts — SQS send replacing inngest.send()</text>
+      <text x={22} y={513} fontSize={8.5} fill={C.dim} fontFamily={MONO}>6 call sites: exams/upload, evidence/route, items, auto-match, domains, parse</text>
+      <text x={22} y={533} fontSize={8.5} fill={C.orange} fontFamily={MONO} fontWeight="600">Pattern mapping:</text>
+      <text x={22} y={551} fontSize={8.5} fill={C.dim} fontFamily={MONO}>{"inngest.send(\"exam/parse\")     → sqs.sendMessage(queue, payload)"}</text>
+      <text x={22} y={567} fontSize={8.5} fill={C.dim} fontFamily={MONO}>{"step.run(\"embed-item\")          → Lambda handler (no wrapper)"}</text>
+      <text x={22} y={583} fontSize={8.5} fill={C.dim} fontFamily={MONO}>{"step.sleep(\"rate-limit\",\"22s\") → Step Fn Wait(22s) OR sleep(22000)"}</text>
+      <text x={22} y={599} fontSize={8.5} fill={C.dim} fontFamily={MONO}>{"Inngest dashboard               → Step Fn console + CW Logs"}</text>
     </svg>
   );
 }
 
 function QueuesView() {
   return (
-    <svg viewBox="0 0 1080 500" style={{ width: "100%" }}>
-      <text x={20} y={20} fontSize={12} fill={C.purple} fontFamily={MONO} fontWeight="700">SQS QUEUES (4 + 4 DLQs) + STEP FUNCTIONS</text>
-      <Zn x={10} y={38} w={520} h={100} label="PARSE" color={C.purple} />
-      <SB x={25} y={62} w={235} h={42} name="SQS: verity-parse" detail="Standard, 14d retention, SSE" color={C.purple} icon="◈" />
-      <SB x={275} y={62} w={235} h={42} name="DLQ: verity-parse-dlq" detail="MaxReceiveCount: 3" color={C.red} icon="⊘" />
-      <Cn x1={260} y1={83} x2={275} y2={83} color={C.red} label="3 fails" />
-      <SB x={25} y={112} w={490} h={22} name="Consumer: Step Functions SM or single Lambda (15 min)" detail="" color={C.purple} icon="⟳" />
+    <svg viewBox="0 0 780 500" style={{ width: "100%" }}>
+      <text x={15} y={20} fontSize={11} fill={C.purple} fontFamily={MONO} fontWeight="700">SQS QUEUES (4 + 4 DLQs) + STEP FUNCTIONS</text>
+      <Zn x={7} y={38} w={375} h={100} label="PARSE" color={C.purple} />
+      <SB x={18} y={62} w={168} h={42} name="SQS: parse" detail="Standard, 14d" color={C.purple} icon="◈" />
+      <SB x={196} y={62} w={168} h={42} name="DLQ: parse-dlq" detail="MaxReceive: 3" color={C.red} icon="⊘" />
+      <Cn x1={186} y1={83} x2={196} y2={83} color={C.red} label="3 fails" />
+      <SB x={18} y={112} w={345} h={22} name="Consumer: Step Fn SM or Lambda (15 min)" detail="" color={C.purple} icon="⟳" />
 
-      <Zn x={550} y={38} w={520} h={100} label="MATCH" color={C.purple} />
-      <SB x={565} y={62} w={235} h={42} name="SQS: verity-match" detail="Standard, SSE" color={C.purple} icon="◈" />
-      <SB x={815} y={62} w={235} h={42} name="DLQ: verity-match-dlq" detail="MaxReceiveCount: 3" color={C.red} icon="⊘" />
-      <Cn x1={800} y1={83} x2={815} y2={83} color={C.red} label="3 fails" />
-      <SB x={565} y={112} w={490} h={22} name="Consumer: Lambda verity-auto-match (300s)" detail="" color={C.purple} icon="⟳" />
+      <Zn x={392} y={38} w={375} h={100} label="MATCH" color={C.purple} />
+      <SB x={403} y={62} w={168} h={42} name="SQS: match" detail="Standard, SSE" color={C.purple} icon="◈" />
+      <SB x={581} y={62} w={168} h={42} name="DLQ: match-dlq" detail="MaxReceive: 3" color={C.red} icon="⊘" />
+      <Cn x1={571} y1={83} x2={581} y2={83} color={C.red} label="3 fails" />
+      <SB x={403} y={112} w={345} h={22} name="Consumer: Lambda auto-match (300s)" detail="" color={C.purple} icon="⟳" />
 
-      <Zn x={10} y={148} w={520} h={100} label="BACKFILL" color={C.purple} />
-      <SB x={25} y={172} w={235} h={42} name="SQS: verity-backfill" detail="Standard, SSE" color={C.purple} icon="◈" />
-      <SB x={275} y={172} w={235} h={42} name="DLQ: verity-backfill-dlq" detail="MaxReceiveCount: 3" color={C.red} icon="⊘" />
-      <Cn x1={260} y1={193} x2={275} y2={193} color={C.red} label="3 fails" />
-      <SB x={25} y={222} w={490} h={22} name="Consumer: Lambda verity-backfill-links (120s)" detail="" color={C.purple} icon="⟳" />
+      <Zn x={7} y={148} w={375} h={100} label="BACKFILL" color={C.purple} />
+      <SB x={18} y={172} w={168} h={42} name="SQS: backfill" detail="Standard, SSE" color={C.purple} icon="◈" />
+      <SB x={196} y={172} w={168} h={42} name="DLQ: backfill-dlq" detail="MaxReceive: 3" color={C.red} icon="⊘" />
+      <Cn x1={186} y1={193} x2={196} y2={193} color={C.red} label="3 fails" />
+      <SB x={18} y={222} w={345} h={22} name="Consumer: Lambda backfill (120s)" detail="" color={C.purple} icon="⟳" />
 
-      <Zn x={550} y={148} w={520} h={100} label="EMAIL" color={C.orange} />
-      <SB x={565} y={172} w={235} h={42} name="SQS: verity-email" detail="Standard, SSE" color={C.orange} icon="✉" />
-      <SB x={815} y={172} w={235} h={42} name="DLQ: verity-email-dlq" detail="MaxReceiveCount: 3" color={C.red} icon="⊘" />
-      <Cn x1={800} y1={193} x2={815} y2={193} color={C.red} label="3 fails" />
-      <SB x={565} y={222} w={490} h={22} name="Consumer: Lambda verity-send-email (30s, SES)" detail="" color={C.orange} icon="⟳" />
+      <Zn x={392} y={148} w={375} h={100} label="EMAIL" color={C.orange} />
+      <SB x={403} y={172} w={168} h={42} name="SQS: email" detail="Standard, SSE" color={C.orange} icon="✉" />
+      <SB x={581} y={172} w={168} h={42} name="DLQ: email-dlq" detail="MaxReceive: 3" color={C.red} icon="⊘" />
+      <Cn x1={571} y1={193} x2={581} y2={193} color={C.red} label="3 fails" />
+      <SB x={403} y={222} w={345} h={22} name="Consumer: Lambda email (30s, SES)" detail="" color={C.orange} icon="⟳" />
 
-      <Zn x={10} y={260} w={1060} h={100} label="STEP FUNCTIONS: ExamParsing" color={C.purple} sub="Start simple: single Lambda first. Add SM when orchestration visibility matters." />
-      <SB x={25} y={294} w={108} h={32} name="LookupCfg" detail="Λ 30s" color={C.purple} icon="⬡" />
-      <SB x={143} y={294} w={100} h={32} name="Validate" detail="Λ 30s" color={C.green} icon="⊡" />
-      <SB x={253} y={294} w={130} h={32} name="ParseBedrock" detail="Λ 300s" color={C.amber} icon="◈" />
-      <SB x={393} y={294} w={175} h={32} name="Map[Wait(22s)+Save]" detail="Per item" color={C.cyan} icon="⟳" />
-      <SB x={578} y={294} w={105} h={32} name="Complete" detail="Λ 30s" color={C.green} icon="◉" />
-      <SB x={693} y={294} w={110} h={32} name="Backfill" detail="SQS msg" color={C.purple} icon="◈" />
-      <Cn x1={133} y1={310} x2={143} y2={310} color={C.purple} />
-      <Cn x1={243} y1={310} x2={253} y2={310} color={C.purple} />
-      <Cn x1={383} y1={310} x2={393} y2={310} color={C.purple} />
-      <Cn x1={568} y1={310} x2={578} y2={310} color={C.purple} />
-      <Cn x1={683} y1={310} x2={693} y2={310} color={C.purple} />
-      <text x={25} y={349} fontSize={8} fill={C.green} fontFamily={MONO}>{"Decision: \"Start with single Lambda. Add Step Functions only if needed.\""}</text>
+      <Zn x={7} y={260} w={760} h={100} label="STEP FUNCTIONS: ExamParsing" color={C.purple} sub="Start simple: single Lambda first. Add SM when visibility matters." />
+      <SB x={18} y={294} w={95} h={32} name="Lookup" detail="Λ 30s" color={C.purple} icon="⬡" />
+      <SB x={123} y={294} w={95} h={32} name="Validate" detail="Λ 30s" color={C.green} icon="⊡" />
+      <SB x={228} y={294} w={95} h={32} name="Parse" detail="Λ 300s" color={C.amber} icon="◈" />
+      <SB x={333} y={294} w={120} h={32} name="Map+Save" detail="Per item" color={C.cyan} icon="⟳" />
+      <SB x={463} y={294} w={95} h={32} name="Complete" detail="Λ 30s" color={C.green} icon="◉" />
+      <SB x={568} y={294} w={95} h={32} name="Backfill" detail="SQS msg" color={C.purple} icon="◈" />
+      <Cn x1={113} y1={310} x2={123} y2={310} color={C.purple} />
+      <Cn x1={218} y1={310} x2={228} y2={310} color={C.purple} />
+      <Cn x1={323} y1={310} x2={333} y2={310} color={C.purple} />
+      <Cn x1={453} y1={310} x2={463} y2={310} color={C.purple} />
+      <Cn x1={558} y1={310} x2={568} y2={310} color={C.purple} />
+      <text x={18} y={349} fontSize={7.5} fill={C.green} fontFamily={MONO}>{"Decision: \"Start with single Lambda. Add Step Functions only if needed.\""}</text>
 
-      <Zn x={10} y={372} w={1060} h={120} label="CLOUDWATCH ALARMS" color={C.orange} />
-      <SB x={25} y={396} w={245} h={40} name="DLQ Depth > 0" detail="Any DLQ → alert immediately" color={C.red} icon="⊛" />
-      <SB x={285} y={396} w={245} h={40} name="Lambda Errors > 3 (5min)" detail="Per-function error rate" color={C.red} icon="⊛" />
-      <SB x={545} y={396} w={245} h={40} name="ECS CPU > 80% (5min)" detail="+ ECS tasks < 1 (2min)" color={C.orange} icon="⊙" />
-      <SB x={805} y={396} w={250} h={40} name="ALB 5xx > 10 (5min)" detail="+ RDS CPU, storage, budget" color={C.orange} icon="⊙" />
-      <text x={25} y={460} fontSize={8} fill={C.dim} fontFamily={MONO}>All alarms → SNS → email. CW Logs: /ecs/verity-app + /aws/lambda/verity-* (30d retention).</text>
-      <text x={25} y={475} fontSize={8} fill={C.dim} fontFamily={MONO}>CDK Pipelines deploy history = CC8.1 audit trail. WAF + CF logs = CC6.6 evidence.</text>
+      <Zn x={7} y={372} w={760} h={120} label="CLOUDWATCH ALARMS" color={C.orange} />
+      <SB x={18} y={396} w={175} h={40} name="DLQ Depth > 0" detail="Any DLQ → alert" color={C.red} icon="⊛" />
+      <SB x={203} y={396} w={175} h={40} name="Λ Errors > 3/5m" detail="Per-function" color={C.red} icon="⊛" />
+      <SB x={388} y={396} w={175} h={40} name="ECS CPU > 80%" detail="+ tasks < 1" color={C.orange} icon="⊙" />
+      <SB x={573} y={396} w={175} h={40} name="ALB 5xx > 10/5m" detail="+ RDS CPU" color={C.orange} icon="⊙" />
+      <text x={18} y={460} fontSize={7.5} fill={C.dim} fontFamily={MONO}>All alarms → SNS → email. CW Logs: /ecs/verity-app + /aws/lambda/verity-* (30d).</text>
+      <text x={18} y={475} fontSize={7.5} fill={C.dim} fontFamily={MONO}>CDK Pipelines deploy = CC8.1 audit. WAF + CF logs = CC6.6 evidence.</text>
     </svg>
   );
 }
 
 function CICDView() {
   return (
-    <svg viewBox="0 0 1080 600" style={{ width: "100%" }}>
-      <text x={20} y={20} fontSize={12} fill={C.orange} fontFamily={MONO} fontWeight="700">CI/CD: GITHUB ACTIONS (APP) + CDK PIPELINES (INFRA)</text>
-      <text x={20} y={36} fontSize={9} fill={C.dim} fontFamily={SANS}>App CI in GitHub Actions (OIDC → ECR). Infra deploy via CDK Pipelines (self-mutating CodePipeline).</text>
+    <svg viewBox="0 0 780 600" style={{ width: "100%" }}>
+      <text x={15} y={20} fontSize={11} fill={C.orange} fontFamily={MONO} fontWeight="700">CI/CD: GITHUB ACTIONS + CDK PIPELINES</text>
+      <text x={15} y={36} fontSize={8} fill={C.dim} fontFamily={SANS}>App CI in GitHub Actions (OIDC → ECR). Infra deploy via CDK Pipelines (self-mutating).</text>
 
-      <Zn x={10} y={48} w={1060} h={100} label="TRACK 1 — APP CI (GITHUB ACTIONS)" color={C.yellow} sub=".github/workflows/ci.yml — on PR and push to main" />
-      <SB x={25} y={82} w={120} h={44} name="PR / Push" detail="to main" color={C.yellow} icon="⬡" />
-      <SB x={158} y={82} w={115} h={44} name="Lint + tsc" detail="Type check" color={C.yellow} icon="⚙" />
-      <SB x={286} y={82} w={110} h={44} name="Unit Tests" detail="vitest" color={C.yellow} icon="◎" />
-      <SB x={409} y={82} w={110} h={44} name="E2E" detail="Playwright" color={C.yellow} icon="⊹" />
-      <SB x={532} y={82} w={120} h={44} name="OIDC Auth" detail="Assume role" color={C.yellow} icon="⊗" />
-      <SB x={665} y={82} w={125} h={44} name="Docker+ECR" detail="SHA-tagged push" color={C.orange} icon="◧" />
-      <SB x={803} y={82} w={125} h={44} name="ECS Update" detail="Force deploy" color={C.green} icon="▷" />
-      <SB x={941} y={82} w={115} h={44} name="Health ✓" detail="/api/health" color={C.green} icon="◉" />
-      <Cn x1={145} y1={104} x2={158} y2={104} color={C.yellow} />
-      <Cn x1={273} y1={104} x2={286} y2={104} color={C.yellow} />
-      <Cn x1={396} y1={104} x2={409} y2={104} color={C.yellow} />
-      <Cn x1={519} y1={104} x2={532} y2={104} color={C.yellow} />
-      <Cn x1={652} y1={104} x2={665} y2={104} color={C.yellow} />
-      <Cn x1={790} y1={104} x2={803} y2={104} color={C.orange} />
-      <Cn x1={928} y1={104} x2={941} y2={104} color={C.green} />
+      <Zn x={7} y={48} w={765} h={100} label="TRACK 1 — APP CI (GITHUB ACTIONS)" color={C.yellow} sub=".github/workflows/ci.yml — on PR and push to main" />
+      <SB x={18} y={82} w={85} h={44} name="PR/Push" detail="to main" color={C.yellow} icon="⬡" />
+      <SB x={112} y={82} w={82} h={44} name="Lint+tsc" detail="Types" color={C.yellow} icon="⚙" />
+      <SB x={203} y={82} w={78} h={44} name="Test" detail="vitest" color={C.yellow} icon="◎" />
+      <SB x={290} y={82} w={78} h={44} name="E2E" detail="Playwright" color={C.yellow} icon="⊹" />
+      <SB x={377} y={82} w={85} h={44} name="OIDC" detail="Assume role" color={C.yellow} icon="⊗" />
+      <SB x={471} y={82} w={88} h={44} name="Docker+ECR" detail="SHA-tagged" color={C.orange} icon="◧" />
+      <SB x={568} y={82} w={88} h={44} name="ECS Deploy" detail="Force deploy" color={C.green} icon="▷" />
+      <SB x={665} y={82} w={85} h={44} name="Health" detail="/api/health" color={C.green} icon="◉" />
+      <Cn x1={103} y1={104} x2={112} y2={104} color={C.yellow} />
+      <Cn x1={194} y1={104} x2={203} y2={104} color={C.yellow} />
+      <Cn x1={281} y1={104} x2={290} y2={104} color={C.yellow} />
+      <Cn x1={368} y1={104} x2={377} y2={104} color={C.yellow} />
+      <Cn x1={462} y1={104} x2={471} y2={104} color={C.yellow} />
+      <Cn x1={559} y1={104} x2={568} y2={104} color={C.orange} />
+      <Cn x1={656} y1={104} x2={665} y2={104} color={C.green} />
 
-      <Zn x={10} y={158} w={1060} h={130} label="TRACK 2 — INFRA DEPLOY (CDK PIPELINES → CODEPIPELINE)" color={C.pink} sub="Self-mutating: pipeline definition in infra/ auto-updates on next run." />
-      <SB x={25} y={192} w={130} h={44} name="Source" detail="GitHub main" color={C.pink} icon="⬡" />
-      <SB x={168} y={192} w={120} h={44} name="cdk synth" detail="Generate CFN" color={C.pink} icon="◇" />
-      <SB x={301} y={192} w={110} h={44} name="cdk-nag" detail="Policy gate" color={C.red} icon="⊘" />
-      <SB x={424} y={192} w={120} h={44} name="Self-Mutate" detail="Update pipeline" color={C.pink} icon="⟳" />
-      <Cn x1={155} y1={214} x2={168} y2={214} color={C.pink} />
-      <Cn x1={288} y1={214} x2={301} y2={214} color={C.pink} />
-      <Cn x1={411} y1={214} x2={424} y2={214} color={C.red} />
+      <Zn x={7} y={158} w={765} h={130} label="TRACK 2 — INFRA (CDK PIPELINES)" color={C.pink} sub="Self-mutating: pipeline definition in infra/ auto-updates on next run." />
+      <SB x={18} y={192} w={96} h={44} name="Source" detail="GitHub main" color={C.pink} icon="⬡" />
+      <SB x={124} y={192} w={89} h={44} name="cdk synth" detail="Generate CFN" color={C.pink} icon="◇" />
+      <SB x={223} y={192} w={81} h={44} name="cdk-nag" detail="Policy gate" color={C.red} icon="⊘" />
+      <SB x={314} y={192} w={89} h={44} name="Self-Mutate" detail="Update pipe" color={C.pink} icon="⟳" />
+      <Cn x1={114} y1={214} x2={124} y2={214} color={C.pink} />
+      <Cn x1={213} y1={214} x2={223} y2={214} color={C.pink} />
+      <Cn x1={304} y1={214} x2={314} y2={214} color={C.red} />
 
-      <SB x={25} y={250} w={220} h={24} name="Deploy → Staging (auto)" detail="" color={C.green} icon="▷" />
-      <SB x={260} y={250} w={170} h={24} name="Smoke Tests (staging)" detail="" color={C.yellow} icon="◎" />
-      <SB x={445} y={250} w={180} h={24} name="ManualApprovalStep" detail="" color={C.orange} icon="⊙" />
-      <SB x={640} y={250} w={220} h={24} name="Deploy → Production" detail="" color={C.green} icon="◉" />
-      <Cn x1={544} y1={214} x2={135} y2={250} color={C.pink} />
-      <Cn x1={245} y1={262} x2={260} y2={262} color={C.green} />
-      <Cn x1={430} y1={262} x2={445} y2={262} color={C.yellow} />
-      <Cn x1={625} y1={262} x2={640} y2={262} color={C.orange} />
+      <SB x={18} y={250} w={163} h={24} name="Deploy → Staging" detail="" color={C.green} icon="▷" />
+      <SB x={192} y={250} w={126} h={24} name="Smoke Tests" detail="" color={C.yellow} icon="◎" />
+      <SB x={329} y={250} w={133} h={24} name="ManualApproval" detail="" color={C.orange} icon="⊙" />
+      <SB x={474} y={250} w={163} h={24} name="Deploy → Prod" detail="" color={C.green} icon="◉" />
+      <Cn x1={403} y1={214} x2={100} y2={250} color={C.pink} />
+      <Cn x1={181} y1={262} x2={192} y2={262} color={C.green} />
+      <Cn x1={318} y1={262} x2={329} y2={262} color={C.yellow} />
+      <Cn x1={462} y1={262} x2={474} y2={262} color={C.orange} />
 
-      <Zn x={10} y={298} w={1060} h={140} label="DNS CUTOVER — BLUE-GREEN VIA CLOUDFRONT (CLOUDFLARE CNAME SWITCH)" color={C.green} sub="Vercel stays live as rollback. Cloudflare CNAME switch points to CloudFront distribution. Proxy off (DNS-only)." />
-      <SB x={25} y={332} w={240} h={44} name="1. TTL → 60s" detail="24h before cutover" color={C.orange} icon="◎" />
-      <SB x={280} y={332} w={240} h={44} name="2. Final data sync" detail="pg_dump + s3 sync" color={C.cyan} icon="⊞" />
-      <SB x={535} y={332} w={250} h={44} name="3. Switch Cloudflare" detail="CNAME → d1234.cloudfront.net" color={C.green} icon="⇌" />
-      <SB x={800} y={332} w={255} h={44} name="4. Verify full flow" detail="Auth, upload, parse, evidence" color={C.green} icon="◉" />
-      <Cn x1={265} y1={354} x2={280} y2={354} color={C.orange} />
-      <Cn x1={520} y1={354} x2={535} y2={354} color={C.cyan} />
-      <Cn x1={785} y1={354} x2={800} y2={354} color={C.green} />
-      <SB x={25} y={392} w={490} h={36} name="5. Rollback: CNAME → cname.vercel-dns.com (~60s)" detail="Sessions survive — same domain, BetterAuth in migrated RDS" color={C.orange} icon="⟳" />
-      <SB x={535} y={392} w={520} h={36} name="6. After 1 week: cancel Vercel, Supabase, Inngest, Resend" detail="Remove old env vars, delete projects" color={C.red} icon="⊘" />
+      <Zn x={7} y={298} w={765} h={140} label="DNS CUTOVER — BLUE-GREEN VIA CLOUDFRONT" color={C.green} sub="Vercel stays live as rollback. Cloudflare CNAME → CloudFront. Proxy off." />
+      <SB x={18} y={332} w={175} h={44} name="1. TTL → 60s" detail="24h before cutover" color={C.orange} icon="◎" />
+      <SB x={203} y={332} w={175} h={44} name="2. Data sync" detail="pg_dump + s3 sync" color={C.cyan} icon="⊞" />
+      <SB x={388} y={332} w={178} h={44} name="3. Switch CF" detail="CNAME → d1234.cf" color={C.green} icon="⇌" />
+      <SB x={576} y={332} w={175} h={44} name="4. Verify" detail="Auth, upload, parse" color={C.green} icon="◉" />
+      <Cn x1={193} y1={354} x2={203} y2={354} color={C.orange} />
+      <Cn x1={378} y1={354} x2={388} y2={354} color={C.cyan} />
+      <Cn x1={566} y1={354} x2={576} y2={354} color={C.green} />
+      <SB x={18} y={392} w={355} h={36} name="5. Rollback: CNAME → vercel (~60s)" detail="Sessions survive — same domain" color={C.orange} icon="⟳" />
+      <SB x={388} y={392} w={363} h={36} name="6. After 1 week: cancel old services" detail="Remove env vars, delete projects" color={C.red} icon="⊘" />
 
-      <Zn x={10} y={448} w={1060} h={145} label="SOC 2 EVIDENCE GENERATED BY CI/CD" color={C.orange} />
-      <SB x={25} y={475} w={195} h={40} name="Git commit log" detail="Who changed what" color={C.yellow} icon="⬡" />
-      <SB x={235} y={475} w={195} h={40} name="PR review record" detail="Approver + comments" color={C.yellow} icon="⊘" />
-      <SB x={445} y={475} w={195} h={40} name="CFN change set" detail="cdk diff output" color={C.pink} icon="△" />
-      <SB x={655} y={475} w={195} h={40} name="Pipeline execution" detail="Stage timestamps" color={C.orange} icon="◉" />
-      <SB x={865} y={475} w={190} h={40} name="ManualApproval log" detail="Who approved prod" color={C.orange} icon="⊙" />
-      <SB x={25} y={525} w={195} h={40} name="cdk-nag report" detail="Compliance per deploy" color={C.red} icon="⊡" />
-      <SB x={235} y={525} w={195} h={40} name="ECR image digest" detail="Immutable artifact" color={C.orange} icon="◧" />
-      <SB x={445} y={525} w={195} h={40} name="WAF + CF logs" detail="CC6.6 evidence" color={C.blue} icon="◈" />
-      <SB x={655} y={525} w={195} h={40} name="CloudTrail" detail="API-level audit" color={C.orange} icon="◎" />
-      <SB x={865} y={525} w={190} h={40} name="Test reports" detail="Unit + E2E" color={C.yellow} icon="◎" />
-      <text x={25} y={585} fontSize={8} fill={C.dim} fontFamily={MONO}>CDK Pipelines + ManualApproval + CFN events = CC8.1. WAF/CF logs = CC6.6. CloudTrail = CC6.1/CC7.2.</text>
+      <Zn x={7} y={448} w={765} h={145} label="SOC 2 EVIDENCE GENERATED BY CI/CD" color={C.orange} />
+      <SB x={18} y={475} w={140} h={40} name="Git commits" detail="Who changed what" color={C.yellow} icon="⬡" />
+      <SB x={168} y={475} w={140} h={40} name="PR reviews" detail="Approver + notes" color={C.yellow} icon="⊘" />
+      <SB x={318} y={475} w={140} h={40} name="CFN changeset" detail="cdk diff output" color={C.pink} icon="△" />
+      <SB x={468} y={475} w={140} h={40} name="Pipeline exec" detail="Timestamps" color={C.orange} icon="◉" />
+      <SB x={618} y={475} w={135} h={40} name="Approval log" detail="Who approved" color={C.orange} icon="⊙" />
+      <SB x={18} y={525} w={140} h={40} name="cdk-nag report" detail="Compliance" color={C.red} icon="⊡" />
+      <SB x={168} y={525} w={140} h={40} name="ECR digest" detail="Immutable image" color={C.orange} icon="◧" />
+      <SB x={318} y={525} w={140} h={40} name="WAF+CF logs" detail="CC6.6 evidence" color={C.blue} icon="◈" />
+      <SB x={468} y={525} w={140} h={40} name="CloudTrail" detail="API audit" color={C.orange} icon="◎" />
+      <SB x={618} y={525} w={135} h={40} name="Test reports" detail="Unit + E2E" color={C.yellow} icon="◎" />
+      <text x={18} y={585} fontSize={7.5} fill={C.dim} fontFamily={MONO}>CDK Pipelines + ManualApproval + CFN = CC8.1. WAF/CF logs = CC6.6. CloudTrail = CC6.1/CC7.2.</text>
     </svg>
   );
 }

@@ -39,7 +39,7 @@ For the target AWS architecture, see [AWS migration](/developers/aws-migration).
 
 ## System overview
 
-Verity is a **monorepo with no separate backend server**. The `backend/` package is a shared library (Drizzle schema, config, background jobs, utilities). All HTTP endpoints live as Next.js API routes inside `frontend/src/app/api/`. The two packages share types and config at build time via npm workspaces.
+Verity is a **monorepo with three packages**. The `backend/` package is a shared library (Drizzle schema, config, background jobs, utilities). The `desktop/` package is a Tauri v2 macOS app. All HTTP endpoints live as Next.js API routes inside `frontend/src/app/api/`. The packages share types and config at build time via npm workspaces.
 
 **Key constraint:** LLM usage is classification and retrieval only. Never generation of compliance content. All AI outputs require human review.
 
@@ -61,7 +61,15 @@ verity/
 │       ├── inngest/   # Background job definitions
 │       └── lib/       # Embeddings, knowledge search, program provisioning
 │
-└── docker/            # Self-contained demo (Postgres + pgvector + app)
+├── desktop/           # Tauri v2 desktop app (macOS)
+│   ├── src-tauri/     # Rust source, Tauri config, capabilities
+│   └── package.json
+│
+├── infra/             # AWS CDK infrastructure
+│   ├── lib/           # Stack definitions (pipeline, app resources, config)
+│   └── cdk.json
+│
+└── docker/            # Production Docker build
 ```
 
 Frontend imports backend via workspace aliases:

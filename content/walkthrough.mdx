@@ -5,16 +5,9 @@ description: A guided tour of Verity's compliance platform — follow along in t
 
 ## Before you start
 
-You'll need a running instance of Verity with at least one compliance program seeded. The quickest way:
+You'll need a running instance of Verity with at least one compliance program seeded. Sign up at `app.verityaml.com` — the system will guide you through setup. Two compliance programs are provisioned automatically when you create your organization.
 
-```bash
-cd docker
-docker compose --profile seeded up --build
-```
-
-Log in with `demo@verity.local` / `demo1234`. The seeded profile includes a BSA/AML compliance program, a third-party oversight program, a sample examination, and a populated regulatory knowledge base.
-
-If you're running against the cloud instance at `app.verityaml.com`, sign up and the system will guide you through setup.
+For local development, follow the [Quickstart](/developers/quickstart) to get a dev server running.
 
 ---
 
@@ -302,6 +295,24 @@ Confirmed links turn to a stone-colored card with a "Linked from EX-2026-001" ba
 <Tip>
 Evidence linking works across regulation types. Evidence from a BSA/AML examination can link to a third-party oversight consent order if the underlying request items are semantically similar.
 </Tip>
+
+---
+
+## Desktop app (macOS)
+
+**Open the Verity desktop app from your Applications folder.**
+
+The desktop app is a native macOS application built with Tauri v2 that wraps the full Verity web interface. It launches in a system-native window — no browser chrome, no tabs, just the compliance dashboard.
+
+**First launch** shows an onboarding screen. Click "Sign in with your browser" — your default browser opens to the Verity login page. After authenticating, the browser redirects back to the desktop app via a `verity://` deep link, and you're logged in. Access tokens refresh automatically in the background.
+
+Everything you can do in the browser — parsing examinations, uploading evidence, viewing readiness scores — works identically in the desktop window.
+
+The desktop app caches your dashboard data locally, so you can view readiness scores and program status even when offline. The **system tray** icon provides quick access to the app without keeping the main window open.
+
+<Note>
+The desktop app is currently macOS-only. Auto-updates and CI/CD distribution are planned for future phases.
+</Note>
 
 ---
 

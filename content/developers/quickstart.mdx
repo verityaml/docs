@@ -9,10 +9,6 @@ description: Get a local Verity development environment running in minutes
 - npm 10+
 - A [Supabase](https://supabase.com/) project (US region, pgvector extension enabled)
 
-<Note>
-If you just want to try Verity without cloud dependencies, skip to the [Docker demo](/developers/docker) — no Supabase or API keys needed.
-</Note>
-
 ## Setup
 
 <Steps>
@@ -92,10 +88,18 @@ verity/
 │       ├── inngest/   # Background job definitions
 │       └── lib/       # Embeddings, knowledge search
 │
-└── docker/            # Self-contained demo environment
+├── desktop/           # Tauri v2 desktop app (macOS)
+│   ├── src-tauri/     # Rust source, Tauri config
+│   └── package.json
+│
+├── infra/             # AWS CDK infrastructure
+│   ├── lib/           # Stack definitions
+│   └── cdk.json
+│
+└── docker/            # Production Docker build
 ```
 
-The `frontend/` package is the Next.js application with all API routes. The `backend/` package is a shared library — not a server. Both packages share types and config at build time via npm workspaces.
+The `frontend/` package is the Next.js application with all API routes. The `backend/` package is a shared library — not a server. The `desktop/` package is a Tauri v2 macOS app that wraps the web UI. All packages share types and config at build time via npm workspaces.
 
 ## Commands
 
@@ -110,3 +114,7 @@ The `frontend/` package is the Next.js application with all API routes. The `bac
 | `npm run db:seed` | Seed the regulatory knowledge base |
 | `npm run test:e2e` | Run Playwright E2E tests (headless) |
 | `npm run test:e2e:ui` | Run E2E tests with Playwright UI |
+| `cd desktop && npx tauri dev` | Run desktop app in dev mode |
+| `cd desktop && npx tauri build` | Build unsigned .dmg |
+| `cd infra && npx cdk synth` | Synthesize CloudFormation templates |
+| `cd infra && npx cdk deploy` | Deploy infrastructure to AWS |

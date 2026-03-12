@@ -48,7 +48,6 @@ export const navigation: NavTab[] = [
         group: 'Getting started',
         pages: [
           { title: 'Quickstart', href: '/developers/quickstart' },
-          { title: 'Docker demo', href: '/developers/docker' },
         ],
       },
       {
