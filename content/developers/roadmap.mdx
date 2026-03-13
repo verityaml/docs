@@ -79,6 +79,13 @@ Structured quarterly progress reports for regulators. Planned for consent order 
 
 ## Infrastructure
 
+### AWS CI/CD integration tests
+
+- Post-deploy smoke test endpoint (`/api/health/smoke`) — verifies SQS, Lambda, and RDS pipeline after each staging deploy
+- Migrate Playwright E2E suite to run against `staging.verityaml.com` via CodePipeline post-deploy stage
+- E2E must pass on staging before manual approval gates production deploy
+- Replaces Vercel-hosted E2E tests after Vercel decommission
+
 ### Performance
 
 - Database indexes on `session(user_id)`, `invitation(organization_id, email)`, `audit_log(org_id, created_at)`
