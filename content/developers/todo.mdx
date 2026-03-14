@@ -42,3 +42,27 @@ Self-service program creation for any regulation type in `REGULATION_CONFIG`. In
 - Extract shared upload component from `EvidenceUploadSection` and `DomainUploadZone`
 
 See the [Roadmap](/developers/roadmap) for planned post-partnership features (consent order lifecycle, bulk assignment, schema renames), infrastructure improvements, and new platform work (desktop app, AWS migration).
+
+---
+
+## Desktop app — remaining phases
+
+Phases 1-7, 10-11 complete. Remaining work blocked on Apple Developer enrollment ($99/year).
+
+### Phase 0: Apple Developer enrollment
+
+- Enroll in Apple Developer Program (individual, $99/year)
+- Begin D-U-N-S registration for organization enrollment (parallel track)
+- Generate Developer ID Application certificate and signing keys
+
+### Phase 8: auto-updates (blocked on Phase 0)
+
+- Configure Tauri updater endpoint and public key
+- Host update manifest on S3 or static file
+- Check for updates on launch + "Update now" button with progress
+
+### Phase 9: CI/CD pipeline (blocked on Phase 0)
+
+- GitHub Actions workflow triggered on `desktop/**` changes and `desktop-v*` tags
+- Build on `macos-latest`, code sign, notarize, produce universal .dmg
+- Upload to GitHub Releases, generate update manifest with signature
