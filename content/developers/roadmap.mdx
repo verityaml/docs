@@ -5,7 +5,7 @@ description: Planned features and tracked improvements beyond the current build
 
 ## Spec status
 
-All 24 feature specs are tracked in the main repository's `SPECLOG.md`. Current status as of March 2026:
+All 26 feature specs are tracked in the main repository's `SPECLOG.md`. Current status as of March 2026:
 
 | Spec | Status |
 |------|--------|
@@ -32,6 +32,8 @@ All 24 feature specs are tracked in the main repository's `SPECLOG.md`. Current 
 | AWS Infrastructure | Complete |
 | AWS Database Migration | Complete |
 | AWS Storage Migration | Complete |
+| AWS Background Jobs | Complete |
+| AWS E2E Pipeline | In Progress |
 | Desktop App | In Progress |
 
 ---
@@ -40,7 +42,7 @@ All 24 feature specs are tracked in the main repository's `SPECLOG.md`. Current 
 
 Migration from Vercel + Supabase + Inngest to AWS-native services (ECS Fargate, RDS, S3, SQS+Lambda, Bedrock, SES). 8-phase plan over ~5 weeks, funded by $5k-25k in AWS credits. Adds CloudFront CDN, AWS WAF, and CDK Pipelines for IaC.
 
-**Phases 1-3** are complete. AWS staging is live at `staging.verityaml.com` with ECS Fargate, RDS PostgreSQL (pgvector), CloudFront, and CDK Pipelines. Phase 3 added a dual-provider storage abstraction — S3 for AWS deployments, Supabase Storage for Vercel — selected by environment variables.
+**Phases 1-4** are complete. AWS staging is live at `staging.verityaml.com` with ECS Fargate, RDS PostgreSQL (pgvector), CloudFront, and CDK Pipelines. Phase 4 added dual-dispatch queue abstraction (SQS on AWS, Inngest on Vercel), Lambda handlers with Bedrock for document parsing, and shared job helpers extracted from Inngest functions. **Phase 4.5** (E2E deployment gate) is in progress — Playwright tests run against staging after deploy, blocking production promotion.
 
 See the full [AWS migration plan](/developers/aws-migration) for architecture diagrams, cost analysis, and phase details.
 
