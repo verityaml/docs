@@ -66,3 +66,16 @@ Phases 1-7, 10-11 complete. Remaining work blocked on Apple Developer enrollment
 - GitHub Actions workflow triggered on `desktop/**` changes and `desktop-v*` tags
 - Build on `macos-latest`, code sign, notarize, produce universal .dmg
 - Upload to GitHub Releases, generate update manifest with signature
+
+### Phase 10: manual testing (blocked on signed build)
+
+- First launch, browser auth, subsequent launch with auto-refresh
+- Sign out clears keychain, shows onboarding
+- Offline mode with cached dashboard and amber banner
+- Clean install from .dmg on fresh Mac, Gatekeeper approval
+- Bundle size under 20MB
+
+### Desktop — low priority
+
+- Web UI "Sign Out" button in desktop mode should navigate to onboarding instead of login page
+- BetterAuth 401 console errors in desktop mode (cosmetic — no BetterAuth session exists)

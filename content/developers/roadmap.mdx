@@ -5,7 +5,7 @@ description: Planned features and tracked improvements beyond the current build
 
 ## Spec status
 
-All 26 feature specs are tracked in the main repository's `SPECLOG.md`. Current status as of March 2026:
+All 28 feature specs are tracked in the main repository's `SPECLOG.md`. Current status as of March 2026:
 
 | Spec | Status |
 |------|--------|
@@ -33,7 +33,9 @@ All 26 feature specs are tracked in the main repository's `SPECLOG.md`. Current 
 | AWS Database Migration | Complete |
 | AWS Storage Migration | Complete |
 | AWS Background Jobs | Complete |
-| AWS E2E Pipeline | In Progress |
+| AWS E2E Pipeline | Complete |
+| AWS CI/CD Consolidation | Complete |
+| AWS Provider Swap + Cutover | Not Started |
 | Desktop App | In Progress |
 
 ---
@@ -42,7 +44,7 @@ All 26 feature specs are tracked in the main repository's `SPECLOG.md`. Current 
 
 Migration from Vercel + Supabase + Inngest to AWS-native services (ECS Fargate, RDS, S3, SQS+Lambda, Bedrock, SES). 8-phase plan over ~5 weeks, funded by $5k-25k in AWS credits. Adds CloudFront CDN, AWS WAF, and CDK Pipelines for IaC.
 
-**Phases 1-4** are complete. AWS staging is live at `staging.verityaml.com` with ECS Fargate, RDS PostgreSQL (pgvector), CloudFront, and CDK Pipelines. Phase 4 added dual-dispatch queue abstraction (SQS on AWS, Inngest on Vercel), Lambda handlers with Bedrock for document parsing, and shared job helpers extracted from Inngest functions. **Phase 4.5** (E2E deployment gate) is in progress — Playwright tests run against staging after deploy, blocking production promotion.
+**Phases 1-4.75** are complete. AWS staging is live at `staging.verityaml.com` with ECS Fargate, RDS PostgreSQL (pgvector), CloudFront, and GitHub Actions CI/CD. Phase 4.5 added E2E tests as a deployment gate — Playwright runs against staging after deploy, blocking production promotion. Phase 4.75 consolidated deployment from dual CodePipeline + GitHub Actions to GitHub Actions only. **Phase 5** (provider swap + cutover) is next — SES email, remove Supabase/Inngest/Resend, DNS cutover to production.
 
 See the full [AWS migration plan](/developers/aws-migration) for architecture diagrams, cost analysis, and phase details.
 
