@@ -5,35 +5,34 @@ description: System overview, interactive diagrams, monorepo structure, authenti
 
 ## Current production stack
 
-Verity runs on **Vercel** (compute), **Supabase** (Postgres + Storage), and **Inngest** (4 background jobs), with Voyage AI for embeddings, Claude for document parsing, and Resend for email. Estimated cost: **~$50-60/mo**.
+Verity runs on **AWS** — ECS Fargate (compute), RDS PostgreSQL (database), S3 (file storage), SQS + Lambda (background jobs), with Voyage AI for embeddings, Anthropic Claude for document parsing, and SES for email. Deployed via GitHub Actions with a staging-first pipeline gated by E2E tests.
 
-Click any service box for details and cost breakdown.
+Click any service box for details. See the [AWS migration plan](/developers/aws-migration) for detailed architecture diagrams.
 
-<CurrentArchDiagram />
+<AWSArchDiagram />
 
 ### Service breakdown
 
-| Service | Role | Cost |
-|---------|------|------|
-| Vercel | Next.js hosting, SSR, API routes, preview deploys | ~$20/mo |
-| Supabase PostgreSQL | Database with pgvector, RLS, transaction-mode pooler | ~$25/mo |
-| Supabase Storage | Evidence files, exam uploads, reports (50MB max) | Included |
-| Inngest | 4 background functions with step-based execution | Free tier |
-| Voyage AI | voyage-law-2 embeddings (1024-dim), legal domain | Free tier |
-| Anthropic Claude | Document parsing via Vercel AI SDK (~50 parses/mo) | ~$5-15/mo |
-| Resend | Transactional email (password resets, invitations) | Free tier |
-| GitHub Actions | PR checks only (lint, test, build) — no deploy | Free tier |
+| Service | Role |
+|---------|------|
+| ECS Fargate | Next.js app (standalone Docker), auto-scaling |
+| RDS PostgreSQL | Database with pgvector, managed backups |
+| S3 | Evidence files, exam uploads, reports (50MB max) |
+| SQS + Lambda | Background jobs (parse, auto-match, evidence propagation, backfill) |
+| CloudFront | CDN with WAF |
+| Voyage AI | voyage-law-2 embeddings (1024-dim), legal domain |
+| Anthropic Claude | Document parsing via Anthropic API |
+| SES | Transactional email (password resets, invitations) — IAM-based |
+| GitHub Actions | CI/CD pipeline: staging deploy, E2E gate, production deploy |
 
 ### Request flows
 
 ```
-Page load:    Browser → Vercel → proxy.ts (cookie check) → Server Component → Drizzle → Supabase PG
-Static asset: Browser → Vercel edge (cached)
-API call:     Browser → Vercel → API route → BetterAuth session → Drizzle → Supabase PG
-Background:   API route → inngest.send() → Inngest step functions → Voyage AI / Claude / Supabase PG
+Page load:    Browser → CloudFront → ALB → ECS → proxy.ts (cookie check) → Server Component → Drizzle → RDS
+Static asset: Browser → CloudFront (cached)
+API call:     Browser → CloudFront → ALB → ECS → API route → BetterAuth session → Drizzle → RDS
+Background:   API route → SQS → Lambda → Voyage AI / Anthropic / RDS / S3
 ```
-
-For the target AWS architecture, see [AWS migration](/developers/aws-migration).
 
 ---
 
@@ -51,15 +50,16 @@ verity/
 │   └── src/
 │       ├── app/       # App Router (pages + API routes)
 │       ├── components/
-│       ├── lib/       # Auth, supabase client, utilities
+│       ├── lib/       # Auth, storage, utilities
 │       └── proxy.ts   # Session gate (replaces middleware.ts in Next.js 16)
 │
 ├── backend/           # Shared library — schema, config, jobs, utilities
 │   └── src/
 │       ├── config/    # REGULATION_CONFIG — single source of truth
 │       ├── db/        # Drizzle schema, migrations, seed scripts
-│       ├── inngest/   # Background job definitions
-│       └── lib/       # Embeddings, knowledge search, program provisioning
+│       ├── jobs/      # Lambda job functions + shared helpers
+│       ├── queue/     # Dual-dispatch queue abstraction (SQS)
+│       └── lib/       # Embeddings, knowledge search, storage, program provisioning
 │
 ├── desktop/           # Tauri v2 desktop app (macOS)
 │   ├── src-tauri/     # Rust source, Tauri config, capabilities
@@ -132,27 +132,28 @@ Warm paper-and-ink aesthetic with design tokens:
 
 ## Deployment
 
-### Production (Vercel)
+### Production (AWS)
 
-- **URL:** `https://app.verityaml.com`
-- **Root directory:** `frontend/`
-- **Build:** Backend type-check → frontend production build (standalone output)
-- **Auto-deploy:** Push to `main` → production. PR branches → preview.
-- **Function timeout:** Default 10s, max 60s
+- **URL:** `https://app.verityaml.com` (via CloudFront)
+- **Staging:** `https://staging.verityaml.com`
+- **Build:** Docker multi-stage build → ECR → ECS Fargate
+- **Pipeline:** Push to `main` → staging deploy → E2E tests → manual approval → production deploy
+- **Infrastructure:** CDK-managed, deployed conditionally via GitHub Actions
 
 ### Database
 
-Supabase managed PostgreSQL with pgvector extension. Uses the transaction-mode pooler (`prepare: false` on the postgres.js client).
+RDS PostgreSQL 16 with pgvector extension. Auto-detects PgBouncer pooler for `prepare: false`.
 
 ## Key design decisions
 
 | Decision | Rationale |
 |----------|-----------|
-| No separate backend server | Next.js API routes are sufficient; scales with frontend on Vercel |
-| Shared library pattern | Monorepo keeps schema, config, and business logic in sync at build time |
-| BetterAuth over Supabase Auth | Self-hosted auth gives full control for compliance requirements |
+| No separate backend server | Next.js API routes are sufficient; shared library pattern keeps schema in sync |
+| SQS + Lambda for background jobs | Reliable retries, parallel processing, no external job framework dependency |
+| BetterAuth over managed auth | Self-hosted auth gives full control for compliance requirements |
 | pgvector in Postgres | No external vector store; semantic search collocated with relational data |
-| Inngest for background jobs | Reliable retries, step functions for long-running parsing, Vercel-native |
+| S3 for file storage | Native AWS integration, no external storage provider |
+| SES for email | IAM-based auth, no API key management, scoped to domain identity |
 | Regulation config as code | Hardcoded enums prevent drift between DB, API, and UI |
 | Human-readable IDs | `EX-2026-001` is meaningful in regulatory context; globally unique |
 | Evidence auto-linked (opt-out) | Auto-matching links evidence automatically; users remove incorrect matches. No automated compliance assertions. |

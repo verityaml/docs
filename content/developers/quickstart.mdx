@@ -7,7 +7,7 @@ description: Get a local Verity development environment running in minutes
 
 - Node.js 20+
 - npm 10+
-- A [Supabase](https://supabase.com/) project (US region, pgvector extension enabled)
+- A PostgreSQL database with pgvector extension (RDS or local)
 
 ## Setup
 
@@ -32,21 +32,17 @@ description: Get a local Verity development environment running in minutes
     Edit `frontend/.env.local` with your credentials:
 
     ```env
-    DATABASE_URL=postgresql://...        # Supabase Postgres connection string
-    SUPABASE_URL=https://xxx.supabase.co # Supabase project URL
-    SUPABASE_ANON_KEY=eyJ...             # Supabase anonymous key
-    SUPABASE_SERVICE_KEY=eyJ...          # Supabase service role key
+    DATABASE_URL=postgresql://...        # PostgreSQL connection string
     BETTER_AUTH_SECRET=...               # Random secret for BetterAuth
-    INNGEST_EVENT_KEY=...                # Inngest event key
-    INNGEST_SIGNING_KEY=...              # Inngest signing key
     VOYAGE_API_KEY=pa-...                # Voyage AI — embeddings (voyage-law-2)
-    OPENAI_API_KEY=sk-...                # LLM provider API key (via Vercel AI SDK)
+    ANTHROPIC_API_KEY=sk-ant-...         # Anthropic — document parsing
     ```
 
-    Optional variables:
+    Optional variables (for AWS deployment):
 
     ```env
-    RESEND_API_KEY=re_...                # Resend — transactional email (emails are no-ops without it)
+    AWS_S3_BUCKET=...                    # S3 bucket for file storage
+    SQS_QUEUE_URL_PARSE=...              # SQS queue URLs for background jobs
     EMAIL_FROM=...                       # Defaults to "Verity <noreply@verityaml.com>"
     ```
   </Step>
@@ -77,7 +73,7 @@ verity/
 │   ├── src/
 │   │   ├── app/       # App Router (pages + API routes)
 │   │   ├── components/
-│   │   ├── lib/       # Auth, supabase client, utilities
+│   │   ├── lib/       # Auth, storage, utilities
 │   │   └── proxy.ts   # Session gate (Next.js 16)
 │   └── e2e/           # Playwright E2E tests
 │
@@ -85,8 +81,9 @@ verity/
 │   └── src/
 │       ├── config/    # REGULATION_CONFIG
 │       ├── db/        # Drizzle schema + migrations + seed
-│       ├── inngest/   # Background job definitions
-│       └── lib/       # Embeddings, knowledge search
+│       ├── jobs/      # Lambda job functions + shared helpers
+│       ├── queue/     # Queue abstraction (SQS)
+│       └── lib/       # Embeddings, knowledge search, storage
 │
 ├── desktop/           # Tauri v2 desktop app (macOS)
 │   ├── src-tauri/     # Rust source, Tauri config

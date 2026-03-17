@@ -5,7 +5,7 @@ description: Planned features and tracked improvements beyond the current build
 
 ## Spec status
 
-All 28 feature specs are tracked in the main repository's `SPECLOG.md`. Current status as of March 2026:
+All 29 feature specs are tracked in the main repository's `SPECLOG.md`. Current status as of March 2026:
 
 | Spec | Status |
 |------|--------|
@@ -35,7 +35,8 @@ All 28 feature specs are tracked in the main repository's `SPECLOG.md`. Current 
 | AWS Background Jobs | Complete |
 | AWS E2E Pipeline | Complete |
 | AWS CI/CD Consolidation | Complete |
-| AWS Provider Swap + Cutover | Not Started |
+| AWS Provider Swap + Cutover | Complete |
+| Reference-Based Extraction | Specified |
 | Desktop App | In Progress |
 
 ---
@@ -44,7 +45,7 @@ All 28 feature specs are tracked in the main repository's `SPECLOG.md`. Current 
 
 Migration from Vercel + Supabase + Inngest to AWS-native services (ECS Fargate, RDS, S3, SQS+Lambda, Bedrock, SES). 8-phase plan over ~5 weeks, funded by $5k-25k in AWS credits. Adds CloudFront CDN, AWS WAF, and CDK Pipelines for IaC.
 
-**Phases 1-4.75** are complete. AWS staging is live at `staging.verityaml.com` with ECS Fargate, RDS PostgreSQL (pgvector), CloudFront, and GitHub Actions CI/CD. Phase 4.5 added E2E tests as a deployment gate — Playwright runs against staging after deploy, blocking production promotion. Phase 4.75 consolidated deployment from dual CodePipeline + GitHub Actions to GitHub Actions only. **Phase 5** (provider swap + cutover) is next — SES email, remove Supabase/Inngest/Resend, DNS cutover to production.
+**Phases 1-5** are complete. Verity is now fully hosted on AWS — Inngest, Supabase Storage, Resend, and Vercel have all been removed. Background jobs run on SQS + Lambda, file storage uses S3, email uses SES (IAM-based, no API key), and document parsing uses the Anthropic API directly. GitHub Actions handles CI/CD with a staging-first pipeline gated by E2E tests.
 
 See the full [AWS migration plan](/developers/aws-migration) for architecture diagrams, cost analysis, and phase details.
 

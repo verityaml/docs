@@ -62,12 +62,14 @@ Verity helps compliance teams continuously prove their programs work. Monitor re
 | Layer | Technology |
 |-------|-----------|
 | Frontend + API | Next.js 16 (App Router) |
-| Database | Supabase (PostgreSQL + pgvector) |
+| Database | RDS PostgreSQL + pgvector |
 | ORM | Drizzle |
 | Auth | BetterAuth |
 | UI | shadcn/ui + Tailwind CSS v4 |
-| LLM | Vercel AI SDK |
+| LLM | Anthropic Claude (via Vercel AI SDK) |
 | Embeddings | Voyage AI (`voyage-law-2`) |
-| Background Jobs | Inngest |
+| Background Jobs | SQS + Lambda |
+| File Storage | S3 |
+| Email | SES |
 | Desktop | Tauri v2 (macOS) |
-| Hosting | Vercel (US regions) |
+| Hosting | AWS (ECS Fargate, CloudFront) |
