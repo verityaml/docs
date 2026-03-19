@@ -22,6 +22,7 @@ Click any service box for details. See the [AWS migration plan](/developers/aws-
 | CloudFront | CDN with WAF |
 | Voyage AI | voyage-law-2 embeddings (1024-dim), legal domain |
 | Anthropic Claude | Document parsing via Anthropic API |
+| unpdf | Deterministic PDF text extraction (reference-based parsing) |
 | SES | Transactional email (password resets, invitations) — IAM-based |
 | GitHub Actions | CI/CD pipeline: staging deploy, E2E gate, production deploy |
 
@@ -58,8 +59,8 @@ verity/
 │       ├── config/    # REGULATION_CONFIG — single source of truth
 │       ├── db/        # Drizzle schema, migrations, seed scripts
 │       ├── jobs/      # Lambda job functions + shared helpers
-│       ├── queue/     # Dual-dispatch queue abstraction (SQS)
-│       └── lib/       # Embeddings, knowledge search, storage, program provisioning
+│       ├── queue/     # SQS dispatch abstraction
+│       └── lib/       # Embeddings, knowledge search, storage, document-model
 │
 ├── desktop/           # Tauri v2 desktop app (macOS)
 │   ├── src-tauri/     # Rust source, Tauri config, capabilities
