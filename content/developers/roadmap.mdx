@@ -35,7 +35,7 @@ All 32 feature specs are tracked in the main repository's `SPECLOG.md`. Current 
 | AWS Background Jobs | Complete |
 | AWS E2E Pipeline | Complete |
 | AWS CI/CD Consolidation | Complete |
-| AWS Provider Swap + Cutover | Complete |
+| AWS Provider Swap + Cutover | Not Started |
 | Reference-Based Extraction | Complete |
 | Event-Based Score Recomputation | In Progress |
 | Score Change UI & Notifications | Specified |
@@ -48,7 +48,7 @@ All 32 feature specs are tracked in the main repository's `SPECLOG.md`. Current 
 
 Migration from Vercel + Supabase + Inngest to AWS-native services (ECS Fargate, RDS, S3, SQS+Lambda, Bedrock, SES). 8-phase plan over ~5 weeks, funded by $5k-25k in AWS credits. Adds CloudFront CDN, AWS WAF, and CDK Pipelines for IaC.
 
-**Phases 1-5** are complete. Verity is now fully hosted on AWS — Inngest, Supabase Storage, Resend, and Vercel have all been removed. Background jobs run on SQS + Lambda, file storage uses S3, email uses SES (IAM-based, no API key), and document parsing uses the Anthropic API directly. GitHub Actions handles CI/CD with a staging-first pipeline gated by E2E tests.
+**Phases 1–4 and CI/CD consolidation (Phase 4.75)** are complete. Background jobs run on SQS + Lambda, file storage uses S3, the database runs on RDS, and GitHub Actions handles CI/CD with a staging-first pipeline gated by E2E tests. **Phase 5 (Provider Swap + Cutover)** — SES email, Supabase/Inngest/Resend/Vercel removal, DNS cutover — is not yet started.
 
 See the full [AWS migration plan](/developers/aws-migration) for architecture diagrams, cost analysis, and phase details.
 
@@ -56,20 +56,20 @@ See the full [AWS migration plan](/developers/aws-migration) for architecture di
 
 ## Planned — post-partnership
 
-### Evidence table rename
+### ~~Evidence table rename~~ — Complete
 
-Rename `evidence_attachments` to `evidence` in a cleanup migration. Pure naming change — no schema logic affected.
+Renamed `evidence_attachments` to `evidence` in PR #214 (migration #273).
 
 ### Consent order lifecycle
 
 - Container-level lifecycle: `issued` &rarr; `remediation_in_progress` &rarr; node-level closure &rarr; `order_lifted`
 - Different from examination lifecycle — container never fully archives
 - Cross-department assignment for findings spanning multiple business lines
-- Recurring deadline support via Inngest scheduled functions (call reports quarterly, attestations monthly)
+- Recurring deadline support via scheduled background jobs (call reports quarterly, attestations monthly)
 
-### Schema rename: examinations to obligations
+### ~~Schema rename: examinations to obligations~~ — Complete
 
-Rename the `examinations` table to `obligations` to reflect the generic compliance obligation container. Cascades to uploads, correspondence, FK columns, and storage paths.
+Renamed the `examinations` table to `obligations` in PR #304. Cascaded to uploads, correspondence, FK columns, and storage paths.
 
 ### Bulk assignment
 
@@ -96,11 +96,11 @@ Structured quarterly progress reports for regulators. Planned for consent order 
 
 ### Performance
 
-- Database indexes on `session(user_id)`, `invitation(organization_id, email)`, `audit_log(org_id, created_at)`
+- ~~Database indexes on `session(user_id)`, `invitation(organization_id, email)`, `audit_log(org_id, created_at)`~~ — Done in PR #267
 - Partial unique indexes to prevent duplicate linked accounts and pending invites
 - Remove Voyage AI rate-limit sleep after upgrading from free tier
-- GIN index on `scoring_criteria.linked_evidence` for evidence library queries at scale
-- Index on `evidence_attachments(org_id)` for evidence library filtering
+- ~~GIN index on `scoring_criteria.linked_evidence` for evidence library queries~~ — Done in PR #270
+- Index on `evidence(org_id)` for evidence library filtering
 
 ### Auth and tenancy
 
