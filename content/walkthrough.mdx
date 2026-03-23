@@ -88,9 +88,35 @@ The **Evidence** tab shows reviewer notes (auto-saved after a one-second pause) 
 
 The **History** tab is the audit trail — every change to this criterion logged with who, when, and why. Filter by change type (status, evidence, notes).
 
+### Score timeline
+
+Below the criteria table, the **Score Timeline** section shows a chronological log of every score change on this domain — manual status changes, auto-match events, evidence propagation, and drift corrections from the nightly recompute.
+
+Each timeline entry shows the score delta (e.g., "+8pts"), the trigger type, a timestamp, and an expandable list of which criteria changed status. Correction events from the nightly recompute have a distinct styling with a "Corrected" badge.
+
+Use the **filter buttons** (All, Manual, Auto-match, Propagation, Correction) to focus on specific event types. The timeline supports cursor pagination via a "Load more" button.
+
+A **sparkline** in the timeline header shows the 30-day score trend at a glance. The same sparkline appears on each domain card on the dashboard, along with a threshold warning badge (amber ▲) on domains scoring below 70%.
+
 ### Domain-level evidence upload
 
 Above the criteria table, a drag-and-drop **upload zone** lets you upload evidence directly to the domain. After upload, files are auto-suggested against all criteria in the domain. Use the **Link Evidence** dropdown on any criterion to manually assign unlinked files.
+
+---
+
+## Notifications
+
+**Where to find it:** The bell icon in the top navigation bar, visible on every page.
+
+The **notification bell** shows a badge with the count of unread notifications (capped at "9+"). Notifications are generated automatically when:
+
+- A domain score changes by 5 or more points
+- A domain crosses the 70% readiness threshold (up or down)
+- A program reaches a milestone (50%, 60%, 70%, 80%, 90%)
+
+Clicking the bell opens the notification panel (coming soon — notifications are currently generated and counted but the full panel UI is in development).
+
+From a notification, you can deep-link directly to the relevant event on the domain's score timeline via the `?event=SCE-xxx` URL parameter, which scrolls to and highlights the specific event.
 
 ---
 

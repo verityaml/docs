@@ -38,8 +38,8 @@ All 32 feature specs are tracked in the main repository's `SPECLOG.md`. Current 
 | AWS Provider Swap + Cutover | Not Started |
 | Reference-Based Extraction | Complete |
 | Event-Based Score Recomputation | In Progress |
-| Score Change UI & Notifications | Specified |
-| Google Drive Connector | Specified |
+| Score Change UI & Notifications | In Progress |
+| Google Drive Connector | In Progress |
 | Desktop App | In Progress |
 
 ---
@@ -48,7 +48,7 @@ All 32 feature specs are tracked in the main repository's `SPECLOG.md`. Current 
 
 Migration from Vercel + Supabase + Inngest to AWS-native services (ECS Fargate, RDS, S3, SQS+Lambda, Bedrock, SES). 8-phase plan over ~5 weeks, funded by $5k-25k in AWS credits. Adds CloudFront CDN, AWS WAF, and CDK Pipelines for IaC.
 
-**Phases 1–4 and CI/CD consolidation (Phase 4.75)** are complete. Background jobs run on SQS + Lambda, file storage uses S3, the database runs on RDS, and GitHub Actions handles CI/CD with a staging-first pipeline gated by E2E tests. **Phase 5 (Provider Swap + Cutover)** — SES email, Supabase/Inngest/Resend/Vercel removal, DNS cutover — is not yet started.
+**Phases 1–4 and CI/CD consolidation (Phase 4.75)** are complete. Background jobs run on SQS + Lambda, file storage uses S3, the database runs on RDS, and GitHub Actions handles CI/CD with a staging-first pipeline gated by E2E tests. **Phase 5 (Provider Swap + Cutover)** — Supabase/Inngest/Vercel removal, DNS cutover — is not yet started. SES email is already live.
 
 See the full [AWS migration plan](/developers/aws-migration) for architecture diagrams, cost analysis, and phase details.
 

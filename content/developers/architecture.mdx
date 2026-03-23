@@ -18,7 +18,7 @@ Click any service box for details. See the [AWS migration plan](/developers/aws-
 | ECS Fargate | Next.js app (standalone Docker), auto-scaling |
 | RDS PostgreSQL | Database with pgvector, managed backups |
 | S3 | Evidence files, exam uploads, reports (50MB max) |
-| SQS + Lambda | Background jobs (parse, auto-match, evidence propagation, backfill) |
+| SQS + Lambda | Background jobs (parse, auto-match, evidence propagation, backfill, connector sync) |
 | CloudFront | CDN with WAF |
 | Voyage AI | voyage-law-2 embeddings (1024-dim), legal domain |
 | Anthropic Claude | Document parsing via Anthropic API |
@@ -33,6 +33,7 @@ Page load:    Browser → CloudFront → ALB → ECS → proxy.ts (cookie check)
 Static asset: Browser → CloudFront (cached)
 API call:     Browser → CloudFront → ALB → ECS → API route → BetterAuth session → Drizzle → RDS
 Background:   API route → SQS → Lambda → Voyage AI / Anthropic / RDS / S3
+Nightly:      EventBridge → Lambda (full-recompute) → RDS (drift correction)
 ```
 
 ---
