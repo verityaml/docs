@@ -39,9 +39,17 @@ Self-service program creation for any regulation type in `REGULATION_CONFIG`. In
 
 - Unit tests for API routes (GET list, POST upload, DELETE, GET download)
 - E2E tests (upload, filter, delete, download)
-- Extract shared upload component from `EvidenceUploadSection` and `DomainUploadZone`
+- ~~Extract shared upload component from `EvidenceUploadSection` and `DomainUploadZone`~~ — Done in PR #271
 
-See the [Roadmap](/developers/roadmap) for planned post-partnership features (consent order lifecycle, bulk assignment, schema renames), infrastructure improvements, and new platform work (desktop app, AWS migration).
+### ~~Evidence table rename~~ — Complete
+
+Renamed `evidence_attachments` to `evidence` in PR #214.
+
+### ~~Schema rename: examinations to obligations~~ — Complete
+
+Renamed `examinations` table to `obligations` in PR #304. Cascaded to uploads, correspondence, FK columns, and storage paths.
+
+See the [Roadmap](/developers/roadmap) for planned post-partnership features (consent order lifecycle, bulk assignment), infrastructure improvements, and new platform work (desktop app, AWS migration).
 
 ---
 
