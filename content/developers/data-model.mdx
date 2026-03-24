@@ -19,15 +19,15 @@ Organization (BetterAuth)
 │       └── ScoringCriteria (evidence_status, linked_evidence JSONB, reviewer_notes)
 │           └── regulatory_source_id FK → Knowledge Base
 │
-├── Examination (EX-2026-001, globally unique PK)
-│   ├── ExaminationUpload (parse_status: pending → processing → completed)
+├── Obligation (EX-2026-001, globally unique PK — table renamed from `examinations`)
+│   ├── ObligationUpload (parse_status: pending → processing → completed)
 │   ├── RequestItem (parsed line items, embedding vector(1024))
-│   │   ├── EvidenceAttachment (file_path OR external_url)
+│   │   ├── Evidence (file_path OR external_url — table renamed from `evidence_attachments`)
 │   │   └── EvidenceLink (cross-obligation link, status: auto_applied → confirmed/rejected)
 │   ├── RemediationItem (REM-2026-001, status lifecycle)
 │   │   ├── RemediationItemRequestItem (junction → RequestItem)
 │   │   └── RemediationItemEvidence (file uploads)
-│   └── ExaminationCorrespondence (post-exam documents)
+│   └── ObligationCorrespondence (post-exam documents)
 │
 ├── AuditLog (immutable, org-scoped)
 │
@@ -119,12 +119,12 @@ Never hardcode pillar labels, obligation types, or regulation types in UI or API
 
 ## File storage
 
-Evidence files are stored in **Supabase Storage** (`evidence-files` bucket).
+Evidence files are stored in **S3** (`evidence-files` bucket).
 
 ### Upload path convention
 
 ```
-evidence/{orgId}/{examId}/{itemId}/{timestamp}-{uuid8}-{filename}
+evidence/{orgId}/{obligationId}/{itemId}/{timestamp}-{uuid8}-{filename}
 ```
 
-Unique paths prevent overwrites. `upsert: false` is enforced. Maximum 50 MB per file. Allowed types: PDF, DOCX, XLSX, CSV, PNG, JPG.
+Unique paths prevent overwrites. Maximum 50 MB per file. Allowed types: PDF, DOCX, XLSX, CSV, PNG, JPG.
