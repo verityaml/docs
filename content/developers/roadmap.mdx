@@ -38,7 +38,7 @@ All 32 feature specs are tracked in the main repository's `SPECLOG.md`. Current 
 | AWS Provider Swap + Cutover | Not Started |
 | Reference-Based Extraction | Complete |
 | Event-Based Score Recomputation | In Progress |
-| Score Change UI & Notifications | In Progress |
+| Score Change UI & Notifications | Complete |
 | Google Drive Connector | In Progress |
 | Desktop App | In Progress |
 
@@ -60,6 +60,12 @@ See the full [AWS migration plan](/developers/aws-migration) for architecture di
 
 Renamed `evidence_attachments` to `evidence` in PR #214 (migration #273).
 
+### Notifications
+
+- Notification preferences UI — settings page to enable/disable notification types per user (P2)
+- Email digest notifications — daily/weekly summary of score changes delivered via SES (P3)
+- `applyScoreDelta` return eventId — pass score_change_event ID to `emitScoreNotifications()` for deep-link metadata (#292)
+
 ### Consent order lifecycle
 
 - Container-level lifecycle: `issued` &rarr; `remediation_in_progress` &rarr; node-level closure &rarr; `order_lifted`
@@ -75,9 +81,9 @@ Renamed the `examinations` table to `obligations` in PR #304. Cascaded to upload
 
 Select multiple request items, assign to one person. API (`PATCH /items/bulk`) + floating action bar with checkbox selection.
 
-### Member permission boundary
+### ~~Member permission boundary~~ — Complete
 
-API-level check: members can only update items assigned to them, admins can update any. UI read-only mode for non-assigned items.
+`requireWriteAccess()` API helper enforces that members can only PATCH request items assigned to them. Admins/owners bypass. UI auto-computes read-only state with lock banner and disabled controls. Done in PR #317.
 
 ### Progress report generation
 
@@ -102,11 +108,11 @@ Structured quarterly progress reports for regulators. Planned for consent order 
 - ~~GIN index on `scoring_criteria.linked_evidence` for evidence library queries~~ — Done in PR #270
 - Index on `evidence(org_id)` for evidence library filtering
 
-### Auth and tenancy
+### ~~Auth and tenancy~~ — Mostly Complete
 
-- Optional org at signup (allow users to sign up without creating an org)
-- Org slug collision handling (append numeric suffix or show clear error)
-- Cross-tenant isolation tests
+- ~~Optional org at signup~~ — Done in PR #317 (invite-only users can sign up without creating an org)
+- ~~Org slug collision handling~~ — Done in PR #317 (auto-numeric suffix retry via server-side endpoint)
+- ~~Cross-tenant isolation tests~~ — Done in PR #317 (~15 E2E test cases covering obligations, programs, domains, evidence, remediation)
 - Atomic signup (single server-side endpoint that rolls back on failure)
 
 ### RLS

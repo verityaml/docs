@@ -35,6 +35,12 @@ Self-service program creation for any regulation type in `REGULATION_CONFIG`. In
 
 ## Planned and deferred
 
+### Notifications
+
+- Notification preferences UI — settings page to enable/disable notification types per user (P2)
+- Email digest notifications — daily/weekly summary of score changes delivered via SES (P3)
+- `applyScoreDelta` return eventId — pass score_change_event ID to `emitScoreNotifications()` for deep-link metadata (#292)
+
 ### Evidence library test coverage
 
 - Unit tests for API routes (GET list, POST upload, DELETE, GET download)
@@ -48,6 +54,14 @@ Renamed `evidence_attachments` to `evidence` in PR #214.
 ### ~~Schema rename: examinations to obligations~~ — Complete
 
 Renamed `examinations` table to `obligations` in PR #304. Cascaded to uploads, correspondence, FK columns, and storage paths.
+
+### ~~Member permission boundary~~ — Complete
+
+`requireWriteAccess()` API helper enforces that members can only PATCH items assigned to them. UI read-only mode with lock banner for non-assigned members. Done in PR #317.
+
+### ~~Auth tenancy hardening~~ — Complete
+
+Org slug collision handling with auto-numeric suffix retry. Optional org at signup for invite-only users. Cross-tenant isolation E2E tests (~15 test cases). Done in PR #317.
 
 See the [Roadmap](/developers/roadmap) for planned post-partnership features (consent order lifecycle, bulk assignment), infrastructure improvements, and new platform work (desktop app, AWS migration).
 

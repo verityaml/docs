@@ -108,13 +108,18 @@ Above the criteria table, a drag-and-drop **upload zone** lets you upload eviden
 
 **Where to find it:** The bell icon in the top navigation bar, visible on every page.
 
-The **notification bell** shows a badge with the count of unread notifications (capped at "9+"). Notifications are generated automatically when:
+The **notification bell** shows a badge with the count of unread notifications (capped at "9+"), polling every 30 seconds with Page Visibility API pause/resume. Notifications are generated automatically when:
 
 - A domain score changes by 5 or more points
 - A domain crosses the 70% readiness threshold (up or down)
 - A program reaches a milestone (50%, 60%, 70%, 80%, 90%)
+- The nightly recompute detects and corrects score drift
 
-Clicking the bell opens the notification panel (coming soon — notifications are currently generated and counted but the full panel UI is in development).
+**Click the bell** to open the notification panel — a slide-out panel on desktop (280px from right) or a full-height bottom sheet on mobile. Notifications are grouped by date (Today, Yesterday, This Week, Earlier) with type-based color borders: forest for score changes, amber for threshold crossings, stone for milestones, and red for corrections.
+
+Each notification shows the event type, score delta, and timestamp. **Click a notification** to mark it as read and navigate to the relevant domain detail page. **Click "Mark all read"** to dismiss all unread notifications at once.
+
+The panel supports cursor pagination via a "Load more" button for older notifications. Self-triggered notifications (changes you made yourself) are excluded from your feed.
 
 From a notification, you can deep-link directly to the relevant event on the domain's score timeline via the `?event=SCE-xxx` URL parameter, which scrolls to and highlights the specific event.
 
@@ -196,6 +201,8 @@ Items stream in one by one. The BSA officer reviews each one — AI proposes the
 Each request item can be assigned to a team member with a deadline. The examination dashboard has six tabs: All Items, By Pillar, **By Reference** (grouped by FFIEC section with library links), By Status, By Assignee, and Timeline.
 
 Status progression: items move from "not started" through "in progress," "uploaded," "needs rework," "reviewed," to "ready." Each item has a **History tab** logging every change.
+
+**Member permissions:** Team members with the "member" role can only edit request items assigned to them. Non-assigned items appear in read-only mode with a lock banner and disabled controls. Admins and owners can edit any item. Permission-denied attempts are logged to the audit trail.
 
 ### Evidence upload
 
@@ -286,7 +293,17 @@ The evidence table shows each file with its **source type badge** (EXAM, DOMAIN,
 
 Upload files directly using the drag-and-drop zone at the top. Files land with a LIBRARY source type — available for linking to any scoring criteria across any domain.
 
-Filter the table using source type pills, the domain dropdown, or filename search. Download any file via a signed URL. Delete library-sourced files with automatic criteria cleanup and score recomputation.
+Filter the table using source type pills (Exam, Domain, Library, Connector), the domain dropdown, or filename search. Download any file via a signed URL. Delete library-sourced files with automatic criteria cleanup and score recomputation.
+
+### Google Drive connector
+
+The **Connectors** tab on the evidence library page shows connected integrations. Connect your Google Drive account via OAuth, then select watched folders to monitor. The system syncs files from watched folders, classifies them using AI (Claude Haiku), and auto-links matching evidence to scoring criteria.
+
+Each connector card shows sync status, a progress bar during active syncs, watched folders, and available actions (Sync Now, manage folders, view files). The **folder picker** provides a lazy-loading tree browser for selecting Drive folders and assigning them to compliance programs. A **folder coverage grid** shows per-domain file counts with gap highlighting.
+
+The **connector file list** shows all synced files with classification badges, confidence scores, and "Open in Google Drive" links. Low-confidence matches can be confirmed manually, which creates evidence and updates scores. Stale file indicators appear when previously synced files are no longer found in Drive.
+
+After a sync completes, the **sync results page** shows score deltas per domain and lists any unmatched files.
 
 ---
 
