@@ -4,21 +4,23 @@ Checkpoint for `/sync-from-app` runs. Used to determine which PRs are new since 
 
 ## Last Sync
 
-- **Date:** 2026-03-22
-- **Latest merged PR:** #309 (chore(tooling): extract shared PR body template for consistent PRs)
-- **Merged at:** 2026-03-21T21:21:04Z
+- **Date:** 2026-03-23
+- **Latest merged PR:** #326 (Fix incomplete LIKE sanitization in connector folder cleanup)
+- **Merged at:** 2026-03-23T08:59:12Z
 
 ## PRs Included in This Sync
 
-All merged PRs up to #309 (2026-03-21). Key PRs that affected docs:
+All merged PRs up to #326 (2026-03-23). Key PRs that affected docs:
 
-- #304: refactor: rename examinations table to obligations (#213)
-- #305: fix: post-merge fixes for PR #304
-- #273: refactor: rename evidence_attachments table to evidence (#214)
-- #267: perf: add missing database indexes for session, invitation, audit_log (#220)
-- #270: perf: add GIN index on linked_evidence JSONB for evidence library queries (#221)
-- #271: test: add evidence library unit tests and extract shared upload component (#219)
-- #262: feat: score notifications — Phase 1-2 foundation (config, schema, engine)
-- #285: feat: connector framework phases 4-6 — Drive client, provider, OAuth routes (#236)
-- #269: refactor: replace evidence_source_invariants CHECK with trigger function (#256)
-- #299: fix: align DB timestamp columns to timestamptz (#278)
+- #290: feat(backend): Phase 3 — wire notification engine into call sites
+- #288: feat(frontend): Phase 4 — notification API routes
+- #287: feat(frontend): Phase 5 — score history detail mode + anchorEvent
+- #286: feat(frontend): Phase 6 — Nav actions slot
+- #313: feat(frontend): Phase 7 — NotificationBell component
+- #314: feat(frontend): Phase 9 — ScoreTimeline + TimelineEntry components
+- #300: feat(frontend): connector CRUD API routes — 8 endpoints for Phase 7 (#236)
+- #301: feat(backend): sync pipeline — job helpers + orchestrator for Phases 8-9 (#236)
+- #316: Fix all GitHub code scanning alerts
+- #326: Fix incomplete LIKE sanitization in connector folder cleanup
+- #322: fix(frontend): cast evidenceStatus type in confirm route
+- #319: chore: prevention rules for score-notifications bugs

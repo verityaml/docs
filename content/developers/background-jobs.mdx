@@ -3,7 +3,7 @@ title: Evidence pipeline
 description: How evidence flows through Verity — from file upload to scoring criteria — through parsing, matching, propagation, and scoring
 ---
 
-How evidence flows through Verity — from file upload to scoring criteria. Covers the five pipeline stages, matching logic, and the Inngest background jobs that power them.
+How evidence flows through Verity — from file upload to scoring criteria. Covers the five pipeline stages, matching logic, and the SQS + Lambda background jobs that power them.
 
 ## Core concepts
 
@@ -17,7 +17,7 @@ How evidence flows through Verity — from file upload to scoring criteria. Cove
 |--------|-----------|-----------------|
 | **Request item** | A parsed line item from an examination letter (e.g., "Provide CDD policies") | Yes — generated at parse time |
 | **Scoring criterion** | A compliance requirement within a domain (e.g., "CDD program documented") | No |
-| **Evidence attachment** | An uploaded file (PDF, CSV, image) | No — completely opaque |
+| **Evidence** | An uploaded file (PDF, CSV, image) | No — completely opaque |
 
 ---
 
@@ -29,31 +29,24 @@ How evidence flows through Verity — from file upload to scoring criteria. Cove
 
 ## Step 1: Examination parsing
 
-When a user uploads a PDF, CSV, or image to an examination, the `parse-examination` Inngest function extracts structured request items.
+When a user uploads a PDF, CSV, or image to an examination, the `parse-examination` Lambda function extracts structured request items.
 
 <Steps>
   <Step title="Download file">
-    Download the uploaded file from Supabase Storage and mark the upload as "processing".
+    Download the uploaded file from S3 and mark the upload as "processing".
   </Step>
   <Step title="Parse with Claude">
-    Stream-parse with Claude Sonnet using regulation-specific system prompts from `REGULATION_CONFIG`.
+    For PDFs with `sectionLevels` config (e.g., consent orders), use reference-based extraction: deterministic text extraction via `unpdf`, per-article LLM categorization with short-field schema, and deterministic text reconstruction from DocumentModel. Falls back to PDF vision parsing (`parseWithLlm()`) for scanned PDFs or unrecognized structure. Uses regulation-specific system prompts from `REGULATION_CONFIG`.
   </Step>
-  <Step title="Record item count">
-    Save the total count so the UI can poll for progress.
-  </Step>
-  <Step title="Process each item">
-    For each extracted item: generate an embedding via Voyage AI (`voyage-law-2`, 1024 dimensions), search the knowledge base using that same embedding (no extra API call), and insert the request item with `guidance_notes` and `common_deficiencies` from the KB match.
+  <Step title="Bulk insert items">
+    Pre-compute embeddings via Voyage AI (`voyage-law-2`, 1024 dimensions) and KB matches for all items, then insert all items in a single atomic DB statement.
   </Step>
   <Step title="Trigger backfill">
-    Send the `obligation/parsed` event to kick off backward backfill (step 4).
+    Dispatch to the `backfill-evidence-links` SQS queue to kick off backward backfill (step 4).
   </Step>
 </Steps>
 
-Each item runs as a separate Inngest step so Vercel's 60-second function timeout is never exceeded. Steps use `onConflictDoNothing` for idempotency — at-least-once semantics means steps can retry after successful writes.
-
-<Note>
-Voyage AI's free tier allows 3 requests per minute. A 22-second sleep is inserted between per-item steps to stay within this limit. Adding a payment method to Voyage AI unlocks standard rate limits and removes the need for the sleep — parsing 28 items would drop from ~10 minutes to under 2 minutes.
-</Note>
+Items use `onConflictDoNothing` for idempotency — at-least-once semantics means the job can retry after successful writes.
 
 The embedding captures the *regulatory meaning* of the item's text (e.g., "Provide your CDD policies and procedures"). This embedding is reused later for cross-obligation similarity matching — it is never regenerated.
 
@@ -61,13 +54,17 @@ The embedding captures the *regulatory meaning* of the item's text (e.g., "Provi
 
 ## Step 2: Evidence attachment
 
-Evidence can be attached in two places:
+Evidence can be attached in four ways:
 
-**To an examination request item** — the user uploads a file responding to a specific parsed item. This creates an `evidence_attachments` row with `source_type: 'examination'` and a foreign key to the request item.
+**To an examination request item** — the user uploads a file responding to a specific parsed item. This creates an `evidence` row with `source_type: 'examination'` and a foreign key to the request item.
 
-**To a compliance domain** — the user uploads evidence directly to a domain (e.g., the **Training** pillar) without tying it to a specific exam item. This creates an `evidence_attachments` row with `source_type: 'domain_upload'` and a foreign key to the domain.
+**To a compliance domain** — the user uploads evidence directly to a domain (e.g., the **Training** pillar) without tying it to a specific exam item. This creates an `evidence` row with `source_type: 'domain_upload'` and a foreign key to the domain.
 
-In both cases, the file is stored in Supabase Storage. The attachment record is metadata only.
+**To the evidence library** — the user uploads a file directly to the org-wide evidence library. This creates an `evidence` row with `source_type: 'library'` and no parent context.
+
+**Via a connector** — a Google Drive connector sync classifies files and creates evidence with `source_type: 'connector'` and a `connector_file_id` FK.
+
+In all cases, the file is stored in S3. The evidence record is metadata only.
 
 ---
 
@@ -117,7 +114,7 @@ When a new examination is parsed, the `backfill-evidence-links` function runs th
 
 ## Step 5: Score recomputation
 
-After auto-match or evidence status changes, domain scores are recomputed:
+All evidence status changes route through `applyScoreDelta()` — a single entry point that updates the domain score, records a `score_change_events` audit entry, and cascades to the program score via `cascadeProgramScore()`. Direct calls to `recomputeDomainScore()` are reserved for the nightly full recompute only.
 
 ```
 domain_score = ((sufficient_count * 100) + (partial_count * 50)) / total_criteria
@@ -130,71 +127,61 @@ domain_score = ((sufficient_count * 100) + (partial_count * 50)) / total_criteri
 | `stale` | 0 (counts as missing for scoring) |
 | `missing` | 0 |
 
-Recomputation is triggered by the Inngest function after modifying criteria, or inline by API routes that change evidence status.
+Program scores are cached on `compliance_programs.current_score` and updated by `cascadeProgramScore()` after every domain score change. Auto-snapshots are created when the program score changes by 5 or more points (with a 1-hour cooldown).
+
+A nightly **full recompute** Lambda (EventBridge, 3am UTC) runs `fullRecomputeAllPrograms()` to detect and correct any score drift, writing correction events only when discrepancies are found.
+
+Score changes also trigger **notifications** via `emitScoreNotifications()` — for deltas ≥5 points, threshold crossings at 70%, and program milestones (50/60/70/80/90%).
 
 ---
 
 ## Background jobs
 
-Verity uses [Inngest](https://www.inngest.com/) for background jobs. Four functions handle the pipeline stages that exceed Vercel's function timeout limits. Functions live in `backend/src/inngest/` and are triggered via events sent from API routes.
+Verity uses **SQS + Lambda** for background jobs. Job functions live in `backend/src/jobs/` as shared helpers, with Lambda handlers in `infra/lambda/`. API routes dispatch messages via `sendMessage()`/`sendMessages()` from `@verity/backend/queue`.
+
+### SQS queues
+
+| Queue | Lambda handler | Description |
+|-------|---------------|-------------|
+| `parse-examination` | `infra/lambda/parse-examination.ts` | Parse uploaded examination letters into request items |
+| `auto-match-evidence` | `infra/lambda/auto-match-evidence.ts` | Match evidence to scoring criteria |
+| `propagate-evidence` | `infra/lambda/propagate-evidence.ts` | Forward evidence propagation across obligations |
+| `backfill-evidence-links` | `infra/lambda/backfill-evidence-links.ts` | Backward backfill when a new obligation is parsed |
+| `sync-connector` | `infra/lambda/sync-connector.ts` | Google Drive connector sync pipeline |
+
+### EventBridge scheduled jobs
+
+| Schedule | Lambda | Description |
+|----------|--------|-------------|
+| 3am UTC daily | `full-recompute` | Nightly full score recompute with drift correction |
 
 ### parse-examination
 
-**Event:** `exam/parse.requested`
-
-Parses uploaded examination request letters into structured request items with embeddings and KB enrichment. See step 1 above for the full flow.
-
-<Steps>
-  <Step title="validate-upload">
-    Check upload exists, mark as "processing"
-  </Step>
-  <Step title="extract-content">
-    Download file from Supabase Storage (PDF, CSV, PNG, JPG)
-  </Step>
-  <Step title="parse-with-llm">
-    Claude Sonnet via Vercel AI SDK with regulation-specific system prompt from `REGULATION_CONFIG`
-  </Step>
-  <Step title="record-total-items">
-    Save count for UI progress polling
-  </Step>
-  <Step title="save-item-{i} (per item)">
-    For each parsed item: generate embedding, search KB for FFIEC match, search for deficiency patterns, insert request item
-  </Step>
-  <Step title="mark-completed">
-    Update upload status to "completed"
-  </Step>
-</Steps>
+Parses uploaded examination request letters into structured request items with embeddings and KB enrichment. See step 1 above for the full flow. Uses Anthropic API (`claude-sonnet-4-6`) via `@ai-sdk/anthropic` — API key loaded from Secrets Manager via `init-secrets.ts`.
 
 ### auto-match-evidence
 
-**Event:** `scoring/auto-match.requested`
-
-Matches examination evidence against scoring criteria using the priority cascade (definition key, regulatory source, category). Accepts an `examinationIds` array for batch matching across multiple examinations.
+Matches examination evidence against scoring criteria using the priority cascade (definition key, regulatory source, category). Accepts an `examinationIds` array for batch matching across multiple examinations. Updates scores via `applyScoreDelta()`.
 
 ### propagate-evidence
-
-**Event:** `evidence/uploaded`
 
 Forward propagation — finds semantically similar request items on other active examinations using pgvector cosine similarity (0.82 threshold). Creates up to 5 evidence links per upload with `auto_applied` status for human review.
 
 ### backfill-evidence-links
 
-**Event:** `obligation/parsed`
-
 Backward backfill — when a new examination is parsed, searches all existing evidence from other examinations for matches against the new items. Uses the same 0.82 cosine similarity threshold.
 
-### Triggering from an API route
+### sync-connector
+
+Connector sync pipeline for external integrations (Google Drive). 12-step orchestrator: load config, decrypt credentials (KMS), per-folder diff/classify/apply cycle, batch score updates, cascade program scores, write sync results. Includes token refresh on 401 and circuit breaker (3 consecutive auth failures disables connector).
+
+### Dispatching from an API route
 
 ```typescript
-import { inngest } from "@verity/backend/inngest"
+import { sendMessage } from "@verity/backend/queue"
 
-await inngest.send({
-  name: "exam/parse.requested",
-  data: { uploadId, examinationId, orgId }
-})
+await sendMessage("parse-examination", { uploadId, examinationId, orgId })
 ```
-
-The webhook endpoint is at `/api/inngest/route.ts` and must be listed in `proxy.ts` `publicPaths` to bypass auth.
 
 ---
 
@@ -217,5 +204,7 @@ Evidence files have no embeddings. They are opaque files. All intelligence comes
 | Cross-link similarity threshold | `backend/src/config/evidence-propagation.ts` | 0.82 |
 | Max cross-links per upload | `backend/src/config/evidence-propagation.ts` | 5 |
 | KB search similarity threshold | `backend/src/lib/knowledge-search.ts` | 0.3 (default) |
-| Rate limit delay | Inngest step functions | 22 seconds (Voyage free tier: 3 RPM) |
+| Notification delta threshold | `backend/src/config/scoring-config.ts` | 5 points |
+| Domain threshold | `backend/src/config/scoring-config.ts` | 70% |
+| Program milestones | `backend/src/config/scoring-config.ts` | 50, 60, 70, 80, 90% |
 | Vector index type | PostgreSQL | HNSW on `vector(1024)` columns |
