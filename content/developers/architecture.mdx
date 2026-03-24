@@ -44,6 +44,259 @@ Verity is a **monorepo with three packages**. The `backend/` package is a shared
 
 **Key constraint:** LLM usage is classification and retrieval only. Never generation of compliance content. All AI outputs require human review.
 
+## Internal system architecture
+
+The diagrams below show how user-facing pages, API routes, backend services, and background jobs connect internally — not just infrastructure, but the application's internal wiring.
+
+### Application layer
+
+<Mermaid chart={`flowchart TD
+    subgraph Pages["Frontend Pages"]
+        direction LR
+        DASH[Dashboard]
+        DOM[Domain Detail]
+        OBL[Obligations]
+        ARC[Archive]
+        LIB[Library]
+        EVL[Evidence Library]
+        RPT[Reports]
+        SET[Settings]
+    end
+
+    subgraph API["API Routes — Next.js App Router"]
+        direction LR
+        API_CP["/compliance-programs\n(CRUD, auto-match,\nscan, snapshots,\nrecompute)"]
+        API_OB["/obligations\n(CRUD, upload,\nparse, items,\narchive)"]
+        API_EV["/evidence\n(upload, download,\nlink, delete)"]
+        API_KB["/knowledge-base\n(search, browse)"]
+        API_CON["/connectors\n(OAuth, sync,\nfolders, files)"]
+        API_NOT["/notifications\n(list, count,\nread)"]
+        API_ORG["/org\n(members, invites)"]
+    end
+
+    subgraph Services["Backend Services"]
+        direction LR
+        SCORE["Score Engine\napplyScoreDelta()\ncascadeProgramScore()"]
+        EMBED["Embeddings\nvoyage-law-2"]
+        SEARCH["Knowledge\nSearch"]
+        STORE["Storage\nS3"]
+        DOCMOD["Document\nModel\nunpdf"]
+        CRYPTO["Crypto\nKMS"]
+        NOTIFY["Notification\nEngine"]
+        PROV["Program\nProvisioning"]
+    end
+
+    subgraph Jobs["Background Jobs — SQS + Lambda"]
+        direction LR
+        PARSE["parse-examination"]
+        MATCH["auto-match-evidence"]
+        PROP["propagate-evidence"]
+        BACK["backfill-evidence-links"]
+        SYNC["sync-connector"]
+        RECOMP["full-recompute\n(nightly)"]
+    end
+
+    subgraph Data["Data Stores"]
+        direction LR
+        RDS[(RDS PostgreSQL\n+ pgvector)]
+        S3[(S3)]
+    end
+
+    subgraph External["External APIs"]
+        direction LR
+        ANTH[Anthropic\nClaude]
+        VOY[Voyage AI]
+        GDRIVE[Google\nDrive]
+        SES_EXT[AWS SES]
+    end
+
+    DASH --> API_CP
+    DOM --> API_CP
+    OBL --> API_OB
+    ARC --> API_OB
+    LIB --> API_KB
+    EVL --> API_EV
+    RPT --> API_CP
+    SET --> API_ORG
+
+    API_CP --> SCORE
+    API_CP --> SEARCH
+    API_OB --> STORE
+    API_OB -->|dispatch| PARSE
+    API_CP -->|dispatch| MATCH
+    API_EV --> STORE
+    API_EV -->|dispatch| PROP
+    API_CON --> CRYPTO
+    API_CON -->|dispatch| SYNC
+    API_NOT --> NOTIFY
+
+    PARSE --> DOCMOD
+    PARSE --> ANTH
+    PARSE --> EMBED
+    PARSE -->|chains| BACK
+    MATCH --> SCORE
+    MATCH --> NOTIFY
+    SYNC --> GDRIVE
+    SYNC --> CRYPTO
+    SYNC --> SCORE
+    RECOMP --> SCORE
+
+    SCORE --> RDS
+    EMBED --> VOY
+    STORE --> S3
+    SEARCH --> RDS
+    NOTIFY --> RDS
+
+    PARSE --> RDS
+    MATCH --> RDS
+    PROP --> RDS
+    BACK --> RDS
+    SYNC --> RDS
+`} caption="Internal application architecture — pages, API routes, services, background jobs, and data stores" />
+
+### Scoring pipeline
+
+Every evidence status change flows through a single entry point (`applyScoreDelta`) that updates the domain, cascades to the program, records an audit event, and optionally triggers notifications and auto-snapshots.
+
+<Mermaid chart={`flowchart LR
+    subgraph Triggers["Score Change Triggers"]
+        T1["Manual status\nchange (UI)"]
+        T2["Auto-match\njob"]
+        T3["Connector\nsync"]
+        T4["Evidence\ndelete"]
+        T5["Nightly\nrecompute"]
+    end
+
+    ASD["applyScoreDelta()\nSELECT FOR UPDATE\non domain"]
+
+    subgraph Updates["Cascading Updates"]
+        direction TB
+        DOM_UP["Domain score\nupdate counts"]
+        EVT["score_change_events\naudit record"]
+        CPS["cascadeProgramScore()\nrecalculate from\nall domains"]
+        PROG["Program\ncurrent_score"]
+    end
+
+    subgraph SideEffects["Side Effects"]
+        direction TB
+        NOTIF["Notifications\n5pt delta\n70% threshold\nmilestones"]
+        SNAP["Auto-snapshot\n5pt program change\n1hr cooldown"]
+    end
+
+    T1 --> ASD
+    T2 --> ASD
+    T3 --> ASD
+    T4 --> ASD
+    T5 --> ASD
+
+    ASD --> DOM_UP --> EVT --> CPS --> PROG
+    PROG --> NOTIF
+    PROG --> SNAP
+`} caption="Scoring pipeline — all score changes flow through applyScoreDelta()" />
+
+### Background job flows
+
+Five SQS queues feed five Lambda handlers. The parse job chains into backfill. The nightly recompute runs on an EventBridge schedule.
+
+<Mermaid chart={`flowchart LR
+    subgraph Dispatch["API Route Dispatchers"]
+        D1["POST /obligations/upload"]
+        D2["POST /programs/auto-match"]
+        D3["POST /items/evidence"]
+        D4["POST /connectors/sync"]
+        D5["EventBridge\n3am UTC"]
+    end
+
+    subgraph Queues["SQS Queues"]
+        Q1[parse-examination]
+        Q2[auto-match-evidence]
+        Q3[propagate-evidence]
+        Q4[backfill-evidence-links]
+        Q5[sync-connector]
+    end
+
+    subgraph Lambda["Lambda Handlers"]
+        L1["Parse\nPDF extract → LLM classify\n→ embed → KB match\n→ bulk insert"]
+        L2["Auto-Match\nCriteria ↔ items\n→ link evidence\n→ score delta"]
+        L3["Propagate\nSemantic search\n→ cross-obligation\nevidence links"]
+        L4["Backfill\nNew items →\nexisting evidence\nacross obligations"]
+        L5["Sync Connector\nList files → classify\n→ link to criteria\n→ score delta"]
+        L6["Full Recompute\nAll programs →\ndrift detection\n→ corrections"]
+    end
+
+    D1 --> Q1 --> L1
+    D2 --> Q2 --> L2
+    D3 --> Q3 --> L3
+    D4 --> Q5 --> L5
+    D5 --> L6
+
+    L1 -->|chains| Q4 --> L4
+    L2 -->|notify| NOTIF2["Notifications"]
+    L5 -->|notify| NOTIF2
+`} caption="Background job architecture — SQS queues, Lambda handlers, and chaining" />
+
+### Data model overview
+
+Core table relationships showing the multi-tenant hierarchy, compliance scoring chain, and evidence linking.
+
+<Mermaid chart={`erDiagram
+    organization ||--o{ member : has
+    organization ||--o{ compliancePrograms : owns
+    organization ||--o{ obligations : owns
+    organization ||--o{ connectorConfigs : owns
+
+    compliancePrograms ||--o{ complianceDomains : contains
+    complianceDomains ||--o{ scoringCriteria : contains
+    compliancePrograms ||--o{ scoreSnapshots : tracks
+    complianceDomains ||--o{ scoreChangeEvents : logs
+
+    obligations ||--o{ obligationUploads : has
+    obligations ||--o{ requestItems : contains
+    obligations ||--o{ remediationItems : produces
+    requestItems ||--o{ evidence : attaches
+    complianceDomains ||--o{ evidence : attaches
+
+    requestItems ||--o{ evidenceLinks : "source/target"
+    connectorConfigs ||--o{ connectorFiles : syncs
+    connectorFiles ||--o{ evidence : creates
+
+    compliancePrograms {
+        string id PK "CP-YYYY-NNN"
+        string regulationType "bsa_aml etc"
+        number currentScore
+    }
+    complianceDomains {
+        string id PK "CD-YYYY-NNN"
+        string domainKey
+        number currentScore
+    }
+    scoringCriteria {
+        string id PK "SC-YYYY-NNN"
+        string definitionKey "ic-01 etc"
+        string evidenceStatus "missing|partial|sufficient"
+        jsonb linkedEvidence
+    }
+    obligations {
+        string id PK "OB-YYYY-NNN"
+        string obligationType "examination|consent_order"
+        string regulationType
+        string status
+    }
+    requestItems {
+        string id PK
+        vector embedding "1024d pgvector"
+        string scoringCriterionKey
+    }
+    evidence {
+        string id PK
+        string sourceType "exam|domain|library|connector"
+    }
+    evidenceLinks {
+        string status "auto_applied|confirmed|rejected"
+        number similarityScore
+    }
+`} caption="Core data model — multi-tenant hierarchy, scoring chain, and evidence relationships" />
+
 ## Monorepo structure
 
 ```
