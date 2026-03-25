@@ -5,9 +5,10 @@ import { useEffect, useRef, useState } from 'react';
 interface MermaidProps {
   chart: string;
   caption?: string;
+  minHeight?: number;
 }
 
-export function Mermaid({ chart, caption }: MermaidProps) {
+export function Mermaid({ chart, caption, minHeight }: MermaidProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const [svg, setSvg] = useState<string>('');
   const [error, setError] = useState<string>('');
@@ -29,7 +30,7 @@ export function Mermaid({ chart, caption }: MermaidProps) {
         },
         flowchart: {
           htmlLabels: true,
-          curve: 'basis',
+          curve: 'linear',
           padding: 12,
         },
       });
@@ -54,8 +55,9 @@ export function Mermaid({ chart, caption }: MermaidProps) {
     <figure className="my-6">
       <div
         ref={containerRef}
-        className="overflow-x-auto rounded-lg border border-[#D0DCD9] bg-[#F2F0EB] p-4"
-        // Safe: chart content is hardcoded in MDX, not user input
+        className="overflow-x-auto rounded-lg border border-[#D0DCD9] bg-[#F2F0EB] p-4 [&>svg]:w-full"
+        style={minHeight ? { minHeight } : undefined}
+        // Safe: chart content is hardcoded in MDX source files, not user input
         dangerouslySetInnerHTML={{ __html: svg }}
       />
       {caption && (
