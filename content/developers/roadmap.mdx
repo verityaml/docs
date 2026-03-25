@@ -91,6 +91,17 @@ Structured quarterly progress reports for regulators. Planned for consent order 
 
 ---
 
+## Google Drive connector — V2 deferred
+
+- Automatic polling — EventBridge scheduled sync (hourly/daily per connector)
+- Content-aware classification — opt-in per-folder, download + parse file contents for higher accuracy
+- SharePoint / OneDrive / Box connectors — extend ConnectorProvider interface
+- Folder-to-domain manual mapping override — bypass LLM classification for known folder structures
+- Multi-account per org — allow multiple Google accounts connected to one organization
+- Reclassification on criteria change — re-run classification when scoring criteria definitions are updated
+
+---
+
 ## Infrastructure
 
 ### AWS CI/CD integration tests

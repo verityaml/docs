@@ -4,21 +4,19 @@ Checkpoint for `/sync-from-app` runs. Used to determine which PRs are new since 
 
 ## Last Sync
 
-- **Date:** 2026-03-24
-- **Latest merged PR:** #324 (feat(frontend): Phases 11-14 — connector UI components, results page, polling)
-- **Merged at:** 2026-03-24T08:44:09Z
+- **Date:** 2026-03-25
+- **Latest merged PR:** #345 (fix(backend): replace zodToJsonSchema with zod v4 built-in z.toJSONSchema())
+- **Merged at:** 2026-03-25T08:56:29Z
 
 ## PRs Included in This Sync
 
-All merged PRs up to #324 (2026-03-24). Key PRs that affected docs:
+All merged PRs up to #345 (2026-03-25). Key PRs in this sync that affected docs:
 
-- #317: feat: member permission boundary + auth tenancy hardening (#217, #222)
-- #321: feat(frontend): Phase 8 — NotificationPanel slide-out
-- #323: feat(infra): Phase 10 — sync-connector Lambda, KMS key, SQS queue (#236)
-- #324: feat(frontend): Phases 11-14 — connector UI components, results page, polling (#236)
-- #329: docs: Phase 11 — score notifications documentation
-- #330: test: notification bell & score timeline E2E tests (Phase 10)
-- #331: feat: adversarial --converse mode for /review skill
-- #333: fix: extract shared notification filters + fix agent-rules JSON
-- #328: chore: multi-PR review mode + PR comment posting
-- #327: fix: thread isAdmin/currentUserId through dashboard view components
+- #325: feat(backend): Phase 15 — classification golden set eval (28 test cases)
+- #336: fix(infra): Lambda error recovery + SQS payload validation (#332)
+- #340: docs: Phase 18 — connector documentation sweep
+- #341: fix(infra): add cold-start guard to createSqsHandler setup()
+- #342: refactor(backend): unify Lambda Zod payload schemas with job types
+- #343: fix: resolve ESLint 9.39.4 startup crash
+- #344: chore: add eval-connector skill + refactor execute-plans → execute
+- #345: fix(backend): replace zodToJsonSchema with zod v4 built-in z.toJSONSchema()

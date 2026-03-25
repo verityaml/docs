@@ -67,6 +67,19 @@ See the [Roadmap](/developers/roadmap) for planned post-partnership features (co
 
 ---
 
+## Google Drive connector — V2 deferred
+
+- Automatic polling — EventBridge scheduled sync (hourly/daily per connector)
+- Content-aware classification — opt-in per-folder, download + parse file contents for higher accuracy
+- SharePoint / OneDrive / Box connectors — extend ConnectorProvider interface
+- Folder-to-domain manual mapping override — bypass LLM classification for known folder structures
+- Multi-account per org — allow multiple Google accounts connected to one organization
+- Reclassification on criteria change — re-run classification when scoring criteria definitions are updated
+- Confirm endpoint: refetch from server after confirm
+- Coverage grid: server-side aggregated counts
+
+---
+
 ## Desktop app — remaining phases
 
 Phases 1-7, 10-11 complete. Remaining work blocked on Apple Developer enrollment ($99/year).
