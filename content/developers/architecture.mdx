@@ -244,6 +244,7 @@ Core table relationships showing the multi-tenant hierarchy, compliance scoring 
     organization ||--o{ compliancePrograms : owns
     organization ||--o{ obligations : owns
     organization ||--o{ connectorConfigs : owns
+    organization ||--o{ notifications : receives
 
     compliancePrograms ||--o{ complianceDomains : contains
     complianceDomains ||--o{ scoringCriteria : contains
@@ -295,6 +296,12 @@ Core table relationships showing the multi-tenant hierarchy, compliance scoring 
         string status "auto_applied|confirmed|rejected"
         number similarityScore
     }
+    notifications {
+        string id PK
+        string type "score_change|threshold|milestone|drift"
+        jsonb metadata
+    }
+    notifications ||--o{ notificationReads : "per-user read state"
 `} caption="Core data model — multi-tenant hierarchy, scoring chain, and evidence relationships" />
 
 ## Monorepo structure
