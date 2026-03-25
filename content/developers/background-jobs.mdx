@@ -139,6 +139,15 @@ Score changes also trigger **notifications** via `emitScoreNotifications()` — 
 
 Verity uses **SQS + Lambda** for background jobs. Job functions live in `backend/src/jobs/` as shared helpers, with Lambda handlers in `infra/lambda/`. API routes dispatch messages via `sendMessage()`/`sendMessages()` from `@verity/backend/queue`.
 
+All Lambda handlers use the shared `createSqsHandler()` factory, which provides:
+
+- **Zod payload validation** — each queue has a typed schema (e.g., `ParseExaminationPayload`). Invalid messages are logged and discarded (not retried).
+- **JSON parse guard** — malformed SQS message bodies are caught before validation.
+- **Error recovery** — unhandled exceptions trigger best-effort status resets (e.g., `parseStatus` back to `failed`) so records don't get stuck in a processing state.
+- **Cold-start guard** — async `setup()` function runs once per container for Secrets Manager initialization.
+
+Schema definitions use zod v4's built-in `z.toJSONSchema()` for LLM structured output (replacing the deprecated `zod-to-json-schema` package).
+
 ### SQS queues
 
 | Queue | Lambda handler | Description |
