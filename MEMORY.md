@@ -4,19 +4,21 @@ Checkpoint for `/sync-from-app` runs. Used to determine which PRs are new since 
 
 ## Last Sync
 
-- **Date:** 2026-03-25
-- **Latest merged PR:** #345 (fix(backend): replace zodToJsonSchema with zod v4 built-in z.toJSONSchema())
-- **Merged at:** 2026-03-25T08:56:29Z
+- **Date:** 2026-03-26
+- **Latest merged PR:** #358 (fix: detect GaxiosError auth failures in connector sync)
+- **Merged at:** 2026-03-26T08:30:47Z
 
 ## PRs Included in This Sync
 
-All merged PRs up to #345 (2026-03-25). Key PRs in this sync that affected docs:
+All merged PRs up to #358 (2026-03-26). PRs since last sync (#345):
 
-- #325: feat(backend): Phase 15 — classification golden set eval (28 test cases)
-- #336: fix(infra): Lambda error recovery + SQS payload validation (#332)
-- #340: docs: Phase 18 — connector documentation sweep
-- #341: fix(infra): add cold-start guard to createSqsHandler setup()
-- #342: refactor(backend): unify Lambda Zod payload schemas with job types
-- #343: fix: resolve ESLint 9.39.4 startup crash
-- #344: chore: add eval-connector skill + refactor execute-plans → execute
-- #345: fix(backend): replace zodToJsonSchema with zod v4 built-in z.toJSONSchema()
+- #347: docs: add internal system architecture diagrams
+- #348: fix(backend): use zod/v4 import in regulation-types
+- #349: fix: block-push-to-main hook now catches chained commands
+- #351: fix: add openid email scope to Google Drive OAuth + callback logging
+- #352: fix(infra): grant sync-connector Lambda access to Anthropic API key
+- #353: feat: Google Drive OAuth hardening — id_token, PKCE, sub-based dedup
+- #354: chore(deps): bump fast-xml-parser and @aws-sdk/xml-builder
+- #355: fix: add "skip" to log() outcome type — fixes production build
+- #356: chore: add redirect-on-error logging convention + review checklist item
+- #358: fix: detect GaxiosError auth failures in connector sync
