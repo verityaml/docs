@@ -50,109 +50,96 @@ The diagrams below show how user-facing pages, API routes, backend services, and
 
 ### Application layer
 
-<Mermaid chart={`flowchart TD
+<Mermaid chart={`%%{ init: { "flowchart": { "rankSep": 120, "nodeSep": 30, "curve": "linear" } } }%%
+flowchart TD
     subgraph Pages["Frontend Pages"]
         direction LR
-        DASH[Dashboard]
-        DOM[Domain Detail]
+        EVL[Evidence Library]
+        LIB[Library]
         OBL[Obligations]
         ARC[Archive]
-        LIB[Library]
-        EVL[Evidence Library]
         RPT[Reports]
+        DASH[Dashboard]
+        DOM[Domain Detail]
         SET[Settings]
     end
 
     subgraph API["API Routes — Next.js App Router"]
         direction LR
-        API_CP["/compliance-programs\n(CRUD, auto-match,\nscan, snapshots,\nrecompute)"]
-        API_OB["/obligations\n(CRUD, upload,\nparse, items,\narchive)"]
         API_EV["/evidence\n(upload, download,\nlink, delete)"]
         API_KB["/knowledge-base\n(search, browse)"]
+        API_OB["/obligations\n(CRUD, upload,\nparse, items,\narchive)"]
         API_CON["/connectors\n(OAuth, sync,\nfolders, files)"]
         API_NOT["/notifications\n(list, count,\nread)"]
+        API_CP["/compliance-programs\n(CRUD, auto-match,\nscan, snapshots,\nrecompute)"]
         API_ORG["/org\n(members, invites)"]
-    end
-
-    subgraph Services["Backend Services"]
-        direction LR
-        SCORE["Score Engine\napplyScoreDelta()\ncascadeProgramScore()"]
-        EMBED["Embeddings\nvoyage-law-2"]
-        SEARCH["Knowledge\nSearch"]
-        STORE["Storage\nS3"]
-        DOCMOD["Document\nModel\nunpdf"]
-        CRYPTO["Crypto\nKMS"]
-        NOTIFY["Notification\nEngine"]
-        PROV["Program\nProvisioning"]
     end
 
     subgraph Jobs["Background Jobs — SQS + Lambda"]
         direction LR
-        PARSE["parse-examination"]
-        MATCH["auto-match-evidence"]
         PROP["propagate-evidence"]
         BACK["backfill-evidence-links"]
+        PARSE["parse-examination"]
         SYNC["sync-connector"]
+        MATCH["auto-match-evidence"]
         RECOMP["full-recompute\n(nightly)"]
     end
 
-    subgraph Data["Data Stores"]
+    subgraph Services["Backend Services"]
         direction LR
-        RDS[(RDS PostgreSQL\n+ pgvector)]
-        S3[(S3)]
+        DOCMOD["Document Model\nunpdf"]
+        EMBED["Embeddings\nvoyage-law-2"]
+        NOTIFY["Notification\nEngine"]
+        SEARCH["Knowledge\nSearch"]
+        CRYPTO["Crypto\nKMS"]
+        SCORE["Score Engine\napplyScoreDelta()"]
     end
 
     subgraph External["External APIs"]
         direction LR
-        ANTH[Anthropic\nClaude]
+        ANTH[Anthropic Claude]
         VOY[Voyage AI]
-        GDRIVE[Google\nDrive]
+        GDRIVE[Google Drive]
         SES_EXT[AWS SES]
     end
 
-    DASH --> API_CP
-    DOM --> API_CP
+    subgraph Data["Data Stores — all jobs and services use Drizzle ORM"]
+        direction LR
+        RDS[(RDS PostgreSQL + pgvector)]
+        S3_STORE[(S3 — evidence files)]
+    end
+
+    EVL --> API_EV
+    LIB --> API_KB
     OBL --> API_OB
     ARC --> API_OB
-    LIB --> API_KB
-    EVL --> API_EV
     RPT --> API_CP
+    DASH --> API_CP
+    DOM --> API_CP
     SET --> API_ORG
 
-    API_CP --> SCORE
-    API_CP --> SEARCH
-    API_OB --> STORE
-    API_OB -->|dispatch| PARSE
-    API_CP -->|dispatch| MATCH
-    API_EV --> STORE
     API_EV -->|dispatch| PROP
-    API_CON --> CRYPTO
+    API_OB -->|dispatch| PARSE
     API_CON -->|dispatch| SYNC
+    API_CP -->|dispatch| MATCH
     API_NOT --> NOTIFY
+    API_CP --> SCORE
 
     PARSE --> DOCMOD
-    PARSE --> ANTH
     PARSE --> EMBED
     PARSE -->|chains| BACK
     MATCH --> SCORE
     MATCH --> NOTIFY
-    SYNC --> GDRIVE
     SYNC --> CRYPTO
-    SYNC --> SCORE
     RECOMP --> SCORE
 
-    SCORE --> RDS
+    PARSE --> ANTH
     EMBED --> VOY
-    STORE --> S3
-    SEARCH --> RDS
-    NOTIFY --> RDS
+    SYNC --> GDRIVE
 
-    PARSE --> RDS
-    MATCH --> RDS
-    PROP --> RDS
-    BACK --> RDS
-    SYNC --> RDS
-`} caption="Internal application architecture — pages, API routes, services, background jobs, and data stores" />
+    Services --> RDS
+    Services --> S3_STORE
+`} caption="Internal application architecture — pages, API routes, services, background jobs, and data stores. All jobs and services read/write RDS via Drizzle ORM." />
 
 ### Scoring pipeline
 
