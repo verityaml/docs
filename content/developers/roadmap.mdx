@@ -35,30 +35,52 @@ All 32 feature specs are tracked in the main repository's `SPECLOG.md`. Current 
 | AWS Background Jobs | Complete |
 | AWS E2E Pipeline | Complete |
 | AWS CI/CD Consolidation | Complete |
-| AWS Provider Swap + Cutover | Not Started |
+| AWS Provider Swap + Cutover | Complete |
 | Reference-Based Extraction | Complete |
-| Event-Based Score Recomputation | In Progress |
+| Event-Based Score Recomputation | Complete |
 | Score Change UI & Notifications | Complete |
 | Google Drive Connector | In Progress |
 | Desktop App | In Progress |
 
+**30 complete**, 2 in progress, 1 removed.
+
 ---
 
-## AWS migration
+## In progress
 
-Migration from Vercel + Supabase + Inngest to AWS-native services (ECS Fargate, RDS, S3, SQS+Lambda, Bedrock, SES). 8-phase plan over ~5 weeks, funded by $5k-25k in AWS credits. Adds CloudFront CDN, AWS WAF, and CDK Pipelines for IaC.
+### Google Drive Connector
 
-**Phases 1–4 and CI/CD consolidation (Phase 4.75)** are complete. Background jobs run on SQS + Lambda, file storage uses S3, the database runs on RDS, and GitHub Actions handles CI/CD with a staging-first pipeline gated by E2E tests. **Phase 5 (Provider Swap + Cutover)** — Supabase/Inngest/Vercel removal, DNS cutover — is not yet started. SES email is already live.
+External integration for automated evidence discovery and classification. Feature-flagged behind `connectors_enabled` in organization metadata.
 
-See the full [AWS migration plan](/developers/aws-migration) for architecture diagrams, cost analysis, and phase details.
+**Done:**
+- Connector schema with KMS envelope encryption for OAuth credentials
+- Google Drive OAuth flow (authorize + callback with PKCE)
+- Sync pipeline: SQS → Lambda → list files → batch LLM classification (Haiku) → score deltas
+- Connector UI: folder picker, file list with classification badges, sync results
+- Stale file detection and `consecutiveMissing` tracking
+
+**Remaining:**
+- OAuth stability improvements (token refresh edge cases)
+- Multi-provider support framework (SharePoint, OneDrive planned)
+
+### Desktop App
+
+Tauri v2 macOS app with offline caching and system tray.
+
+**Done (phases 1–7, 10–11):**
+- Onboarding flow, dashboard snapshot, system tray
+- Cookie-based SSR auth, cross-origin token bootstrap
+- Dev-mode polling auth fallback
+- 12 post-deploy smoke tests
+
+**Remaining:**
+- Phase 0: Apple Developer enrollment
+- Phase 8: Auto-updates
+- Phase 9: CI/CD (code signing, DMG notarization)
 
 ---
 
 ## Planned — post-partnership
-
-### ~~Evidence table rename~~ — Complete
-
-Renamed `evidence_attachments` to `evidence` in PR #214 (migration #273).
 
 ### Notifications
 
@@ -68,14 +90,10 @@ Renamed `evidence_attachments` to `evidence` in PR #214 (migration #273).
 
 ### Consent order lifecycle
 
-- Container-level lifecycle: `issued` &rarr; `remediation_in_progress` &rarr; node-level closure &rarr; `order_lifted`
-- Different from examination lifecycle — container never fully archives
+- Container-level lifecycle: `issued` → `remediation_in_progress` → node-level closure → `order_lifted`
+- Different from obligation lifecycle — container never fully archives
 - Cross-department assignment for findings spanning multiple business lines
 - Recurring deadline support via scheduled background jobs (call reports quarterly, attestations monthly)
-
-### ~~Schema rename: examinations to obligations~~ — Complete
-
-Renamed the `examinations` table to `obligations` in PR #304. Cascaded to uploads, correspondence, FK columns, and storage paths.
 
 ### Bulk assignment
 
@@ -106,20 +124,13 @@ Structured quarterly progress reports for regulators. Planned for consent order 
 
 ## Infrastructure
 
-### AWS CI/CD integration tests
-
-- Post-deploy smoke test endpoint (`/api/health/smoke`) — verifies SQS, Lambda, and RDS pipeline after each staging deploy
-- Migrate Playwright E2E suite to run against `staging.verityaml.com` via CodePipeline post-deploy stage
-- E2E must pass on staging before manual approval gates production deploy
-- Replaces Vercel-hosted E2E tests after Vercel decommission
-
 ### Performance
 
 - ~~Database indexes on `session(user_id)`, `invitation(organization_id, email)`, `audit_log(org_id, created_at)`~~ — Done in PR #267
-- Partial unique indexes to prevent duplicate linked accounts and pending invites
-- Remove Voyage AI rate-limit sleep after upgrading from free tier
+- ~~Partial unique indexes to prevent duplicate linked accounts and pending invites~~ — Done
 - ~~GIN index on `scoring_criteria.linked_evidence` for evidence library queries~~ — Done in PR #270
-- Index on `evidence(org_id)` for evidence library filtering
+- ~~Index on `evidence(org_id)` for evidence library filtering~~ — Done
+- Voyage AI embedding delay is now config-driven (`EMBEDDING_DELAY_MS` env var, default 100ms) — remove entirely after upgrading from free tier
 
 ### ~~Auth and tenancy~~ — Mostly Complete
 
@@ -127,10 +138,6 @@ Structured quarterly progress reports for regulators. Planned for consent order 
 - ~~Org slug collision handling~~ — Done in PR #317 (auto-numeric suffix retry via server-side endpoint)
 - ~~Cross-tenant isolation tests~~ — Done in PR #317 (~15 E2E test cases covering obligations, programs, domains, evidence, remediation)
 - Atomic signup (single server-side endpoint that rolls back on failure)
-
-### RLS
-
-- `SET LOCAL app.current_user_id` in Drizzle transaction wrapper for per-user RLS enforcement
 
 ### Accessibility
 
