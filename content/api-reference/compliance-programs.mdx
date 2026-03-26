@@ -1,6 +1,6 @@
 ---
 title: Compliance programs
-description: Programs, domains, scoring criteria, evidence linking, and auto-matching
+description: Programs, domains, scoring criteria, evidence linking, snapshots, and auto-matching
 ---
 
 ## List programs
@@ -14,14 +14,15 @@ Returns all compliance programs for the organization, each with its domains.
   - `id` — Human-readable ID (e.g., `CP-2026-001`)
   - `regulationType` — `bsa_aml` or `third_party_oversight`
   - `name` — Program display name
-  - `domains` — Array of domain objects with `id`, `category`, `label`, `score`
+  - `currentScore` — Aggregated program score
+  - `domains` — Array of domain objects with `id`, `domainKey`, `domainLabel`, `currentScore`, `totalCriteria`, `sufficientCriteria`, `partialCriteria`, `missingCriteria`
 </ResponseField>
 
 ---
 
 ## Get program
 
-<ParamField path="method" type="GET">`/api/compliance-programs/{id}`</ParamField>
+<ParamField path="method" type="GET">`/api/compliance-programs/[id]`</ParamField>
 
 <ParamField path="id" type="string" required>
   Program ID (e.g., `CP-2026-001`).
@@ -33,16 +34,76 @@ Returns all compliance programs for the organization, each with its domains.
 
 ---
 
+## Create program
+
+<ParamField path="method" type="POST">`/api/compliance-programs`</ParamField>
+
+Creates a new compliance program with domains and optional criteria from `SCORING_CRITERIA_DEFINITIONS`.
+
+<ParamField body="name" type="string">
+  Program display name.
+</ParamField>
+
+<ParamField body="regulationType" type="string" required>
+  Regulation type from `REGULATION_CONFIG` (e.g., `bsa_aml`, `third_party_oversight`).
+</ParamField>
+
+<ParamField body="domains" type="array">
+  Array of domain keys to include. Defaults to all categories for the regulation type.
+</ParamField>
+
+<ParamField body="populateCriteria" type="boolean">
+  Whether to populate criteria from `SCORING_CRITERIA_DEFINITIONS`. Defaults to `true`.
+</ParamField>
+
+<ParamField body="baseline" type="object">
+  Optional map of domain keys to initial evidence statuses for baseline assessment.
+</ParamField>
+
+<ResponseField name="data.program" type="object">
+  The created program with domains and criteria.
+</ResponseField>
+
+---
+
+## Update program
+
+<ParamField path="method" type="PATCH">`/api/compliance-programs/[id]`</ParamField>
+
+Update program name or add/remove domains.
+
+<ParamField body="name" type="string">
+  Updated program name.
+</ParamField>
+
+<ParamField body="addDomains" type="array">
+  Domain keys to add.
+</ParamField>
+
+<ParamField body="removeDomains" type="array">
+  Domain keys to remove.
+</ParamField>
+
+---
+
+## Delete program
+
+<ParamField path="method" type="DELETE">`/api/compliance-programs/[id]`</ParamField>
+
+Deletes a program with FK cascade cleanup of domains and criteria.
+
+---
+
 ## Get domain details
 
-<ParamField path="method" type="GET">`/api/compliance-programs/{id}/domains/{domainId}`</ParamField>
+<ParamField path="method" type="GET">`/api/compliance-programs/[id]/domains/[domainId]`</ParamField>
 
 <ParamField path="id" type="string" required>
   Program ID.
 </ParamField>
 
 <ParamField path="domainId" type="string" required>
-  Domain ID.
+  Domain ID (e.g., `CD-2026-001`).
 </ParamField>
 
 <ResponseField name="data.program" type="object">
@@ -50,26 +111,27 @@ Returns all compliance programs for the organization, each with its domains.
 </ResponseField>
 
 <ResponseField name="data.domain" type="object">
-  Domain with `id`, `category`, `label`, `score`.
+  Domain with `id`, `domainKey`, `domainLabel`, `currentScore`, criteria counts.
 </ResponseField>
 
 <ResponseField name="data.criteria" type="array">
   Array of scoring criteria for this domain. Each criterion includes:
-  - `id` — Criterion ID
-  - `text` — What the regulation requires
+  - `id` — Criterion ID (e.g., `SC-2026-001`)
+  - `criterionText` — What the regulation requires
   - `regulatorySourceId` — FK to knowledge base
   - `evidenceStatus` — `missing`, `stale`, `partial`, or `sufficient`
   - `linkedEvidence` — JSONB array of linked evidence entries
   - `reviewerNotes` — Free-text notes
+  - `sortOrder` — Display order
 </ResponseField>
 
 ---
 
 ## Update scoring criterion
 
-<ParamField path="method" type="PATCH">`/api/compliance-programs/{id}/domains/{domainId}/criteria/{criteriaId}`</ParamField>
+<ParamField path="method" type="PATCH">`/api/compliance-programs/[id]/domains/[domainId]/criteria/[criteriaId]`</ParamField>
 
-Updates a scoring criterion's evidence status, notes, or linked evidence. Automatically recomputes the domain score.
+Updates a scoring criterion's evidence status, notes, or linked evidence. Automatically recomputes the domain and program scores via `applyScoreDelta()`.
 
 <ParamField body="evidenceStatus" type="string">
   New evidence status. One of: `missing`, `stale`, `partial`, `sufficient`.
@@ -79,11 +141,15 @@ Updates a scoring criterion's evidence status, notes, or linked evidence. Automa
   Updated reviewer notes.
 </ParamField>
 
+<ParamField body="changeReason" type="string">
+  Reason for the status change (recorded in score change events).
+</ParamField>
+
 <ParamField body="addEvidence" type="object">
   Link new evidence to this criterion.
 
   <ParamField body="addEvidence.sourceType" type="string" required>
-    One of: `evidence_attachment`, `domain_upload`, `library`, `remediation`, `external_url`.
+    One of: `evidence_attachment`, `domain_upload`, `library`, `remediation`, `external_url`, `connector`.
   </ParamField>
 
   <ParamField body="addEvidence.sourceId" type="string" required>
@@ -116,98 +182,74 @@ Updates a scoring criterion's evidence status, notes, or linked evidence. Automa
 </ParamField>
 
 <ResponseField name="data.criterion" type="object">
-  Updated criterion.
+  Updated criterion with new `linkedEvidence` array.
 </ResponseField>
 
 <ResponseField name="data.domain" type="object">
-  Updated domain with recomputed score.
+  Updated domain with recomputed `currentScore`, criteria counts, and `programScore`.
 </ResponseField>
 
 <Note>
-Maximum 50 evidence items per criterion.
+Maximum 50 evidence items per criterion. Score changes trigger `scoreChangeEvents` audit records. If the program score changes by 5+ points, an auto-snapshot is created (1 hour cooldown).
 </Note>
 
 ---
 
-## Create program
+## Criterion audit trail
 
-<ParamField path="method" type="POST">`/api/compliance-programs`</ParamField>
+<ParamField path="method" type="GET">`/api/compliance-programs/[id]/domains/[domainId]/criteria/[criteriaId]/audit`</ParamField>
 
-Creates a new compliance program with domains and optional criteria from `SCORING_CRITERIA_DEFINITIONS`.
-
-<ParamField body="name" type="string" required>
-  Program display name.
-</ParamField>
-
-<ParamField body="regulationType" type="string" required>
-  Regulation type from `REGULATION_CONFIG` (e.g., `bsa_aml`, `third_party_oversight`).
-</ParamField>
-
-<ParamField body="domains" type="array">
-  Array of domain keys to include. Defaults to all categories for the regulation type.
-</ParamField>
-
-<ParamField body="includeCriteria" type="boolean">
-  Whether to populate criteria from `SCORING_CRITERIA_DEFINITIONS`. Defaults to `true`.
-</ParamField>
-
-<ParamField body="baselineStatuses" type="object">
-  Optional map of criterion definition keys to initial evidence statuses for baseline assessment.
-</ParamField>
-
-<ResponseField name="data.program" type="object">
-  The created program with domains and criteria.
-</ResponseField>
-
----
-
-## Update program
-
-<ParamField path="method" type="PATCH">`/api/compliance-programs/{id}`</ParamField>
-
-Update program name or add/remove domains.
-
-<ParamField body="name" type="string">
-  Updated program name.
-</ParamField>
-
-<ParamField body="addDomains" type="array">
-  Domain keys to add.
-</ParamField>
-
-<ParamField body="removeDomains" type="array">
-  Domain keys to remove.
-</ParamField>
-
----
-
-## Delete program
-
-<ParamField path="method" type="DELETE">`/api/compliance-programs/{id}`</ParamField>
-
-Deletes a program with FK cascade cleanup of domains and criteria.
-
----
-
-## List score snapshots
-
-<ParamField path="method" type="GET">`/api/compliance-programs/{id}/snapshots`</ParamField>
-
-Returns cursor-paginated score snapshots for a program.
+Returns cursor-paginated score change events for a scoring criterion.
 
 <ParamField query="cursor" type="string">
   Cursor for pagination.
 </ParamField>
 
-<ResponseField name="data.snapshots" type="array">
-  Array of snapshot objects with `id` (e.g., `SNAP-2026-001`), `label`, `programScore`, `domainData` (JSONB), and `createdAt`.
-</ResponseField>
+---
+
+## Criterion suggestions
+
+<ParamField path="method" type="GET">`/api/compliance-programs/[id]/domains/[domainId]/criteria/[criteriaId]/suggestions`</ParamField>
+
+Returns auto-matched evidence suggestions for a criterion.
 
 ---
 
-## Create score snapshot
+## Domain score history
 
-<ParamField path="method" type="POST">`/api/compliance-programs/{id}/snapshots`</ParamField>
+<ParamField path="method" type="GET">`/api/compliance-programs/[id]/domains/[domainId]/score-history`</ParamField>
+
+Returns score change events for the domain, used for sparklines and trend charts.
+
+---
+
+## Domain evidence
+
+<ParamField path="method" type="POST">`/api/compliance-programs/[id]/domains/[domainId]/evidence`</ParamField>
+
+Upload evidence files directly to a domain. Multipart form data with multiple files.
+
+<ParamField path="method" type="GET">`/api/compliance-programs/[id]/domains/[domainId]/evidence`</ParamField>
+
+List domain evidence. Supports `?limit=50` query param.
+
+<ParamField path="method" type="DELETE">`/api/compliance-programs/[id]/domains/[domainId]/evidence/[evidenceId]`</ParamField>
+
+Delete domain evidence with cascade cleanup from criteria JSONB.
+
+---
+
+## Score snapshots
+
+<ParamField path="method" type="GET">`/api/compliance-programs/[id]/snapshots`</ParamField>
+
+Returns cursor-paginated score snapshots for a program.
+
+<ResponseField name="data.snapshots" type="array">
+  Array of snapshot objects with `id` (e.g., `SNAP-2026-001`), `label`, `programScore`, `domainSnapshots` (JSONB), `trigger`, `createdBy`, and `createdAt`.
+</ResponseField>
+
+<ParamField path="method" type="POST">`/api/compliance-programs/[id]/snapshots`</ParamField>
 
 Captures a point-in-time snapshot of the program's scores.
 
@@ -215,74 +257,46 @@ Captures a point-in-time snapshot of the program's scores.
   Optional label (e.g., "Partnership Baseline", "Pre-60-Day Review").
 </ParamField>
 
----
-
-## Generate readiness report
-
-<ParamField path="method" type="POST">`/api/compliance-programs/{id}/report/generate`</ParamField>
-
-Generates a PDF or CSV readiness report and uploads to Supabase Storage.
-
-<ParamField body="format" type="string" required>
-  `pdf` or `csv`.
-</ParamField>
-
-<ResponseField name="data.url" type="string">
-  Signed download URL (1-hour expiry).
-</ResponseField>
-
----
-
-## Domain evidence
-
-<ParamField path="method" type="POST">`/api/compliance-programs/{id}/domains/{domainId}/evidence`</ParamField>
-
-Upload evidence files directly to a domain. Multipart form data with multiple files.
-
-<ParamField path="method" type="GET">`/api/compliance-programs/{id}/domains/{domainId}/evidence`</ParamField>
-
-List domain evidence. Supports `?unlinked=true` filter.
-
-<ParamField path="method" type="DELETE">`/api/compliance-programs/{id}/domains/{domainId}/evidence/{evidenceId}`</ParamField>
-
-Delete domain evidence with cascade cleanup from criteria JSONB.
-
----
-
-## Criterion audit trail
-
-<ParamField path="method" type="GET">`/api/compliance-programs/{id}/domains/{domainId}/criteria/{criteriaId}/audit`</ParamField>
-
-Returns cursor-paginated audit entries for a scoring criterion.
-
-<ParamField query="cursor" type="string">
-  Cursor for pagination.
-</ParamField>
-
-<ParamField query="type" type="string">
-  Filter by change type: `status`, `evidence`, `notes`.
+<ParamField body="reason" type="string">
+  Optional reason for the snapshot.
 </ParamField>
 
 ---
 
 ## Trigger auto-match
 
-<ParamField path="method" type="POST">`/api/compliance-programs/{id}/auto-match`</ParamField>
+<ParamField path="method" type="POST">`/api/compliance-programs/[id]/auto-match`</ParamField>
 
-Triggers AI-powered evidence matching between examinations' evidence and the program's scoring criteria. Supports batch matching across multiple examinations.
-
-<ParamField body="examinationId" type="string">
-  Single examination ID to match evidence from. Backward compatible — use `examinationIds` for batch matching.
-</ParamField>
+Triggers AI-powered evidence matching between obligation evidence and the program's scoring criteria. Dispatches the `auto-match-evidence` SQS job.
 
 <ParamField body="examinationIds" type="array">
-  Array of examination IDs to match evidence from. Use this for multi-exam batch matching.
+  Array of obligation IDs to match evidence from.
 </ParamField>
 
 <ResponseField name="data.status" type="string">
   `matching` — the background job has been queued.
 </ResponseField>
 
-<ResponseField name="data.programId" type="string">
-  The program being matched against.
+---
+
+## Recompute scores
+
+<ParamField path="method" type="POST">`/api/compliance-programs/[id]/recompute`</ParamField>
+
+Recomputes all domain and program scores from current criteria states. Used for drift correction.
+
+---
+
+## Generate readiness report
+
+<ParamField path="method" type="POST">`/api/compliance-programs/[id]/report/generate`</ParamField>
+
+Generates a PDF or CSV readiness report and uploads to S3.
+
+<ParamField body="format" type="string" required>
+  `pdf` or `csv`.
+</ParamField>
+
+<ResponseField name="data.url" type="string">
+  Signed S3 download URL (1-hour expiry).
 </ResponseField>

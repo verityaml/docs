@@ -1,26 +1,30 @@
 ---
-title: Examinations
-description: Create, manage, and track compliance examinations — including request items, evidence, uploads, and response package generation
+title: Obligations
+description: Create, manage, and track regulatory obligations — including request items, evidence, uploads, and response package generation
 ---
 
-## List examinations
+<Note>
+Obligations were previously called "examinations" in the codebase. The table was renamed but API routes now live at `/api/obligations/`. IDs use the format `OB-2026-001`.
+</Note>
 
-<ParamField path="method" type="GET">`/api/examinations`</ParamField>
+## List obligations
 
-Returns all examinations for the current organization.
+<ParamField path="method" type="GET">`/api/obligations`</ParamField>
 
-<ResponseField name="data.examinations" type="array">
-  Array of examination objects with `id`, `name`, `type`, `status`, `examiner`, `dateReceived`, `responseDeadline`, `createdAt`, `updatedAt`.
+Returns all obligations for the current organization.
+
+<ResponseField name="data.obligations" type="array">
+  Array of obligation objects with `id`, `name`, `type`, `status`, `examiner`, `dateReceived`, `responseDeadline`, `obligationType`, `regulationType`, `createdAt`, `updatedAt`.
 </ResponseField>
 
 ---
 
-## Create examination
+## Create obligation
 
-<ParamField path="method" type="POST">`/api/examinations`</ParamField>
+<ParamField path="method" type="POST">`/api/obligations`</ParamField>
 
 <ParamField body="type" type="string" required>
-  Examination type. One of: `regulatory`, `bank_partner`, `internal_audit`.
+  Obligation type. One of: `regulatory`, `bank_partner`, `internal_audit`.
 </ParamField>
 
 <ParamField body="examiner" type="string">
@@ -28,10 +32,10 @@ Returns all examinations for the current organization.
 </ParamField>
 
 <ParamField body="name" type="string">
-  Display name for the examination.
+  Display name for the obligation.
 </ParamField>
 
-<ParamField body="dateReceived" type="string">
+<ParamField body="dateReceived" type="string" required>
   ISO date string when the request letter was received.
 </ParamField>
 
@@ -39,32 +43,40 @@ Returns all examinations for the current organization.
   ISO date string for the response deadline.
 </ParamField>
 
-<ResponseField name="data.examination" type="object">
-  The created examination with auto-generated ID (e.g., `EX-2026-001`). Status starts as `preparing`.
+<ParamField body="obligationType" type="string">
+  One of: `examination`, `consent_order`, `call_report`, `attestation`. Defaults to `examination`.
+</ParamField>
+
+<ParamField body="regulationType" type="string">
+  One of: `bsa_aml`, `third_party_oversight`. Defaults to `bsa_aml`.
+</ParamField>
+
+<ResponseField name="data.obligation" type="object">
+  The created obligation with auto-generated ID (e.g., `OB-2026-001`). Status starts as `preparing`.
 </ResponseField>
 
 ---
 
-## Get examination
+## Get obligation
 
-<ParamField path="method" type="GET">`/api/examinations/{examId}`</ParamField>
+<ParamField path="method" type="GET">`/api/obligations/[id]`</ParamField>
 
-<ParamField path="examId" type="string" required>
-  Examination ID (e.g., `EX-2026-001`).
+<ParamField path="id" type="string" required>
+  Obligation ID (e.g., `OB-2026-001`).
 </ParamField>
 
 ---
 
-## Update examination
+## Update obligation
 
-<ParamField path="method" type="PATCH">`/api/examinations/{examId}`</ParamField>
+<ParamField path="method" type="PATCH">`/api/obligations/[id]`</ParamField>
 
 <ParamField body="status" type="string">
   One of: `preparing`, `in_progress`, `submitted`, `findings_received`, `archived`.
 </ParamField>
 
 <ParamField body="type" type="string">
-  Examination type.
+  Obligation type.
 </ParamField>
 
 <ParamField body="examiner" type="string">
@@ -84,45 +96,65 @@ Returns all examinations for the current organization.
 </ParamField>
 
 <Note>
-Archived examinations can only update `findingsReportPath`.
+Archived obligations can only update `findingsReportPath`.
 </Note>
 
 ---
 
-## Delete examination
+## Delete obligation
 
-<ParamField path="method" type="DELETE">`/api/examinations/{examId}`</ParamField>
+<ParamField path="method" type="DELETE">`/api/obligations/[id]`</ParamField>
 
-Deletes the examination and all associated data (request items, evidence, uploads). Cleans up files from storage.
-
----
-
-## Archive examination
-
-<ParamField path="method" type="POST">`/api/examinations/{examId}/archive`</ParamField>
-
-Transitions the examination to `archived` status. Only valid from `submitted` or `findings_received`.
+Deletes the obligation and all associated data (request items, evidence, uploads). Cleans up files from S3.
 
 ---
 
-## Unarchive examination
+## Archive obligation
 
-<ParamField path="method" type="POST">`/api/examinations/{examId}/unarchive`</ParamField>
+<ParamField path="method" type="POST">`/api/obligations/[id]/archive`</ParamField>
 
-Transitions an archived examination back to `in_progress`. Idempotent — if already `in_progress`, returns 200 with current record.
+Transitions the obligation to `archived` status. Only valid from `submitted` or `findings_received`.
+
+---
+
+## Unarchive obligation
+
+<ParamField path="method" type="POST">`/api/obligations/[id]/unarchive`</ParamField>
+
+Transitions an archived obligation back to `in_progress`. Idempotent — if already `in_progress`, returns 200 with current record.
+
+---
+
+## Upload request letter
+
+<ParamField path="method" type="POST">`/api/obligations/[id]/upload`</ParamField>
+
+Uploads a request letter for AI parsing. Triggers the `parse-examination` background job which extracts request items using unpdf and Claude.
+
+<ParamField body="file" type="file" required>
+  The request letter file. Max 50 MB. Allowed: PDF, CSV, PNG, JPG.
+</ParamField>
+
+<ResponseField name="data.uploadId" type="string">
+  Upload ID for tracking parse progress.
+</ResponseField>
+
+<ResponseField name="data.status" type="string">
+  Initial status: `pending`.
+</ResponseField>
 
 ---
 
 ## List request items
 
-<ParamField path="method" type="GET">`/api/examinations/{examId}/items`</ParamField>
+<ParamField path="method" type="GET">`/api/obligations/[id]/items`</ParamField>
 
 <ParamField query="after" type="number">
-  Sort order cursor for polling during parse (returns items with `sortOrder > after`).
+  Sort order cursor for polling during parse (returns items with `sortOrder` greater than `after`).
 </ParamField>
 
 <ResponseField name="data.items" type="array">
-  Array of request items.
+  Array of request items with `id` (UUID), `itemNumber`, `originalText`, `ffiecSection`, `category`, `evidenceType`, `guidanceNotes`, `status`, `assigneeId`, `dueDate`, `sortOrder`.
 </ResponseField>
 
 <ResponseField name="data.parseStatus" type="string">
@@ -137,7 +169,9 @@ Transitions an archived examination back to `in_progress`. Idempotent — if alr
 
 ## Create request item
 
-<ParamField path="method" type="POST">`/api/examinations/{examId}/items`</ParamField>
+<ParamField path="method" type="POST">`/api/obligations/[id]/items`</ParamField>
+
+Accepts a single item or an array for bulk insert.
 
 <ParamField body="originalText" type="string" required>
   The examiner's request text.
@@ -159,7 +193,7 @@ Transitions an archived examination back to `in_progress`. Idempotent — if alr
 
 ## Update request item
 
-<ParamField path="method" type="PATCH">`/api/examinations/{examId}/items/{itemId}`</ParamField>
+<ParamField path="method" type="PATCH">`/api/obligations/[id]/items/[itemId]`</ParamField>
 
 <ParamField body="originalText" type="string">
   Updated request text.
@@ -186,24 +220,24 @@ Transitions an archived examination back to `in_progress`. Idempotent — if alr
 </ParamField>
 
 <Note>
-Updating any item on a `preparing` examination automatically advances the exam to `in_progress`.
+Updating any item on a `preparing` obligation automatically advances it to `in_progress`.
 </Note>
 
 ---
 
 ## List evidence attachments
 
-<ParamField path="method" type="GET">`/api/examinations/{examId}/items/{itemId}/evidence`</ParamField>
+<ParamField path="method" type="GET">`/api/obligations/[id]/items/[itemId]/evidence`</ParamField>
 
 <ResponseField name="data.attachments" type="array">
-  Array of evidence attachment objects with `id`, `fileName`, `filePath`, `fileSize`, `mimeType`, `createdAt`.
+  Array of evidence attachment objects with `id` (UUID), `fileName`, `filePath`, `fileSize`, `mimeType`, `uploadedBy`, `uploadedAt`.
 </ResponseField>
 
 ---
 
 ## Upload evidence
 
-<ParamField path="method" type="POST">`/api/examinations/{examId}/items/{itemId}/evidence`</ParamField>
+<ParamField path="method" type="POST">`/api/obligations/[id]/items/[itemId]/evidence`</ParamField>
 
 Accepts either file upload (`multipart/form-data`) or external URL (`application/json`).
 
@@ -223,45 +257,25 @@ Accepts either file upload (`multipart/form-data`) or external URL (`application
   Display name for the URL evidence.
 </ParamField>
 
+<ParamField body="sourceSystem" type="string">
+  Source system identifier (e.g., `sharepoint`, `google_drive`).
+</ParamField>
+
 ---
 
 ## Delete evidence
 
-<ParamField path="method" type="DELETE">`/api/examinations/{examId}/items/{itemId}/evidence/{evidenceId}`</ParamField>
+<ParamField path="method" type="DELETE">`/api/obligations/[id]/items/[itemId]/evidence/[evidenceId]`</ParamField>
 
-Deletes the evidence attachment and cleans up the file from storage.
-
----
-
-## Upload examination file
-
-<ParamField path="method" type="POST">`/api/examinations/{examId}/upload`</ParamField>
-
-Uploads an examination request letter for AI parsing. Triggers the `parse-examination` background job.
-
-<ParamField body="file" type="file" required>
-  The request letter file. Max 50 MB. Allowed: PDF, CSV, PNG, JPG.
-</ParamField>
-
-<ResponseField name="data.uploadId" type="string">
-  Upload ID for tracking parse progress.
-</ResponseField>
-
-<ResponseField name="data.status" type="string">
-  Initial status: `pending`.
-</ResponseField>
+Deletes the evidence attachment and cleans up the file from S3.
 
 ---
 
-## Get evidence link count
+## Evidence link count
 
-<ParamField path="method" type="GET">`/api/examinations/{examId}/evidence-link-count`</ParamField>
+<ParamField path="method" type="GET">`/api/obligations/[id]/evidence-link-count`</ParamField>
 
-Returns the count of pending (auto-applied) evidence links for an obligation. Used for the sidebar badge.
-
-<ParamField path="examId" type="string" required>
-  Examination/obligation ID.
-</ParamField>
+Returns the count of pending (auto-applied) evidence links for this obligation. Used for the sidebar badge.
 
 <ResponseField name="data.count" type="number">
   Number of `auto_applied` (pending review) evidence links targeting items in this obligation.
@@ -269,50 +283,50 @@ Returns the count of pending (auto-applied) evidence links for an obligation. Us
 
 ---
 
-## Get report data
+## Correspondence
 
-<ParamField path="method" type="GET">`/api/examinations/{examId}/report`</ParamField>
+<ParamField path="method" type="GET">`/api/obligations/[id]/correspondence`</ParamField>
 
-Returns aggregated report data for the examination, including item counts by pillar and status.
+List post-exam correspondence documents.
 
----
+<ParamField path="method" type="POST">`/api/obligations/[id]/correspondence`</ParamField>
 
-## Save report configuration
+Upload correspondence. Multipart form data with `file` and `type` fields.
 
-<ParamField path="method" type="POST">`/api/examinations/{examId}/report`</ParamField>
+<ParamField path="method" type="DELETE">`/api/obligations/[id]/correspondence/[corrId]`</ParamField>
 
-<ParamField body="format" type="string" required>
-  Export format: `pdf` or `zip`.
-</ParamField>
-
-<ParamField body="watermark" type="boolean">
-  Enable watermark on PDF output.
-</ParamField>
-
-<ParamField body="batesNumbering" type="boolean">
-  Enable Bates numbering on PDF output.
-</ParamField>
+Delete a correspondence document.
 
 ---
 
-## Generate report
+## Findings
 
-<ParamField path="method" type="POST">`/api/examinations/{examId}/report/generate`</ParamField>
+<ParamField path="method" type="GET">`/api/obligations/[id]/findings`</ParamField>
 
-Generates the response package and returns a signed download URL (valid for 1 hour).
+List findings for this obligation.
 
-<ParamField body="format" type="string" required>
-  Export format: `pdf` or `zip`.
+<ParamField path="method" type="POST">`/api/obligations/[id]/findings`</ParamField>
+
+<ParamField body="title" type="string" required>
+  Finding title.
 </ParamField>
+
+<ParamField body="content" type="string" required>
+  Finding content.
+</ParamField>
+
+---
+
+## Report
+
+<ParamField path="method" type="GET">`/api/obligations/[id]/report`</ParamField>
+
+Returns aggregated report data including item counts by category and status.
+
+<ParamField path="method" type="POST">`/api/obligations/[id]/report/generate`</ParamField>
+
+Generates a response package and returns a signed download URL (valid 1 hour).
 
 <ResponseField name="data.downloadUrl" type="string">
-  Signed URL for downloading the generated package.
-</ResponseField>
-
-<ResponseField name="data.format" type="string">
-  The format that was generated.
-</ResponseField>
-
-<ResponseField name="data.expiresAt" type="string">
-  ISO timestamp when the download URL expires.
+  Signed S3 URL for downloading the generated package.
 </ResponseField>

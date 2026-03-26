@@ -1,0 +1,126 @@
+---
+title: Connectors
+description: External integrations — manage Google Drive and other connectors for automated evidence collection
+---
+
+Connectors integrate with external file storage services to automatically discover and classify compliance evidence.
+
+## List connectors
+
+<ParamField path="method" type="GET">`/api/connectors`</ParamField>
+
+Returns all configured connectors for the organization.
+
+<ResponseField name="data.connectors" type="array">
+  Array of connector objects. Each includes:
+  - `id` — Connector ID
+  - `connectorType` — e.g., `google_drive`
+  - `displayName` — User-assigned name
+  - `enabled` — Whether the connector is active
+  - `lastSyncAt` — Last successful sync timestamp
+  - `lastSyncStatus` — `idle`, `syncing`, `success`, or `error`
+  - `fileCount` — Number of synced files
+  - `providerConfig` — Provider-specific config (folder selections, etc.)
+</ResponseField>
+
+---
+
+## Delete connector
+
+<ParamField path="method" type="DELETE">`/api/connectors/[id]`</ParamField>
+
+Deletes a connector and all its synced file records.
+
+---
+
+## Trigger sync
+
+<ParamField path="method" type="POST">`/api/connectors/[id]/sync`</ParamField>
+
+Triggers a sync for the connector. Dispatches the `sync-connector` SQS job which lists files, classifies them, and creates evidence records.
+
+<ResponseField name="data.syncStarted" type="boolean">
+  `true` when the sync job has been queued.
+</ResponseField>
+
+---
+
+## Sync results
+
+<ParamField path="method" type="GET">`/api/connectors/[id]/results`</ParamField>
+
+Returns the latest sync progress and results.
+
+<ResponseField name="data.results" type="object">
+  Sync results including progress percentages, file counts, and any error details.
+</ResponseField>
+
+---
+
+## List synced files
+
+<ParamField path="method" type="GET">`/api/connectors/[id]/files`</ParamField>
+
+Returns files discovered by the connector with their AI classification results.
+
+<ParamField query="folderPath" type="string">
+  Filter by folder path.
+</ParamField>
+
+<ParamField query="limit" type="number">
+  Results per page. Default: 100.
+</ParamField>
+
+<ResponseField name="data.files" type="array">
+  Array of connector file objects. Each includes:
+  - `id` — File ID
+  - `externalId` — Provider file ID
+  - `fileName` — File name
+  - `folderPath` — Folder path in the provider
+  - `classification` — AI classification results (relevance, category, confidence)
+  - `externalModifiedAt` — Last modified in the provider
+</ResponseField>
+
+---
+
+## Confirm file classification
+
+<ParamField path="method" type="POST">`/api/connectors/[id]/files/[fileId]/confirm`</ParamField>
+
+Confirms an AI-suggested file classification and creates an evidence record.
+
+<ParamField body="classification" type="string" required>
+  Classification type: `evidence` or `supporting`.
+</ParamField>
+
+---
+
+## Update selected folders
+
+<ParamField path="method" type="PATCH">`/api/connectors/[id]/folders`</ParamField>
+
+Updates which folders the connector should sync.
+
+<ParamField body="selectedFolders" type="array" required>
+  Array of folder IDs to sync.
+</ParamField>
+
+---
+
+## Browse provider folders
+
+<ParamField path="method" type="GET">`/api/connectors/[id]/drive/folders`</ParamField>
+
+Browse the folder structure of the connected provider (e.g., Google Drive).
+
+<ParamField query="parentId" type="string">
+  Parent folder ID. Omit for root.
+</ParamField>
+
+<ParamField query="limit" type="number">
+  Results per page. Default: 50.
+</ParamField>
+
+<ResponseField name="data.folders" type="array">
+  Array of folder objects with `id`, `name`, `hasChildren`.
+</ResponseField>

@@ -1,19 +1,19 @@
 ---
 title: Remediation items
-description: Remediation items — create, track, and remediate examination findings
+description: Remediation items — create, track, and remediate obligation findings
 ---
 
-Remediation items track examination findings and their remediation. They are created from archived examinations and linked to specific request items.
+Remediation items track findings from obligations and their remediation. They are created from archived obligations and linked to specific request items.
 
 <Note>
-Remediation items were previously called "MRAs" (Matters Requiring Attention). The API routes have been updated to `/api/remediation-items/`. IDs use the format `REM-2026-001`.
+Remediation items were previously called "MRAs" (Matters Requiring Attention). The API routes live at `/api/remediation-items/`. IDs use the format `REM-2026-001`.
 </Note>
 
 ## List remediation items
 
 <ParamField path="method" type="GET">`/api/remediation-items`</ParamField>
 
-Returns all remediation items for the organization, enriched with examination names.
+Returns all remediation items for the organization, enriched with obligation names.
 
 <ParamField query="status" type="string">
   Filter by status (comma-separated). Valid values: `open`, `remediation_in_progress`, `closed`.
@@ -27,20 +27,20 @@ Returns all remediation items for the organization, enriched with examination na
   - `category` — Regulatory category
   - `status` — `open`, `remediation_in_progress`, or `closed`
   - `issuedDate` — When the finding was issued
-  - `examinationId` — Parent examination
-  - `examinationName` — Parent examination name
+  - `obligationId` — Parent obligation
+  - `obligationName` — Parent obligation name
 </ResponseField>
 
 ---
 
 ## Create remediation item
 
-<ParamField path="method" type="POST">`/api/examinations/{examId}/remediation-items`</ParamField>
+<ParamField path="method" type="POST">`/api/obligations/[id]/remediation-items`</ParamField>
 
-Creates a new remediation item for an archived examination.
+Creates a new remediation item for an archived obligation.
 
-<ParamField path="examId" type="string" required>
-  Examination ID. Must be in `archived` status.
+<ParamField path="id" type="string" required>
+  Obligation ID. Must be in `archived` status.
 </ParamField>
 
 <ParamField body="title" type="string" required>
@@ -60,7 +60,7 @@ Creates a new remediation item for an archived examination.
 </ParamField>
 
 <ParamField body="linkedRequestItemIds" type="array" required>
-  Array of request item IDs from the examination that led to this finding. At least one required.
+  Array of request item UUIDs from the obligation that led to this finding. At least one required.
 </ParamField>
 
 <ResponseField name="data.remediationItem" type="object">
@@ -71,7 +71,7 @@ Creates a new remediation item for an archived examination.
 
 ## Update remediation item
 
-<ParamField path="method" type="PATCH">`/api/remediation-items/{itemId}`</ParamField>
+<ParamField path="method" type="PATCH">`/api/remediation-items/[itemId]`</ParamField>
 
 <ParamField path="itemId" type="string" required>
   Remediation item ID (e.g., `REM-2026-001`).
@@ -101,17 +101,17 @@ Status transitions are forward-only. You cannot move a remediation item back to 
 
 ## List remediation evidence
 
-<ParamField path="method" type="GET">`/api/remediation-items/{itemId}/evidence`</ParamField>
+<ParamField path="method" type="GET">`/api/remediation-items/[itemId]/evidence`</ParamField>
 
 <ResponseField name="data.evidence" type="array">
-  Array of remediation evidence files with `id`, `fileName`, `filePath`, `fileSize`, `mimeType`, `createdAt`.
+  Array of remediation evidence files with `id`, `fileName`, `filePath`, `fileSize`, `mimeType`, `uploadedAt`.
 </ResponseField>
 
 ---
 
 ## Upload remediation evidence
 
-<ParamField path="method" type="POST">`/api/remediation-items/{itemId}/evidence`</ParamField>
+<ParamField path="method" type="POST">`/api/remediation-items/[itemId]/evidence`</ParamField>
 
 Upload a file demonstrating remediation progress.
 
@@ -127,6 +127,6 @@ Upload a file demonstrating remediation progress.
 
 ## Delete remediation evidence
 
-<ParamField path="method" type="DELETE">`/api/remediation-items/{itemId}/evidence/{evidenceId}`</ParamField>
+<ParamField path="method" type="DELETE">`/api/remediation-items/[itemId]/evidence/[evidenceId]`</ParamField>
 
-Deletes a remediation evidence file and cleans up from storage.
+Deletes a remediation evidence file and cleans up from S3.

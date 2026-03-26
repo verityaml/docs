@@ -87,38 +87,21 @@ export const navigation: NavTab[] = [
         ],
       },
       {
-        group: 'Examinations',
+        group: 'Core resources',
         pages: [
-          { title: 'Examinations', href: '/api-reference/examinations' },
-        ],
-      },
-      {
-        group: 'Compliance programs',
-        pages: [
+          { title: 'Obligations', href: '/api-reference/examinations' },
           { title: 'Compliance programs', href: '/api-reference/compliance-programs' },
-        ],
-      },
-      {
-        group: 'Knowledge base',
-        pages: [
-          { title: 'Knowledge base', href: '/api-reference/knowledge-base' },
-        ],
-      },
-      {
-        group: 'Remediation items',
-        pages: [
+          { title: 'Evidence', href: '/api-reference/evidence' },
+          { title: 'Evidence links', href: '/api-reference/evidence-links' },
           { title: 'Remediation items', href: '/api-reference/mras' },
         ],
       },
       {
-        group: 'Evidence links',
+        group: 'Supporting',
         pages: [
-          { title: 'Evidence links', href: '/api-reference/evidence-links' },
-        ],
-      },
-      {
-        group: 'Organization',
-        pages: [
+          { title: 'Knowledge base', href: '/api-reference/knowledge-base' },
+          { title: 'Notifications', href: '/api-reference/notifications' },
+          { title: 'Connectors', href: '/api-reference/connectors' },
           { title: 'Organization', href: '/api-reference/organization' },
         ],
       },

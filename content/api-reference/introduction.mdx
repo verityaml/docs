@@ -30,7 +30,7 @@ All tenant-scoped queries filter by `orgId` for multi-tenant isolation.
 POST and PATCH endpoints accept JSON request bodies:
 
 ```bash
-curl -X POST /api/examinations \
+curl -X POST /api/obligations \
   -H "Content-Type: application/json" \
   -d '{"type": "regulatory", "examiner": "FDIC", "responseDeadline": "2026-03-15"}'
 ```
@@ -40,7 +40,7 @@ curl -X POST /api/examinations \
 Evidence and document upload endpoints accept `multipart/form-data`:
 
 ```bash
-curl -X POST /api/examinations/EX-2026-001/upload \
+curl -X POST /api/obligations/OB-2026-001/upload \
   -F "file=@request-letter.pdf"
 ```
 
@@ -51,8 +51,9 @@ Maximum file size: 50 MB. Allowed types: PDF, DOCX, XLSX, CSV, PNG, JPG.
 GET endpoints use query parameters for filtering and pagination:
 
 ```bash
-GET /api/knowledge-base/browse?domain=bsa_aml&limit=20&offset=0
-GET /api/mras?status=open,remediation_in_progress
+GET /api/knowledge-base/browse?domain=bsa_aml&limit=20
+GET /api/remediation-items?status=open,remediation_in_progress
+GET /api/evidence?sourceType=examination&limit=50&cursor=2026-03-20T10:00:00Z:uuid
 ```
 
 ## Response format
@@ -62,8 +63,8 @@ GET /api/mras?status=open,remediation_in_progress
 ```json
 {
   "data": {
-    "examination": {
-      "id": "EX-2026-001",
+    "obligation": {
+      "id": "OB-2026-001",
       "name": "Q1 BSA Examination",
       "status": "in_progress"
     }
@@ -76,7 +77,7 @@ List endpoints wrap results in a named array:
 ```json
 {
   "data": {
-    "examinations": [...]
+    "obligations": [...]
   }
 }
 ```
@@ -87,10 +88,29 @@ List endpoints wrap results in a named array:
 {
   "error": {
     "code": "NOT_FOUND",
-    "message": "Examination not found"
+    "message": "Obligation not found"
   }
 }
 ```
+
+## Pagination
+
+List endpoints use cursor-based pagination with composite keys to handle timestamp collisions:
+
+```bash
+GET /api/evidence?limit=50&cursor=2026-03-20T10:00:00Z:550e8400-...
+```
+
+```json
+{
+  "data": {
+    "evidence": [...],
+    "nextCursor": "2026-03-19T14:00:00Z:660f9500-..."
+  }
+}
+```
+
+When `nextCursor` is present, more results are available.
 
 ## Status codes
 
@@ -108,14 +128,19 @@ List endpoints wrap results in a named array:
 
 ## ID formats
 
-Verity uses human-readable IDs throughout:
+Verity uses human-readable IDs for top-level entities and UUIDs for child records:
 
 | Resource | Format | Example |
 |----------|--------|---------|
-| Examination | `EX-YYYY-NNN` | `EX-2026-001` |
-| Request item | `RI-NNN` | `RI-001` |
-| Remediation item | `REM-YYYY-NNN` | `REM-2026-001` |
-| Snapshot | `SNAP-YYYY-NNN` | `SNAP-2026-001` |
+| Obligation | `OB-YYYY-NNN` | `OB-2026-001` |
 | Compliance program | `CP-YYYY-NNN` | `CP-2026-001` |
+| Compliance domain | `CD-YYYY-NNN` | `CD-2026-001` |
+| Scoring criterion | `SC-YYYY-NNN` | `SC-2026-001` |
+| Score snapshot | `SNAP-YYYY-NNN` | `SNAP-2026-001` |
+| Score change event | `SCE-YYYY-NNN` | `SCE-2026-001` |
+| Remediation item | `REM-YYYY-NNN` | `REM-2026-001` |
+| Request item | UUID | `550e8400-e29b-41d4-...` |
+| Evidence | UUID | `550e8400-e29b-41d4-...` |
+| Evidence link | UUID | `550e8400-e29b-41d4-...` |
 
-IDs are globally unique across all organizations.
+Human-readable IDs are globally unique across all organizations.
