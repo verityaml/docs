@@ -1,0 +1,82 @@
+---
+title: Notifications
+description: Score-driven notifications — list, read, and manage notification preferences
+---
+
+Notifications are generated automatically by score changes, threshold crossings, and program milestones.
+
+## List notifications
+
+<ParamField path="method" type="GET">`/api/notifications`</ParamField>
+
+Returns cursor-paginated notifications for the current user's organization.
+
+<ParamField query="limit" type="number">
+  Results per page. Default: 25.
+</ParamField>
+
+<ParamField query="cursor" type="string">
+  Cursor for pagination (composite: `timestamp|notificationId`).
+</ParamField>
+
+<ResponseField name="data.notifications" type="array">
+  Array of notification objects. Each includes:
+  - `id` — Notification ID
+  - `type` — `score_change`, `threshold_crossed`, `program_milestone`, or `drift_correction`
+  - `title` — Notification title
+  - `body` — Notification body text
+  - `metadata` — Type-specific data (e.g., `domainId`, `oldScore`, `newScore`, `trigger`)
+  - `read` — Whether the current user has read this notification
+  - `createdAt` — ISO timestamp
+</ResponseField>
+
+<ResponseField name="data.nextCursor" type="string">
+  Cursor for the next page. Absent when no more results.
+</ResponseField>
+
+---
+
+## Unread count
+
+<ParamField path="method" type="GET">`/api/notifications/count`</ParamField>
+
+Returns the count of unread notifications for the current user.
+
+<ResponseField name="data.unreadCount" type="number">
+  Number of unread notifications.
+</ResponseField>
+
+---
+
+## Mark as read
+
+<ParamField path="method" type="PATCH">`/api/notifications/[id]/read`</ParamField>
+
+Marks a single notification as read for the current user.
+
+<ParamField path="id" type="string" required>
+  Notification ID.
+</ParamField>
+
+---
+
+## Mark all as read
+
+<ParamField path="method" type="PATCH">`/api/notifications/read-all`</ParamField>
+
+Marks all unread notifications as read for the current user.
+
+<ResponseField name="data.markedCount" type="number">
+  Number of notifications that were marked as read.
+</ResponseField>
+
+---
+
+## Notification types
+
+| Type | Trigger | Metadata |
+|------|---------|----------|
+| `score_change` | Domain score changes by 5+ points | `domainId`, `oldScore`, `newScore`, `trigger` |
+| `threshold_crossed` | Domain crosses 70% threshold | `domainId`, `direction` (up/down), `score` |
+| `program_milestone` | Program reaches 25/50/75/100% | `programId`, `milestone`, `score` |
+| `drift_correction` | Nightly recompute finds score drift | `programId`, `domainId`, `correctedScore` |

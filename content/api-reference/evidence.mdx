@@ -1,0 +1,105 @@
+---
+title: Evidence
+description: Org-wide evidence management — list, upload, download, and delete evidence files
+---
+
+The evidence API provides org-wide access to all evidence files across obligations, compliance domains, remediation items, and the evidence library.
+
+## List evidence
+
+<ParamField path="method" type="GET">`/api/evidence`</ParamField>
+
+Returns a cursor-paginated list of all evidence files for the organization.
+
+<ParamField query="sourceType" type="string">
+  Filter by source type. One of: `examination`, `domain_upload`, `remediation`, `library`, `connector`.
+</ParamField>
+
+<ParamField query="domainId" type="string">
+  Filter by compliance domain ID (e.g., `CD-2026-001`).
+</ParamField>
+
+<ParamField query="search" type="string">
+  Text search across file names.
+</ParamField>
+
+<ParamField query="limit" type="number">
+  Results per page. Default: 50.
+</ParamField>
+
+<ParamField query="cursor" type="string">
+  Cursor for pagination (composite: `timestamp:uuid`).
+</ParamField>
+
+<ResponseField name="data.evidence" type="array">
+  Array of evidence objects. Each includes:
+  - `id` — Evidence UUID
+  - `fileName` — File name
+  - `fileSize` — Size in bytes
+  - `mimeType` — MIME type
+  - `sourceType` — How the evidence was added
+  - `uploadedBy` — User ID
+  - `uploaderName` — User display name
+  - `uploadedAt` — ISO timestamp
+  - `complianceDomainId` — Domain ID (if domain-scoped)
+  - `domainLabel` — Domain label
+  - `obligationId` — Obligation ID (if obligation-scoped)
+  - `obligationName` — Obligation name
+  - `linkedCriteriaCount` — Number of criteria this evidence is linked to
+</ResponseField>
+
+<ResponseField name="data.nextCursor" type="string">
+  Cursor for the next page. Absent when no more results.
+</ResponseField>
+
+<ResponseField name="data.total" type="number">
+  Total evidence count matching the filters.
+</ResponseField>
+
+---
+
+## Upload evidence
+
+<ParamField path="method" type="POST">`/api/evidence`</ParamField>
+
+Batch upload evidence files to a compliance domain or the org-wide library. Multipart form data.
+
+<ParamField body="files[]" type="file" required>
+  One or more evidence files. Max 50 MB each. Allowed: PDF, DOCX, XLSX, CSV, PNG, JPG.
+</ParamField>
+
+<ParamField body="domainId" type="string">
+  Optional compliance domain ID. If provided, evidence is scoped to that domain (`sourceType: domain_upload`). If omitted, evidence goes to the org-wide library (`sourceType: library`).
+</ParamField>
+
+<ResponseField name="data.evidence" type="array">
+  Array of created evidence records.
+</ResponseField>
+
+---
+
+## Download evidence
+
+<ParamField path="method" type="GET">`/api/evidence/[evidenceId]/download`</ParamField>
+
+Returns the evidence file as a binary download with appropriate Content-Type headers.
+
+<ParamField path="evidenceId" type="string" required>
+  Evidence UUID.
+</ParamField>
+
+---
+
+## Delete evidence
+
+<ParamField path="method" type="DELETE">`/api/evidence/[evidenceId]`</ParamField>
+
+Deletes the evidence file from S3 and removes all references from scoring criteria JSONB arrays.
+
+<ParamField path="evidenceId" type="string" required>
+  Evidence UUID.
+</ParamField>
+
+<ResponseField name="data.deleted" type="boolean">
+  `true` on success.
+</ResponseField>
