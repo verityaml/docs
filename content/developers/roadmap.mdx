@@ -58,9 +58,13 @@ External integration for automated evidence discovery and classification. Featur
 - Sync pipeline: SQS → Lambda → list files → batch LLM classification (Haiku) → score deltas
 - Connector UI: folder picker, file list with classification badges, sync results
 - Stale file detection and `consecutiveMissing` tracking
+- Google Drive logo on connector cards and integrations panel
+- Program label shown as inline tag on folder pills
+- Linked criteria hover popover on evidence table
+- Proactive OAuth token refresh for Google Drive API routes
+- `clearExistingItems()` memory-safe DELETE (no `.returning()`) for Lambda
 
 **Remaining:**
-- OAuth stability improvements (token refresh edge cases)
 - Multi-provider support framework (SharePoint, OneDrive planned)
 
 ### Desktop App
@@ -86,7 +90,7 @@ Tauri v2 macOS app with offline caching and system tray.
 
 - Notification preferences UI — settings page to enable/disable notification types per user (P2)
 - Email digest notifications — daily/weekly summary of score changes delivered via SES (P3)
-- `applyScoreDelta` return eventId — pass score_change_event ID to `emitScoreNotifications()` for deep-link metadata (#292)
+- ~~`applyScoreDelta` return eventId~~ — Done in PR #360. `applyScoreDelta()` now returns `eventId` for notification→score event deep-linking (#292)
 
 ### Consent order lifecycle
 
