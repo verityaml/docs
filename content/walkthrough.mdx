@@ -289,7 +289,7 @@ If you need to revisit an archived examination, click **Reopen Examination**. A 
 
 This is the centralised view of every piece of evidence in your organisation — uploaded through examinations, domain uploads, or directly to the library.
 
-The evidence table shows each file with its **source type badge** (EXAM, DOMAIN, or LIBRARY), the context where it was uploaded, how many scoring criteria it's linked to, upload date, and who uploaded it.
+The evidence table shows each file with its **source type badge** (EXAM, DOMAIN, or LIBRARY), the context where it was uploaded, how many scoring criteria it's linked to (hover over the count for a popover listing linked criteria with domain labels), upload date, and who uploaded it.
 
 Upload files directly using the drag-and-drop zone at the top. Files land with a LIBRARY source type — available for linking to any scoring criteria across any domain.
 
@@ -299,9 +299,9 @@ Filter the table using source type pills (Exam, Domain, Library, Connector), the
 
 The **Connectors** tab on the evidence library page shows connected integrations. Connect your Google Drive account via OAuth, then select watched folders to monitor. The system syncs files from watched folders, classifies them using AI (Claude Haiku), and auto-links matching evidence to scoring criteria.
 
-Each connector card shows sync status, a progress bar during active syncs, watched folders, and available actions (Sync Now, manage folders, view files). The **folder picker** provides a lazy-loading tree browser for selecting Drive folders and assigning them to compliance programs. A **folder coverage grid** shows per-domain file counts with gap highlighting.
+Each connector card shows the **Google Drive logo**, sync status, a progress bar during active syncs, and watched folders with **program labels** shown as inline tags on folder pills. Available actions include Sync Now, manage folders, and view files. The **folder picker** provides a lazy-loading tree browser for selecting Drive folders and assigning them to compliance programs.
 
-The **connector file list** shows all synced files with classification badges, confidence scores, and "Open in Google Drive" links. Low-confidence matches can be confirmed manually, which creates evidence and updates scores. Stale file indicators appear when previously synced files are no longer found in Drive.
+The **connector file list** shows all synced files with classification badges, confidence scores, and "Open in Google Drive" links. Hover over the **linked criteria count** to see a popover listing which scoring criteria are linked, with domain labels. Low-confidence matches can be confirmed manually, which creates evidence and updates scores. Stale file indicators appear when previously synced files are no longer found in Drive.
 
 After a sync completes, the **sync results page** shows score deltas per domain and lists any unmatched files.
 
