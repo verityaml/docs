@@ -5,7 +5,7 @@ description: Planned features and tracked improvements beyond the current build
 
 ## Spec status
 
-All 32 feature specs are tracked in the main repository's `SPECLOG.md`. Current status as of March 2026:
+All 33 feature specs are tracked in the main repository's `SPECLOG.md`. Current status as of March 2026:
 
 | Spec | Status |
 |------|--------|
@@ -35,14 +35,15 @@ All 32 feature specs are tracked in the main repository's `SPECLOG.md`. Current 
 | AWS Background Jobs | Complete |
 | AWS E2E Pipeline | Complete |
 | AWS CI/CD Consolidation | Complete |
-| AWS Provider Swap + Cutover | Complete |
+| AWS Provider Swap + Cutover | Not Started |
 | Reference-Based Extraction | Complete |
-| Event-Based Score Recomputation | Complete |
+| Event-Based Score Recomputation | In Progress |
 | Score Change UI & Notifications | Complete |
 | Google Drive Connector | In Progress |
+| Agentic File Classification | Specified |
 | Desktop App | In Progress |
 
-**30 complete**, 2 in progress, 1 removed.
+**27 complete**, 3 in progress, 1 not started, 1 specified, 1 removed.
 
 ---
 
@@ -67,9 +68,17 @@ External integration for automated evidence discovery and classification. Featur
 **Remaining:**
 - Multi-provider support framework (SharePoint, OneDrive planned)
 
-### Desktop App
+### Agentic File Classification (Specified)
 
-Tauri v2 macOS app with offline caching and system tray.
+Upgrade connector classification from single-shot to agentic Haiku with tools — folder exploration, file content preview (transient, never stored), on-demand criteria lookup. Structured triage with a 10-peek budget and fallback to single-shot on tool exhaustion. Feature-flagged per org.
+
+**Status:** Spec complete (requirements, design, tasks, diagrams). Not yet in implementation.
+
+### AWS Provider Swap + Cutover (Not Started)
+
+AWS migration Phase 5 — SES email (replacing Resend), remove Supabase storage provider, remove rate-limit sleeps, E2E on staging, SNS alarm notifications, DNS cutover, Inngest/Anthropic/Supabase/Resend removal, Vercel decommission.
+
+### Desktop App
 
 **Done (phases 1–7, 10–11):**
 - Onboarding flow, dashboard snapshot, system tray
