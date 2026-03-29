@@ -4,14 +4,14 @@ Checkpoint for `/sync-from-app` runs. Used to determine which PRs are new since 
 
 ## Last Sync
 
-- **Date:** 2026-03-28
-- **Latest merged PR:** #370 (docs: agentic file classification spec (#33))
-- **Merged at:** 2026-03-27T11:13:52Z
+- **Date:** 2026-03-29
+- **Latest merged PR:** #372 (fix: use __dirname-based requires in hooks for worktree compat)
+- **Merged at:** 2026-03-28T10:28:27Z
 
 ## PRs Included in This Sync
 
-All merged PRs up to #370 (2026-03-28). PRs since last sync (#363):
+All merged PRs up to #372 (2026-03-29). PRs since last sync (#370):
 
-- #368: fix(frontend): popover clipping + connector sourceType filter
-- #369: test(e2e): evidence library — popover, connector filter, source badges
-- #370: docs: agentic file classification spec (#33)
+- #372: fix: use __dirname-based requires in hooks for worktree compat
+
+No docs page changes required — #372 is an internal hooks fix with no impact on source-of-truth files (CHANGELOG, TODO, SPECLOG, WALKTHROUGH, README).
