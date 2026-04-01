@@ -5,7 +5,7 @@ description: Planned features and tracked improvements beyond the current build
 
 ## Spec status
 
-All 33 feature specs are tracked in the main repository's `SPECLOG.md`. Current status as of March 2026:
+All 35 feature specs are tracked in the main repository's `SPECLOG.md`. Current status as of April 2026:
 
 | Spec | Status |
 |------|--------|
@@ -41,13 +41,19 @@ All 33 feature specs are tracked in the main repository's `SPECLOG.md`. Current 
 | Score Change UI & Notifications | Complete |
 | Google Drive Connector | Complete |
 | Agentic File Classification | Complete |
+| Evidence Bridge | Complete |
+| Library Evidence Classification | In Progress |
 | Desktop App | In Progress |
 
-**31 complete**, 1 in progress, 1 removed.
+**33 complete**, 2 in progress, 1 removed.
 
 ---
 
 ## In progress
+
+### Library Evidence Classification
+
+Auto-classify library uploads via embedding similarity — text extraction, heading-based chunking, pgvector cosine matching against scoring criteria, auto-link + score update. New Lambda + SQS queue, criteria embedding column + backfill, classification status badges in UI.
 
 ### Desktop App
 
@@ -65,6 +71,10 @@ All 33 feature specs are tracked in the main repository's `SPECLOG.md`. Current 
 ---
 
 ## Recently completed
+
+### Evidence Bridge (Complete)
+
+Criteria → request item evidence propagation. When evidence is linked to a scoring criterion, auto-suggest on request items sharing the same `definition_key`. Extends `evidence_links` table with `source_criterion_id` + `match_type`. Async via existing propagate-evidence SQS queue.
 
 ### Google Drive Connector (Complete)
 
@@ -113,6 +123,15 @@ Structured quarterly progress reports for regulators. Planned for consent order 
 
 ---
 
+## Library evidence classification — deferred
+
+- Auto-refresh criteria embeddings when `SCORING_CRITERIA_DEFINITIONS` change (re-run backfill or incremental update)
+- Retroactive classification of existing library evidence uploaded before this feature
+- Manual "re-classify" button in evidence library UI
+- Reclassification when criteria definitions are updated (shared concern with connector reclassification below)
+
+---
+
 ## Google Drive connector — V2 deferred
 
 - Automatic polling — EventBridge scheduled sync (hourly/daily per connector)
@@ -134,7 +153,10 @@ Structured quarterly progress reports for regulators. Planned for consent order 
 - ~~Partial unique indexes to prevent duplicate linked accounts and pending invites~~ — Done
 - ~~GIN index on `scoring_criteria.linked_evidence` for evidence library queries~~ — Done in PR #270
 - ~~Index on `evidence(org_id)` for evidence library filtering~~ — Done
-- Voyage AI embedding delay is now config-driven (`EMBEDDING_DELAY_MS` env var, default 100ms) — remove entirely after upgrading from free tier
+- Remove Voyage AI rate-limit sleep after upgrading from free tier (parsing drops from ~10 min to ~2 min)
+- Evidence library: `linkedCriteriaCount` correlated subquery scans all criteria JSONB per evidence row — add GIN index on `scoring_criteria.linked_evidence` or materialize the count when scale warrants
+- Evidence library: DELETE loads all org criteria for JSONB cleanup — use `linked_evidence @>` containment query with GIN index at scale
+- Add index on `evidence(org_id)` — every evidence library query filters on it
 
 ### ~~Auth and tenancy~~ — Mostly Complete
 
