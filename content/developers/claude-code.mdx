@@ -3,11 +3,55 @@ title: Developing with Claude Code
 description: AI-assisted development workflow — specs, skills, agents, hooks, and session lifecycle
 ---
 
-Verity uses [Claude Code](https://claude.com/claude-code) for AI-assisted development. The `.claude/` directory in the project repo contains all configuration — specs, skills (slash commands), agents, and hooks.
+Verity uses [Claude Code](https://claude.com/claude-code) for AI-assisted development. The `.claude/` directory in the project repo contains all configuration — 27 skills, 4 agents, and 15+ hooks that automate the full development lifecycle.
 
-## Starting a session
+## Development workflow
 
-Run `/session-start` at the beginning of every session. This invokes the `context-loader` agent, which reads all specs, SPECLOG, git log, and CHANGELOG to produce a prioritised briefing of what's in progress and what to work on next.
+<Mermaid chart={`%%{init: {'theme': 'neutral'}}%%
+flowchart TD
+    SS["/session-start"] --> A
+
+    subgraph Plan
+        A["/plan brainstorm"] --> B["docs/plans/YYYY-MM-DD-slug.md"]
+        B --> C["/plan-ceo — challenge & refine"]
+        C --> D["/plan interview"]
+        D --> E[".claude/specs/slug/\\nrequirements.md\\ndesign.md\\ntasks.md"]
+        E --> E2["/plan visualize — Mermaid diagrams"]
+        E2 --> F["/plan review — validate specs"]
+    end
+
+    subgraph Implement
+        F --> G["/execute\\nTask-by-task with subagents\\n+ two-stage review per task"]
+        G --> QA["/qa — browser testing\\nDesign system + multi-tenancy"]
+    end
+
+    subgraph Ship
+        G --> H["/ship"]
+        H --> H1["Frontend unit tests"]
+        H --> H2["Backend unit tests"]
+        H --> H3["E2E tests"]
+        H --> H4["Lint"]
+        H1 & H2 & H3 & H4 --> SI["/simplify — code cleanup"]
+        SI --> I["/review — 7 parallel agents\\nConventions + Security + Blame\\n+ PR history + Silent failures"]
+        I --> J["Bisectable commits + PR"]
+        J --> BP["/babysit-pr — CI monitor\\nretry flaky, notify on ready"]
+    end
+
+    subgraph Review
+        J --> L{PR feedback?}
+        L -->|Yes| M["/receiving-pr-feedback\\nVerify then fix then push back"]
+        M --> H
+        L -->|No| N["Merge to main"]
+    end
+
+    subgraph "Multi-Model Review"
+        J -.-> MR["/review pr 1,2,3 --multi\\nSeparate CC per pane"]
+        J -.-> CV["/review pr N --converse codex\\nParallel review then debate then consensus"]
+    end
+
+    N --> UD["/update-docs"]
+    N --> SW["/sweep-issues — auto-create GH issues"]
+`} caption="Full development lifecycle — from planning through shipping and review" minHeight={600} />
 
 ## Specs
 
@@ -19,110 +63,107 @@ Feature specifications live in `.claude/specs/`. Each spec directory contains:
 | `design.md` | How to build it — architecture, data model, API design |
 | `tasks.md` | Implementation checklist, phased |
 
-To create a new spec, use the templates at `.claude/specs/{requirements,design,tasks}.md`.
-
-Check [SPECLOG.md](https://github.com/verity-aml/verity/blob/main/SPECLOG.md) for the current implementation status and which spec to work on next. Specs are worked in order: Platform → Design System → Auth → Knowledge Base → Parser → Dashboard → Archive.
+To create a new spec, use the templates at `.claude/specs/{requirements,design,tasks}.md`. Check [SPECLOG.md](https://github.com/verity-aml/verity/blob/main/SPECLOG.md) for the current implementation status and which spec to work on next.
 
 ## Skills (slash commands)
 
-### Project
+### Planning
 
 | Command | Description |
 |---------|-------------|
-| `/session-start` | Load project context (runs context-loader agent) |
-| `/spec-interview` | Deep interview about a spec, then write the final version |
-| `/update-docs` | Update all project documentation after changes |
+| `/session-start` | Load project context — reads specs, changelog, git history, produces prioritised briefing |
+| `/plan brainstorm <topic>` | Explore idea, write plan to `docs/plans/` |
+| `/plan interview [slug]` | Read plan, deep interview, write specs to `.claude/specs/` |
+| `/plan visualize [slug]` | Generate Mermaid diagrams from spec for visual design validation |
+| `/plan review [slug]` | Validate specs (architecture, quality, tests, performance) |
+| `/plan-ceo [slug]` | CEO-mode plan review — 10-star product thinking, premise challenge |
+| `/execute [spec or issue]` | Task-by-task execution with subagents + two-stage review |
 
-### Git and PRs
-
-| Command | Description |
-|---------|-------------|
-| `/commit` | Create a git commit |
-| `/commit-push-pr` | Commit, push, and open a PR |
-| `/code-review` | Code review a pull request |
-| `/review-pr` | Comprehensive multi-agent PR review |
-
-### Development workflow
+### Shipping and review
 
 | Command | Description |
 |---------|-------------|
-| `/feature-dev` | Guided feature development with codebase analysis |
-| `/brainstorming` | Explore requirements and design before writing code |
-| `/writing-plans` | Plan multi-step tasks from specs |
-| `/executing-plans` | Execute plans with review checkpoints |
-| `/test-driven-development` | TDD: write tests first, then implement |
-| `/systematic-debugging` | Structured debugging workflow |
-| `/verification-before-completion` | Verify claims with evidence before marking done |
-| `/finishing-a-development-branch` | Decide how to integrate completed work |
+| `/ship` | Full release pipeline — merge main, test, simplify, review, bisectable commits, push, PR |
+| `/ship pr-only` | Lightweight PR — skip tests/review, just commit + push + create PR |
+| `/ship clean` | Clean up stale local branches marked as `[gone]` on remote + worktrees |
+| `/review` | Pre-landing review — 5 core + 2 conditional agents, confidence scoring |
+| `/review pr <number>` | Review existing PR — posts findings as PR comment (read-only) |
+| `/review pr 1,2,3 --multi` | Spawn separate Claude Code instances in tmux panes — context-free unbiased reviews |
+| `/review [pr N] --converse codex` | Adversarial review — both models review in parallel, then debate until consensus |
+| `/receiving-pr-feedback [pr]` | Handle PR review feedback — verify before implementing, push back when wrong |
+| `/babysit-pr <number>` | Watch PR through CI — poll checks, retry flaky CI, macOS notifications |
+| `/qa [url] [--quick]` | Systematic QA testing — diff-aware, design system checks, multi-tenancy validation |
 
-### Code quality
+### Debugging and quality
 
 | Command | Description |
 |---------|-------------|
-| `/requesting-code-review` | Request review of completed work |
+| `/debug [error]` | Systematic 4-phase debugging: investigate, patterns, hypothesis, fix |
+| `/prevent [description]` | Analyse a mistake, find deterministic prevention, implement guardrail + tracking issue |
 | `/simplify` | Review changed code for reuse, quality, and efficiency |
-| `/revise-claude-md` | Update CLAUDE.md with session learnings |
-| `/hookify` | Create hooks to prevent unwanted behaviours |
+| `/eval-parser` | Run parser golden set evaluations — required before prompt changes |
+| `/lint-rule-gen [desc]` | Generate ESLint or agent-rules from review feedback patterns |
+
+### Scaffolding
+
+| Command | Description |
+|---------|-------------|
+| `/new-api-route <name>` | Scaffold Next.js API route + Vitest test with auth guard, org scoping |
+| `/new-spec <slug>` | Scaffold spec directory (requirements.md, design.md, tasks.md) + SPECLOG row |
+| `/skill-builder <name>` | Scaffold a new skill with best-practice structure |
+| `/worktrees [branch]` | Create isolated git worktrees with auto project setup |
+
+### Operations and data
+
+| Command | Description |
+|---------|-------------|
+| `/update-docs` | Update all project documentation after changes |
+| `/sweep-issues` | Scan session for deferred items — auto-create GitHub issues |
+| `/retro [window]` | Weekly engineering retrospective — commit analysis, trends |
+| `/seed-demo <org>` | Seed demo compliance programs with realistic scoring data |
+| `/unseed-demo <org>` | Remove demo-seeded compliance data |
+| `/delete-org <org>` | Permanently delete an organisation and all related data |
+
+### Session guards
+
+| Command | Description |
+|---------|-------------|
+| `/careful` / `/careful off` | Block destructive commands (force push, rm -rf, DROP TABLE) for the session |
+| `/freeze <dir>` / `/freeze off` | Restrict edits to a specific directory for the session |
+| `/context7 [lib] [query]` | Look up current, version-specific library documentation |
+
+### Plugin skills
+
+`/commit`, `/review-pr`, `/revise-claude-md`, `/claude-md-improver`, `/hookify`, `/hookify:list`, `/hookify:configure`
 
 ## Agents
 
-| Agent | When to use | Description |
-|-------|-------------|-------------|
+| Agent | Trigger | Description |
+|-------|---------|-------------|
 | `context-loader` | Start of session | Reads specs, SPECLOG, git log, CHANGELOG. Produces a prioritised briefing. |
 | `doc-updater` | End of session | Updates docs, SPECLOG, CHANGELOG, and task tracking after work is done. |
 | `browser` | Visual testing | Browser automation for screenshots, navigation, form filling, and visual verification. |
-| `code-reviewer` | Pre-commit (automatic) | Reviews staged changes against CLAUDE.md conventions, active spec, and codebase patterns. Returns PASS/BLOCKED verdict. |
+| `code-reviewer` | Pre-commit (automatic) | Reviews staged changes against CLAUDE.md conventions, active spec, and codebase patterns. |
 
 ## Hooks (automatic)
 
-These run automatically via `.claude/settings.json` — no manual invocation needed:
+These run automatically via `.claude/settings.json` — no manual invocation needed.
+
+### PreToolUse (before actions)
+
+- **Review gate** blocks `git commit` until staged changes pass the `code-reviewer` agent (skip with `[skip-review]`, `docs:`, `chore:` prefixes)
+- **Lint gate** checks `agent-rules.json` patterns against staged files (bypass with `[skip-lint]`)
+- **Deferred items guard** blocks commits when `.claude/.deferred-items` has content
+- **Doc guard** blocks creation of random `.md` files outside known locations
+- **tmux** reminders for long-running commands; blocks dev server outside tmux
+- **Push guard** blocks direct pushes to main/master
+- **On-demand runner** enforces session rules from `/careful` and `/freeze`
+- **Strategic compact** suggests `/compact` at logical intervals to manage context
+
+### PostToolUse (after actions)
 
 - **Prettier** auto-formats JS/TS files after edits
 - **TypeScript** type-checks after editing `.ts`/`.tsx` files
-- **console.log** warnings after edits and at end of each response
-- **tmux** reminders for long-running commands; blocks dev server outside tmux
-- **Git push** review reminder before pushing
-- **Review gate** blocks `git commit` until staged changes pass the `code-reviewer` agent; bypass with `[skip-review]` in commit message, or `docs:`/`chore:`/`style:` prefix, or md-only changes
-- **Doc guard** blocks creation of random `.md` files (use README/CLAUDE/SPECLOG/CHANGELOG)
-- **Strategic compact** suggests `/compact` at logical intervals to manage context
-
-## Suggested workflow
-
-<Steps>
-  <Step title="Start the session">
-    Run `/session-start` to get a briefing of current status, active specs, and next tasks.
-  </Step>
-  <Step title="Pick up work from the spec">
-    Check SPECLOG for the active spec, then open its `tasks.md`. Work through phases in order — mark tasks `[x]` with a date as you complete them.
-  </Step>
-  <Step title="Plan before coding">
-    For non-trivial features, run `/brainstorming` to explore requirements, then `/writing-plans` to design the implementation approach. Get approval before writing code.
-  </Step>
-  <Step title="Implement with TDD">
-    Use `/test-driven-development` for new features — write tests first, then implement. For bug fixes, use `/systematic-debugging` to find the root cause before writing a fix.
-  </Step>
-  <Step title="Verify before claiming done">
-    Run `/verification-before-completion` — this enforces running the build, tests, and type checks before marking work as complete. Evidence before assertions.
-  </Step>
-  <Step title="Review and commit">
-    The review gate hook automatically runs the `code-reviewer` agent when you commit. If it blocks, fix the issues and commit again. You can also run `/requesting-code-review` proactively.
-  </Step>
-  <Step title="Update docs and finish">
-    Run `/update-docs` to sync SPECLOG, CHANGELOG, and task tracking. Then `/finishing-a-development-branch` to decide whether to merge, open a PR, or clean up.
-  </Step>
-</Steps>
-
-## Keeping docs in sync
-
-Documentation updates are part of every task, not a separate chore.
-
-| File | When to update |
-|------|---------------|
-| `tasks.md` | Mark `[x]` with date immediately when a task is done. Add new tasks as `[ ]` when discovered. |
-| `SPECLOG.md` | When a spec moves to "In Progress" or "Complete". |
-| `CHANGELOG.md` | For every user-facing change. Add under `[Unreleased]` as Added, Changed, or Fixed. |
-| `CLAUDE.md` | When architecture, commands, project structure, env vars, or tooling change. |
-
-<Tip>
-Run `/update-docs` at the end of every session to catch anything missed — the doc-updater agent syncs all tracking files automatically.
-</Tip>
+- **ESLint** checks on edited files — reports violations for self-correction (fail-open)
+- **console.log** warnings after edits
+- **Babysit-pr** auto-spawns CI monitor daemon after `gh pr create`
