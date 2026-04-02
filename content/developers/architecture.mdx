@@ -18,7 +18,7 @@ Click any service box for details. See the [AWS migration plan](/developers/aws-
 | ECS Fargate | Next.js app (standalone Docker), auto-scaling |
 | RDS PostgreSQL | Database with pgvector, managed backups |
 | S3 | Evidence files, exam uploads, reports (50MB max) |
-| SQS + Lambda | Background jobs (parse, auto-match, evidence propagation, backfill, connector sync) |
+| SQS + Lambda | Background jobs (parse, auto-match, evidence propagation, backfill, connector sync, library classification) |
 | CloudFront | CDN with WAF |
 | Voyage AI | voyage-law-2 embeddings (1024-dim), legal domain |
 | Anthropic Claude | Document parsing via Anthropic API |
@@ -82,6 +82,7 @@ flowchart TD
         PARSE["parse-examination"]
         SYNC["sync-connector"]
         MATCH["auto-match-evidence"]
+        CLASSIFY["classify-library-evidence"]
         RECOMP["full-recompute\n(nightly)"]
     end
 
@@ -122,6 +123,7 @@ flowchart TD
     API_OB -->|dispatch| PARSE
     API_CON -->|dispatch| SYNC
     API_CP -->|dispatch| MATCH
+    API_EV -->|dispatch| CLASSIFY
     API_NOT --> NOTIFY
     API_CP --> SCORE
 
@@ -183,7 +185,7 @@ Every evidence status change flows through a single entry point (`applyScoreDelt
 
 ### Background job flows
 
-Five SQS queues feed five Lambda handlers. The parse job chains into backfill. The nightly recompute runs on an EventBridge schedule.
+Six SQS queues feed six Lambda handlers. The parse job chains into backfill. Library uploads dispatch to a classification queue. The nightly recompute runs on an EventBridge schedule.
 
 <Mermaid chart={`flowchart LR
     subgraph Dispatch["API Route Dispatchers"]
@@ -192,6 +194,7 @@ Five SQS queues feed five Lambda handlers. The parse job chains into backfill. T
         D3["POST /items/evidence"]
         D4["POST /connectors/sync"]
         D5["EventBridge\n3am UTC"]
+        D6["POST /evidence\n(library upload)"]
     end
 
     subgraph Queues["SQS Queues"]
@@ -200,6 +203,7 @@ Five SQS queues feed five Lambda handlers. The parse job chains into backfill. T
         Q3[propagate-evidence]
         Q4[backfill-evidence-links]
         Q5[sync-connector]
+        Q6[classify-library-evidence]
     end
 
     subgraph Lambda["Lambda Handlers"]
@@ -209,6 +213,7 @@ Five SQS queues feed five Lambda handlers. The parse job chains into backfill. T
         L4["Backfill\nNew items →\nexisting evidence\nacross obligations"]
         L5["Sync Connector\nList files → classify\n→ link to criteria\n→ score delta"]
         L6["Full Recompute\nAll programs →\ndrift detection\n→ corrections"]
+        L7["Classify Library\nText extract → chunk\n→ embed → pgvector\n→ link criteria"]
     end
 
     D1 --> Q1 --> L1
@@ -216,6 +221,7 @@ Five SQS queues feed five Lambda handlers. The parse job chains into backfill. T
     D3 --> Q3 --> L3
     D4 --> Q5 --> L5
     D5 --> L6
+    D6 --> Q6 --> L7
 
     L1 -->|chains| Q4 --> L4
     L2 -->|notify| NOTIF2["Notifications"]
@@ -263,6 +269,7 @@ Core table relationships showing the multi-tenant hierarchy, compliance scoring 
         string definitionKey "ic-01 etc"
         string evidenceStatus "missing|partial|sufficient"
         jsonb linkedEvidence
+        vector embedding "1024d pgvector"
     }
     obligations {
         string id PK "OB-YYYY-NNN"
@@ -278,10 +285,13 @@ Core table relationships showing the multi-tenant hierarchy, compliance scoring 
     evidence {
         string id PK
         string sourceType "exam|domain|library|connector"
+        string classificationStatus "pending|classified|no_match|skipped|error"
     }
     evidenceLinks {
         string status "auto_applied|confirmed|rejected"
         number similarityScore
+        string sourceCriterionId "criterion-key links"
+        string matchType "semantic|criterion_key"
     }
     notifications {
         string id PK
