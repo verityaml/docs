@@ -33,6 +33,7 @@ Page load:    Browser → CloudFront → ALB → ECS → proxy.ts (cookie check)
 Static asset: Browser → CloudFront (cached)
 API call:     Browser → CloudFront → ALB → ECS → API route → BetterAuth session → Drizzle → RDS
 Background:   API route → SQS → Lambda → Voyage AI / Anthropic / RDS / S3
+Classify:     Evidence upload → SQS → Lambda → text extract → Voyage AI → pgvector → RDS
 Nightly:      EventBridge → Lambda (full-recompute) → RDS (drift correction)
 ```
 
@@ -133,6 +134,8 @@ flowchart TD
     MATCH --> SCORE
     MATCH --> NOTIFY
     SYNC --> CRYPTO
+    CLASSIFY --> EMBED
+    CLASSIFY --> SCORE
     RECOMP --> SCORE
 
     PARSE --> ANTH
@@ -185,7 +188,7 @@ Every evidence status change flows through a single entry point (`applyScoreDelt
 
 ### Background job flows
 
-Six SQS queues feed six Lambda handlers. The parse job chains into backfill. Library uploads dispatch to a classification queue. The nightly recompute runs on an EventBridge schedule.
+Six SQS queues feed six Lambda handlers. The parse job chains into backfill. The nightly recompute runs on an EventBridge schedule.
 
 <Mermaid chart={`flowchart LR
     subgraph Dispatch["API Route Dispatchers"]
@@ -213,7 +216,7 @@ Six SQS queues feed six Lambda handlers. The parse job chains into backfill. Lib
         L4["Backfill\nNew items →\nexisting evidence\nacross obligations"]
         L5["Sync Connector\nList files → classify\n→ link to criteria\n→ score delta"]
         L6["Full Recompute\nAll programs →\ndrift detection\n→ corrections"]
-        L7["Classify Library\nText extract → chunk\n→ embed → pgvector\n→ link criteria"]
+        L7["Classify Library\nText extract → chunk\n→ embed → cosine\n→ link + score"]
     end
 
     D1 --> Q1 --> L1
@@ -251,6 +254,7 @@ Core table relationships showing the multi-tenant hierarchy, compliance scoring 
     complianceDomains ||--o{ evidence : attaches
 
     requestItems ||--o{ evidenceLinks : "source/target"
+    scoringCriteria ||--o{ evidenceLinks : "criterion-key bridge"
     connectorConfigs ||--o{ connectorFiles : syncs
     connectorFiles ||--o{ evidence : creates
 
@@ -290,8 +294,8 @@ Core table relationships showing the multi-tenant hierarchy, compliance scoring 
     evidenceLinks {
         string status "auto_applied|confirmed|rejected"
         number similarityScore
-        string sourceCriterionId "criterion-key links"
         string matchType "semantic|criterion_key"
+        string sourceCriterionId "FK to scoring_criteria"
     }
     notifications {
         string id PK
