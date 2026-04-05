@@ -291,7 +291,7 @@ This is the centralised view of every piece of evidence in your organisation —
 
 The evidence table shows each file with its **source type badge** (EXAM, DOMAIN, or LIBRARY), the context where it was uploaded, how many scoring criteria it's linked to (hover over the count for a popover listing linked criteria with domain labels), upload date, and who uploaded it.
 
-Upload files directly using the drag-and-drop zone at the top. Files land with a LIBRARY source type — available for linking to any scoring criteria across any domain.
+Upload files directly using the drag-and-drop zone at the top. Files land with a LIBRARY source type and are **automatically classified** — the system extracts text from the document, generates embeddings for each section, and matches them against your scoring criteria using vector similarity. High-confidence matches are linked automatically; medium-confidence matches appear as suggestions for review. A classification status badge on each file shows the result: "Classifying..." while processing, then the number of matched criteria or "No matches" when complete.
 
 Filter the table using source type pills (Exam, Domain, Library, Connector), the domain dropdown, or filename search. Download any file via a signed URL. Delete library-sourced files with automatic criteria cleanup and score recomputation.
 
@@ -378,6 +378,9 @@ Here's how all of this connects:
   </Step>
   <Step title="Propagate evidence across obligations">
     **Evidence linking** automatically propagates uploaded evidence to similar request items on other obligations — no duplicate uploads
+  </Step>
+  <Step title="Bridge evidence to examinations">
+    The **evidence bridge** propagates criterion-linked evidence to request items sharing the same regulatory key — when evidence satisfies a scoring criterion, it's automatically suggested on examination items mapped to that same requirement
   </Step>
   <Step title="Export the response package">
     When evidence is ready, **export the response package** as a PDF binder or pillar-organized ZIP archive and submit to the examiner

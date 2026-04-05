@@ -5,7 +5,7 @@ description: Planned features and tracked improvements beyond the current build
 
 ## Spec status
 
-All 33 feature specs are tracked in the main repository's `SPECLOG.md`. Current status as of March 2026:
+All 36 feature specs are tracked in the main repository's `SPECLOG.md`. Current status as of April 2026:
 
 | Spec | Status |
 |------|--------|
@@ -41,9 +41,12 @@ All 33 feature specs are tracked in the main repository's `SPECLOG.md`. Current 
 | Score Change UI & Notifications | Complete |
 | Google Drive Connector | Complete |
 | Agentic File Classification | Complete |
+| Evidence Bridge | Complete |
+| Library Evidence Classification | In Progress |
+| Classification FDR Tuning | In Progress |
 | Desktop App | In Progress |
 
-**31 complete**, 1 in progress, 1 removed.
+**32 complete**, 3 in progress, 1 removed.
 
 ---
 
@@ -64,7 +67,23 @@ All 33 feature specs are tracked in the main repository's `SPECLOG.md`. Current 
 
 ---
 
+## In progress
+
+### Library Evidence Classification
+
+Auto-classify library uploads via embedding similarity — text extraction, heading-based chunking, pgvector cosine matching against scoring criteria, auto-link + score update. New Lambda + SQS queue, criteria embedding column + backfill, classification status badges in UI.
+
+### Classification FDR Tuning
+
+Replace single-shot connector classification (60.8% FDR) with two-stage funnel: embedding retrieval for recall, LLM binary confirmation for precision. Shared `embedAndMatch()` helper, library refactor, OAuth scope upgrade, reconnect banner, CI eval workflow. Target FDR <= 10%.
+
+---
+
 ## Recently completed
+
+### Evidence Bridge (Complete)
+
+Criteria → request item evidence propagation. When evidence is linked to a scoring criterion, auto-suggest on request items sharing the same `definition_key`. Extends `evidence_links` table with `source_criterion_id` + `match_type`. Async via existing propagate-evidence SQS queue.
 
 ### Google Drive Connector (Complete)
 
@@ -123,6 +142,7 @@ Structured quarterly progress reports for regulators. Planned for consent order 
 - Reclassification on criteria change — re-run classification when scoring criteria definitions are updated
 - Confirm endpoint: refetch from server after confirm
 - Coverage grid: server-side aggregated counts
+- Validate metadata-only classification accuracy (0.70 threshold) with real production data at 2-week post-launch mark
 
 ---
 
