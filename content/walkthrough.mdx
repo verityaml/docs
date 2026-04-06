@@ -291,13 +291,15 @@ This is the centralised view of every piece of evidence in your organisation —
 
 The evidence table shows each file with its **source type badge** (EXAM, DOMAIN, or LIBRARY), the context where it was uploaded, how many scoring criteria it's linked to (hover over the count for a popover listing linked criteria with domain labels), upload date, and who uploaded it.
 
-Upload files directly using the drag-and-drop zone at the top. Files land with a LIBRARY source type — available for linking to any scoring criteria across any domain.
+Upload files directly using the drag-and-drop zone at the top. Files land with a LIBRARY source type and are **automatically classified** — the system extracts text from the document (PDF or text/*), generates embeddings for each heading-based chunk, and matches them against your scoring criteria using pgvector cosine similarity. High-confidence matches are linked automatically and scores update through `applyScoreDelta()`. A classification status badge on each file shows the result: a spinner while pending, a checkmark when classified, a dash for no matches, and a warning for errors.
 
 Filter the table using source type pills (Exam, Domain, Library, Connector), the domain dropdown, or filename search. Download any file via a signed URL. Delete library-sourced files with automatic criteria cleanup and score recomputation.
 
 ### Google Drive connector
 
-The **Connectors** tab on the evidence library page shows connected integrations. Connect your Google Drive account via OAuth, then select watched folders to monitor. The system syncs files from watched folders, classifies them using AI (Claude Haiku), and auto-links matching evidence to scoring criteria.
+The **Connectors** tab on the evidence library page shows connected integrations. Connect your Google Drive account via OAuth (default scope `drive.readonly` so Verity can read file content for classification), then select watched folders to monitor. Existing metadata-only connectors show a **reconnect banner** on their card until re-authorised with the content scope.
+
+Classification runs as a **two-stage funnel**: Stage 1 embeds extracted file content via Voyage AI and retrieves candidate criteria through pgvector cosine similarity. High-confidence matches (≥0.85) auto-classify. Medium-confidence candidates (0.55–0.85) pass to Stage 2, where Claude Haiku issues a binary confirm/reject per file. When content extraction fails (403, binary, empty) the sync falls back to a metadata-only path at a higher threshold (0.70) with no Stage 2 confirmation. An `agentic_classification` feature flag can instead enable the folder-exploring Haiku agent for orgs that opted in.
 
 Each connector card shows the **Google Drive logo**, sync status, a progress bar during active syncs, and watched folders with **program labels** shown as inline tags on folder pills. Available actions include Sync Now, manage folders, and view files. The **folder picker** provides a lazy-loading tree browser for selecting Drive folders and assigning them to compliance programs.
 
@@ -339,6 +341,12 @@ Confirmed links turn to a stone-colored card with a "Linked from EX-2026-001" ba
 Evidence linking works across regulation types. Evidence from a BSA/AML examination can link to a third-party oversight consent order if the underlying request items are semantically similar.
 </Tip>
 
+### Evidence bridge — criteria to request items
+
+A second propagation path runs in the criteria → request item direction. When evidence is linked to a scoring criterion — manually, by accepting a suggestion, or via a connector auto-link — matching request items automatically receive the evidence as a suggestion. Matching is deterministic on `definition_key` (the scoring criterion key) rather than semantic similarity, so the propagation is precise and cheap.
+
+Request items surface bridge-propagated evidence in an `EvidenceLinkBanner` labelled `From: [Program] · [Domain] · [key]`, alongside the existing semantic `From: [Obligation] · RI-XXX` banners. A single dispatch propagates up to 50 criterion-key links to prevent unbounded fan-out, and the work runs async through the existing `propagate-evidence` SQS queue.
+
 ---
 
 ## Desktop app (macOS)
@@ -378,6 +386,9 @@ Here's how all of this connects:
   </Step>
   <Step title="Propagate evidence across obligations">
     **Evidence linking** automatically propagates uploaded evidence to similar request items on other obligations — no duplicate uploads
+  </Step>
+  <Step title="Bridge criteria to request items">
+    The **evidence bridge** propagates criterion-linked evidence to request items sharing the same regulatory key — when evidence satisfies a scoring criterion, it's automatically suggested on examination items mapped to that same requirement
   </Step>
   <Step title="Export the response package">
     When evidence is ready, **export the response package** as a PDF binder or pillar-organized ZIP archive and submit to the examiner
