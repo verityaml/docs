@@ -3,21 +3,21 @@
 import { useState } from "react";
 
 const C = {
-  bg: "#0F1117",
-  surface: "#161822",
-  surfaceLight: "#1E2030",
-  border: "#2A2D3E",
-  text: "#E2E4ED",
-  dim: "#8B8FA3",
-  green: "#4ADE80",
-  orange: "#FB923C",
-  blue: "#60A5FA",
-  purple: "#A78BFA",
-  red: "#F87171",
-  cyan: "#22D3EE",
-  yellow: "#FACC15",
-  pink: "#EC4899",
-  amber: "#D97706",
+  bg: "#F2F0EB",
+  surface: "#FFFFFF",
+  surfaceLight: "#FAFAF7",
+  border: "#2A382E33",
+  text: "#1C1C1B",
+  dim: "#6B7567",
+  green: "#15803D",
+  orange: "#C2410C",
+  blue: "#1D4ED8",
+  purple: "#6D28D9",
+  red: "#B91C1C",
+  cyan: "#0E7490",
+  yellow: "#A16207",
+  pink: "#BE185D",
+  amber: "#B45309",
 };
 
 const MONO = "'JetBrains Mono', 'SF Mono', monospace";
@@ -28,7 +28,7 @@ function SB({ x, y, w, h, label, sub, color, icon, sm, onClick, on }: {
 }) {
   return (
     <g style={{ cursor: onClick ? "pointer" : "default" }} onClick={onClick}>
-      <rect x={x} y={y} width={w} height={h} rx={6} fill={on ? color + "18" : C.surface} stroke={on ? color : C.border} strokeWidth={on ? 1.5 : 1} />
+      <rect x={x} y={y} width={w} height={h} rx={6} fill={on ? color + "28" : C.surface} stroke={on ? color : C.border} strokeWidth={on ? 1.5 : 1} />
       {icon && <text x={x + 10} y={y + (sm ? 17 : 20)} fontSize={sm ? 11 : 13} fill={color}>{icon}</text>}
       <text x={icon ? x + (sm ? 24 : 28) : x + w / 2} y={y + (sm ? 17 : 20)} fontSize={sm ? 10.5 : 11.5} fill={C.text} fontWeight="600" fontFamily={MONO} textAnchor={icon ? "start" : "middle"}>{label}</text>
       {sub && <text x={icon ? x + (sm ? 24 : 28) : x + w / 2} y={y + (sm ? 30 : 35)} fontSize={9.5} fill={C.dim} fontFamily={SANS} textAnchor={icon ? "start" : "middle"}>{sub}</text>}
@@ -42,8 +42,8 @@ function Zn({ x, y, w, h, label, color, children }: {
   const labelWidth = label.length * 8.5 + 20;
   return (
     <g>
-      <rect x={x} y={y} width={w} height={h} rx={8} fill={color + "08"} stroke={color + "30"} strokeWidth={1} strokeDasharray="8,4" />
-      {label && <rect x={x + 4} y={y + 2} width={labelWidth} height={18} rx={4} fill={color + "08"} />}
+      <rect x={x} y={y} width={w} height={h} rx={8} fill={color + "10"} stroke={color + "60"} strokeWidth={1} strokeDasharray="8,4" />
+      {label && <rect x={x + 4} y={y + 2} width={labelWidth} height={18} rx={4} fill={C.bg} />}
       <text x={x + 12} y={y + 16} fontSize={10} fill={color} fontWeight="700" fontFamily={MONO} letterSpacing="0.08em">{label}</text>
       {children}
     </g>
@@ -61,8 +61,8 @@ function Ar({ x1, y1, x2, y2, color = C.border }: {
   const uy = dy / l;
   return (
     <g>
-      <line x1={x1} y1={y1} x2={x2 - ux * 4} y2={y2 - uy * 4} stroke={color + "80"} strokeWidth={1.2} />
-      <polygon points={`${x2},${y2} ${x2 - ux * 7 - uy * 3.5},${y2 - uy * 7 + ux * 3.5} ${x2 - ux * 7 + uy * 3.5},${y2 - uy * 7 - ux * 3.5}`} fill={color + "80"} />
+      <line x1={x1} y1={y1} x2={x2 - ux * 4} y2={y2 - uy * 4} stroke={color + "C0"} strokeWidth={1.2} />
+      <polygon points={`${x2},${y2} ${x2 - ux * 7 - uy * 3.5},${y2 - uy * 7 + ux * 3.5} ${x2 - ux * 7 + uy * 3.5},${y2 - uy * 7 - ux * 3.5}`} fill={color + "C0"} />
     </g>
   );
 }

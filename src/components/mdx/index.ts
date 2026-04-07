@@ -9,6 +9,7 @@ import { CurrentArchDiagram } from './architecture-diagram';
 import { AWSArchDiagram } from './aws-architecture-diagram';
 import { AWSDetailedDiagram } from './aws-detailed-diagram';
 import { EvidencePipelineDiagram } from './evidence-pipeline-diagram';
+import { AuthDiagram } from './auth-diagram';
 import { Mermaid } from './mermaid';
 
 export const mdxComponents: MDXComponents = {
@@ -26,5 +27,6 @@ export const mdxComponents: MDXComponents = {
   AWSArchDiagram,
   AWSDetailedDiagram,
   EvidencePipelineDiagram,
+  AuthDiagram,
   Mermaid,
 };

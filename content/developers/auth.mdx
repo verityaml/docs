@@ -1,0 +1,285 @@
+---
+title: Authentication
+description: How Verity authenticates users, services, and connectors — sessions, OAuth, desktop tokens, and KMS-encrypted credentials
+---
+
+How Verity authenticates and authorizes every request — from browser logins through OAuth connector flows to the desktop app's device-code exchange. Every token, where it lives, how long it lasts, and which key signs or encrypts it.
+
+## At a glance
+
+Verity uses **five distinct auth mechanisms**, each suited to a different surface area. Click through the tabs to explore each flow.
+
+<AuthDiagram />
+
+---
+
+## Mechanism overview
+
+| Mechanism | Used by | Token format | TTL | Storage |
+|-----------|---------|--------------|-----|---------|
+| **BetterAuth session** | Web app (browser) | Opaque session ID | ~30 days | Signed cookie + `session` table |
+| **Desktop access token** | Desktop app (Tauri) | JWT (HS256) | 1 hour | In-memory + `desktop_access_token` cookie |
+| **Desktop refresh token** | Desktop app | 32-byte hex | 30 days | macOS Keychain + SHA-256 hash in `desktop_tokens` |
+| **OAuth state JWT** | Connector OAuth flows | JWT (HS256) | 5 minutes | URL parameter only |
+| **KMS-encrypted credentials** | OAuth provider tokens | AES-256-GCM envelope | Provider TTL | `connector_configs.credentials` (Buffer) |
+
+There is **no API key or bearer token** mechanism. All `/api/*` routes are session-gated; the public `/api-reference` documents the same endpoints accessed via session cookies.
+
+---
+
+## 1. BetterAuth sessions
+
+The web app uses **[BetterAuth](https://better-auth.com)** with the Drizzle adapter, organization plugin, and `nextCookies` plugin. Configured in `frontend/src/lib/auth.ts`.
+
+<Steps>
+  <Step title="User submits credentials">
+    `/login` or `/signup` form posts to BetterAuth's `/api/auth/*` routes. Passwords hashed by BetterAuth (scrypt) and stored in the `user` table.
+  </Step>
+  <Step title="Session row written">
+    BetterAuth inserts into `session` table with `userId`, `expiresAt`, `ipAddress`, `userAgent`, and — critically — `activeOrganizationId`. The session ID is signed and set as an HTTP-only cookie.
+  </Step>
+  <Step title="Org provisioning hooks fire">
+    On first signup, the `afterCreateOrganization` hook in `auth.ts` runs `provisionDefaultPrograms()` to seed compliance programs, then writes an audit-log entry. Hooks are non-fatal — a failed provisioning still lets the org exist.
+  </Step>
+  <Step title="Cookie cache enabled">
+    BetterAuth caches session lookups for 5 minutes (`cookieCache.maxAge: 5 * 60`) to avoid hitting the DB on every request.
+  </Step>
+</Steps>
+
+### Request authorization
+
+Every request flows through `frontend/src/proxy.ts` (Next.js 16's `proxy()` function — replaces middleware) and then `requireAuth()` in `frontend/src/lib/api-helpers.ts`.
+
+<Steps>
+  <Step title="Optimistic cookie check (proxy)">
+    `getSessionCookie(request)` checks for the BetterAuth cookie without hitting the database. If missing → redirect to `/login`. Public paths (`/login`, `/signup`, `/invite`, `/forgot-password`, `/reset-password`, `/api/auth/*`, `/api/health`, `/api/desktop/onboarding`, `/api/desktop/auth-poll`) bypass entirely.
+  </Step>
+  <Step title="Full session lookup (handler)">
+    API routes call `requireAuth()` → `auth.api.getSession({ headers })`, which returns the full `{ session, user }` from the DB (or cache). 401 if missing.
+  </Step>
+  <Step title="Org scoping">
+    `getOrgId(session)` extracts `session.session.activeOrganizationId`. 400 if not set — every protected endpoint is multi-tenant by org.
+  </Step>
+  <Step title="Role-aware variants">
+    `requireAdmin()` adds an admin/owner role check. `requireWriteAccess()` enforces resource assignment — members can only modify items assigned to them by `userId`.
+  </Step>
+</Steps>
+
+<Note>
+The session cookie is **opaque**, not a JWT. Verity does not put any claims in the cookie itself — the activeOrganizationId is read from the DB session row (with the 5-minute cache).
+</Note>
+
+---
+
+## 2. Connector OAuth (Google Drive)
+
+Connectors authenticate users *to a third party* (Google Drive today, more coming). The pattern uses **PKCE + a signed state JWT** to bind the OAuth roundtrip to the user's session, and **AWS KMS envelope encryption** to store the resulting tokens.
+
+### Phase 1 — Initiate (`GET /api/auth/google-drive/authorize`)
+
+| Step | What happens |
+|------|--------------|
+| `requireAuth()` | Resolves orgId from BetterAuth session |
+| Feature flag | `hasFeature(org.metadata, "connectors_enabled")` — 403 if disabled |
+| `generatePkce()` | 32-byte verifier, SHA-256 challenge (S256) |
+| Sign state JWT | HS256, key = `BETTER_AUTH_SECRET`, issuer = `verity-oauth`, **5 min TTL**. Payload: `{ userId, orgId, nonce, codeVerifier, reconnectConnectorId? }` |
+| Redirect | 302 → `accounts.google.com/o/oauth2/v2/auth` with `state`, `code_challenge`, `scope=drive.readonly openid email`, `nonce` |
+
+### Phase 2 — Callback (`GET /api/auth/google-drive/callback`)
+
+The state JWT is the only thing tying the callback to the original user. Verifying it (signature, issuer, expiry) prevents the OAuth handshake from being hijacked across sessions.
+
+<Steps>
+  <Step title="Verify state JWT">
+    Reject if expired, wrong issuer, or signature invalid. Extracts `codeVerifier`, `userId`, `orgId`, `nonce`.
+  </Step>
+  <Step title="Exchange code for tokens">
+    `POST oauth2.googleapis.com/token` with `code`, `code_verifier`, `client_id`, `client_secret`. Returns `{ access_token, refresh_token, expires_in, id_token }`.
+  </Step>
+  <Step title="Verify id_token">
+    Validates against Google's JWKS, checks the nonce binding from the state JWT. Falls back to `/userinfo` if no id_token returned.
+  </Step>
+  <Step title="Duplicate check">
+    Reject if another enabled connector in the org uses the same `googleSub` or `googleEmail`.
+  </Step>
+  <Step title="Encrypt and persist">
+    See KMS section below. Insert/update `connector_configs` and 302 → `/evidence?connector=new&id=<id>`.
+  </Step>
+</Steps>
+
+### KMS envelope encryption
+
+`backend/src/lib/crypto.ts` implements envelope encryption for all connector credentials. Defined once, used by every OAuth provider integration.
+
+```ts
+// encryptCredentials(creds) — simplified
+const { Plaintext, CiphertextBlob } = await kms.send(new GenerateDataKeyCommand({
+  KeyId: process.env.CONNECTOR_KMS_KEY_ARN,
+  KeySpec: "AES_256",
+}));
+
+const iv = randomBytes(12);
+const cipher = createCipheriv("aes-256-gcm", Plaintext, iv);
+const ciphertext = Buffer.concat([cipher.update(JSON.stringify(creds)), cipher.final()]);
+const authTag = cipher.getAuthTag();
+
+Plaintext.fill(0); // zero plaintext key in memory immediately
+
+return {
+  encryptedData: Buffer.concat([iv, authTag, ciphertext]), // 12B + 16B + N
+  encryptedDataKey: CiphertextBlob, // KMS-wrapped data key
+};
+```
+
+The Lambda IAM role grants `kms:Decrypt` and `kms:GenerateDataKey` only on `CONNECTOR_KMS_KEY_ARN`. Plaintext data keys never leave Lambda memory and are zeroed after each operation.
+
+<Tip>
+Decryption mirrors encryption: KMS unwraps the data key, AES-256-GCM decrypts (verifying the authTag), the plaintext key is zeroed. See `decryptCredentials()` in the same file.
+</Tip>
+
+---
+
+## 3. Desktop app auth (device code + JWT)
+
+The Tauri desktop app cannot store BetterAuth session cookies the way a browser does, so it uses a **device-code flow** that issues a short-lived JWT access token plus a long-lived refresh token kept in the macOS Keychain.
+
+### Files
+
+- `frontend/src/lib/desktop-jwt.ts` — JWT issuance and verification
+- `frontend/src/lib/desktop-auth-codes.ts` — auth-code store
+- `frontend/src/lib/desktop.ts` — Tauri-side integration (Keychain, refresh scheduling)
+- `frontend/src/app/api/auth/desktop-callback/` — generates auth code after web login
+- `frontend/src/app/api/auth/desktop-token/` — exchanges code for tokens
+- `frontend/src/app/api/auth/desktop-token/refresh/` — rotates refresh token
+- `frontend/src/app/api/auth/desktop-token/revoke/` — logout
+
+### Token issuance flow
+
+<Steps>
+  <Step title="Desktop opens browser">
+    Tauri app launches the system browser to `/api/auth/desktop-callback` with a generated `state` parameter.
+  </Step>
+  <Step title="Web user logs in">
+    Standard BetterAuth login. Once authenticated, the callback handler generates a 32-byte random auth code, hashes it with SHA-256, and inserts into `desktop_auth_codes` with `(codeHash, userId, orgId, state, expiresAt = now + 5min)`.
+  </Step>
+  <Step title="Code returned to desktop">
+    Production: deep link `verity://callback?code=...&state=...` opens the desktop app. Dev: in-memory polling map served via `/api/desktop/auth-poll?state=...`.
+  </Step>
+  <Step title="Code exchange">
+    Desktop POSTs `{ code, state }` to `/api/auth/desktop-token`. Server **atomically** marks the code consumed in the same query as the lookup — a single-use guard against race conditions. Validates not expired, state matches, returns 401 otherwise.
+  </Step>
+  <Step title="issueTokenPair()">
+    Generates a 32-byte hex refresh token, hashes it with SHA-256, inserts into `desktop_tokens`. Signs an HS256 JWT access token. Returns `{ accessToken, refreshToken, expiresIn: 3600 }`.
+  </Step>
+</Steps>
+
+### Token formats
+
+| Token | Format | TTL | Signing/Hashing | Storage |
+|-------|--------|-----|-----------------|---------|
+| Access token | JWT HS256 — payload `{ userId, orgId, name, email, role }`, claims `iat`, `exp`, `iss: "verity-desktop"` | 3600 s (1 hour) | `BETTER_AUTH_SECRET` | In-memory variable + `desktop_access_token` cookie (for SSR/RSC) |
+| Refresh token | 32-byte hex (64 chars) | 30 days | SHA-256 hash stored, plaintext never persisted server-side | macOS Keychain (service `com.verityaml.desktop`, key `refresh_token`) + DB hash |
+| Auth code | 32-byte random | 5 min | SHA-256 | `desktop_auth_codes.codeHash` |
+
+### Refresh rotation
+
+Every refresh issues a **new pair** and revokes the old refresh token in the same transaction.
+
+<Steps>
+  <Step title="Schedule">
+    Desktop app schedules refresh 5 minutes before access-token expiry (or minimum 30 seconds from now).
+  </Step>
+  <Step title="POST /desktop-token/refresh">
+    Send the current refresh token. Server hashes it, looks up in `desktop_tokens`, verifies not revoked and not expired.
+  </Step>
+  <Step title="Atomic rotation">
+    Marks old token `revokedAt = now()`, calls `issueTokenPair()` to create a fresh pair, returns new access + new refresh.
+  </Step>
+  <Step title="Failure handling">
+    On 401/403 the desktop app clears the Keychain entry and the in-memory token, forcing a fresh device-code flow.
+  </Step>
+</Steps>
+
+### Request authorization (desktop)
+
+`requireAuth()` checks two transports before falling back to BetterAuth cookies:
+
+1. **`X-Desktop-Token` header** — JWT verified with `BETTER_AUTH_SECRET`
+2. **`desktop_access_token` cookie** — same JWT, set so RSC fetches inherit auth
+
+If either verifies, `userId`/`orgId`/`role` are pulled from JWT claims and the request proceeds as if it were a BetterAuth session.
+
+---
+
+## 4. Invite flow
+
+Org invitations are handled by BetterAuth's `organization` plugin, with one Verity-specific addition: an optional **signup gate** controlled by the `SIGNUP_INVITE_CODE` environment variable.
+
+### Org invitations
+
+| Field | Value |
+|-------|-------|
+| Expiry | **7 days** (`invitationExpiresIn: 60 * 60 * 24 * 7`) |
+| Email | `sendInvitationEmail()` hook → SES, link to `/invite/{inviteId}` |
+| Table | `invitation` — `id, organizationId, email, role, status, expiresAt, inviterId` |
+| Uniqueness | Unique on `(orgId, email) WHERE status = 'pending'` |
+
+### Signup gate
+
+`/api/auth/validate-invite-code` checks `SIGNUP_INVITE_CODE` (case-sensitive, trimmed). If the env var is unset, all signups are allowed (dev/staging). If set, the code must match exactly. This is a single static gate — there is no per-link tracking.
+
+---
+
+## 5. Service-to-service auth
+
+### Lambda → AWS Secrets Manager
+
+Background workers boot with no plaintext secrets. `infra/lambda/init-secrets.ts` runs once per cold start, fetching ARN-pinned secrets and exporting them as env vars:
+
+| Env var | Source ARN |
+|---------|------------|
+| `DATABASE_URL` | `DATABASE_URL_SECRET_ARN` |
+| `VOYAGE_API_KEY` | `VOYAGE_API_KEY_SECRET_ARN` |
+| `ANTHROPIC_API_KEY` | `ANTHROPIC_API_KEY_SECRET_ARN` |
+| `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET` | `GOOGLE_OAUTH_SECRET_ARN` (JSON blob) |
+
+The Lambda IAM role grants `secretsmanager:GetSecretValue` only on these specific ARNs. Secrets are cached in memory for the lifetime of the warm container.
+
+### KMS access
+
+The same Lambdas hold `kms:Decrypt` + `kms:GenerateDataKey` on `CONNECTOR_KMS_KEY_ARN` to decrypt connector credentials per invocation. Plaintext data keys are zeroed immediately after each crypto operation.
+
+### Webhooks
+
+Verity does not currently expose any webhook receivers (no Stripe, no Resend inbound webhooks). All third-party integrations are outbound from Verity, authenticated via the secrets above.
+
+---
+
+## Environment variables
+
+```bash
+BETTER_AUTH_URL=https://app.verityaml.com   # optional; defaults to localhost:3000
+BETTER_AUTH_SECRET=<hex>                     # signs ALL JWTs (desktop + OAuth state)
+GOOGLE_CLIENT_ID=<...>
+GOOGLE_CLIENT_SECRET=<...>
+GOOGLE_REDIRECT_URI=https://app.verityaml.com/api/auth/google-drive/callback
+SIGNUP_INVITE_CODE=<optional gate>
+CONNECTOR_KMS_KEY_ARN=arn:aws:kms:us-east-1:...:key/...
+AWS_REGION=us-east-1                         # defaults
+```
+
+<Warning>
+`BETTER_AUTH_SECRET` is the single signing key for both desktop access tokens *and* OAuth state JWTs. Rotating it invalidates all in-flight desktop sessions and any OAuth redirects mid-flow. Plan rotations during low-traffic windows and accept some user re-auth churn.
+</Warning>
+
+---
+
+## Quirks worth knowing
+
+1. **Shared signing key.** Desktop JWTs and OAuth state JWTs both use `BETTER_AUTH_SECRET`. Different `iss` claims (`verity-desktop` vs `verity-oauth`) prevent token confusion across surfaces.
+2. **Session cookie cache.** BetterAuth caches session lookups for 5 minutes. Org switches and role changes can take up to 5 minutes to propagate to in-flight requests. Force a fresh session by re-logging in or calling `auth.api.setActiveOrganization()`.
+3. **No email verification.** The `user.emailVerified` column exists but is never enforced — signup is treated as verification today.
+4. **Atomic code consumption.** Desktop auth codes and refresh tokens are marked consumed/revoked in the same SQL statement that looks them up, defeating any double-exchange race.
+5. **Idempotent revoke.** `/desktop-token/revoke` returns 200 even if the token doesn't exist — fire-and-forget logout from the desktop side.
+6. **Org provisioning is non-fatal.** If `provisionDefaultPrograms()` throws inside `afterCreateOrganization`, the org is still created. Recovery is manual (re-run provisioning via admin tooling).
+7. **No API key endpoint.** Every public-facing API uses session auth. There is no token-issuance endpoint for third-party API consumers — that is intentional and tracked on the [roadmap](/developers/roadmap).

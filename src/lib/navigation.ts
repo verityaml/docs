@@ -56,6 +56,7 @@ export const navigation: NavTab[] = [
           { title: 'Architecture', href: '/developers/architecture' },
           { title: 'Data model', href: '/developers/data-model' },
           { title: 'Evidence pipeline', href: '/developers/background-jobs' },
+          { title: 'Authentication', href: '/developers/auth' },
           { title: 'AWS migration', href: '/developers/aws-migration' },
         ],
       },

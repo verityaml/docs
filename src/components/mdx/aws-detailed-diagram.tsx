@@ -3,21 +3,21 @@
 import { useState } from "react";
 
 const C = {
-  bg: "#080A0F",
-  panel: "#0D1017",
-  card: "#131720",
-  border: "#1E2433",
-  text: "#D4D8E3",
-  dim: "#6B7280",
-  green: "#34D399",
-  blue: "#3B82F6",
-  purple: "#8B5CF6",
-  orange: "#F59E0B",
-  red: "#EF4444",
-  cyan: "#06B6D4",
-  pink: "#EC4899",
-  yellow: "#EAB308",
-  amber: "#D97706",
+  bg: "#F2F0EB",
+  panel: "#FAFAF7",
+  card: "#FFFFFF",
+  border: "#2A382E22",
+  text: "#1C1C1B",
+  dim: "#6B7567",
+  green: "#15803D",
+  blue: "#1D4ED8",
+  purple: "#6D28D9",
+  orange: "#C2410C",
+  red: "#B91C1C",
+  cyan: "#0E7490",
+  pink: "#BE185D",
+  yellow: "#A16207",
+  amber: "#B45309",
 };
 
 const MONO = "'JetBrains Mono', 'SF Mono', monospace";
@@ -39,14 +39,14 @@ function SB({ x, y, w = 150, h = 52, name, detail, color, port, icon }: {
   const iconY = nameY;
   return (
     <g>
-      <rect x={x} y={y} width={w} height={h} rx={5} fill={C.card} stroke={color + "50"} strokeWidth={1} />
+      <rect x={x} y={y} width={w} height={h} rx={5} fill={C.card} stroke={color + "AA"} strokeWidth={1} />
       <rect x={x} y={y} width={4} height={h} rx={2} fill={color} />
       {icon && <text x={x + 14} y={iconY} fontSize={12} fill={color}>{icon}</text>}
       <text x={x + (icon ? 30 : 14)} y={nameY} fontSize={11} fill={C.text} fontWeight="600" fontFamily={MONO}>{name}</text>
       {detail && <text x={x + (icon ? 30 : 14)} y={detailY} fontSize={9} fill={C.dim} fontFamily={SANS}>{detail}</text>}
       {port && (
         <g>
-          <rect x={x + w - 38} y={y + 4} width={34} height={16} rx={3} fill={color + "20"} stroke={color + "40"} strokeWidth={0.5} />
+          <rect x={x + w - 38} y={y + 4} width={34} height={16} rx={3} fill={color + "30"} stroke={color + "70"} strokeWidth={0.5} />
           <text x={x + w - 21} y={y + 15} fontSize={8} fill={color} fontFamily={MONO} textAnchor="middle">{port}</text>
         </g>
       )}
@@ -67,11 +67,11 @@ function Cn({ x1, y1, x2, y2, color = C.dim, label, dashed }: {
   const my = (y1 + y2) / 2;
   return (
     <g>
-      <line x1={x1} y1={y1} x2={x2 - ux * 5} y2={y2 - uy * 5} stroke={color + "60"} strokeWidth={1} strokeDasharray={dashed ? "4,3" : "none"} />
-      <polygon points={`${x2},${y2} ${x2 - ux * 6 - uy * 3},${y2 - uy * 6 + ux * 3} ${x2 - ux * 6 + uy * 3},${y2 - uy * 6 - ux * 3}`} fill={color + "70"} />
+      <line x1={x1} y1={y1} x2={x2 - ux * 5} y2={y2 - uy * 5} stroke={color + "C0"} strokeWidth={1} strokeDasharray={dashed ? "4,3" : "none"} />
+      <polygon points={`${x2},${y2} ${x2 - ux * 6 - uy * 3},${y2 - uy * 6 + ux * 3} ${x2 - ux * 6 + uy * 3},${y2 - uy * 6 - ux * 3}`} fill={color + "DD"} />
       {label && (
         <g>
-          <rect x={mx - label.length * 3 - 4} y={my - 8} width={label.length * 6 + 8} height={14} rx={3} fill={C.bg} stroke={color + "30"} strokeWidth={0.5} />
+          <rect x={mx - label.length * 3 - 4} y={my - 8} width={label.length * 6 + 8} height={14} rx={3} fill={C.bg} stroke={color + "60"} strokeWidth={0.5} />
           <text x={mx} y={my + 2} fontSize={7.5} fill={color} fontFamily={MONO} textAnchor="middle">{label}</text>
         </g>
       )}
@@ -86,8 +86,8 @@ function Zn({ x, y, w, h, label, color, sub }: {
   const bgHeight = sub ? 30 : 18;
   return (
     <g>
-      <rect x={x} y={y} width={w} height={h} rx={6} fill={color + "06"} stroke={color + "25"} strokeWidth={1} strokeDasharray="6,4" />
-      {label && <rect x={x + 3} y={y + 1} width={Math.min(labelWidth, w - 6)} height={bgHeight} rx={4} fill={color + "06"} />}
+      <rect x={x} y={y} width={w} height={h} rx={6} fill={color + "10"} stroke={color + "55"} strokeWidth={1} strokeDasharray="6,4" />
+      {label && <rect x={x + 3} y={y + 1} width={Math.min(labelWidth, w - 6)} height={bgHeight} rx={4} fill={C.bg} />}
       <text x={x + 10} y={y + 14} fontSize={9} fill={color} fontWeight="700" fontFamily={MONO} letterSpacing="0.08em">{label}</text>
       {sub && <text x={x + 10} y={y + 26} fontSize={7.5} fill={C.dim} fontFamily={SANS}>{sub}</text>}
     </g>
@@ -454,7 +454,7 @@ export function AWSDetailedDiagram() {
                 fontWeight: tab === t.id ? 700 : 500,
                 color: tab === t.id ? t.color : C.dim,
                 background: tab === t.id ? t.color + "15" : C.panel,
-                border: `1px solid ${tab === t.id ? t.color + "40" : C.border}`,
+                border: `1px solid ${tab === t.id ? t.color + "70" : C.border}`,
                 borderRadius: 6,
                 cursor: "pointer",
               }}
