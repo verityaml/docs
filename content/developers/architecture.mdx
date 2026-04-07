@@ -188,7 +188,7 @@ Every evidence status change flows through a single entry point (`applyScoreDelt
 
 ### Background job flows
 
-Five SQS queues feed five Lambda handlers. The parse job chains into backfill. The nightly recompute runs on an EventBridge schedule.
+Six SQS queues feed six Lambda handlers. The parse job chains into backfill. The nightly recompute runs on an EventBridge schedule.
 
 <Mermaid chart={`flowchart LR
     subgraph Dispatch["API Route Dispatchers"]
@@ -273,6 +273,7 @@ Core table relationships showing the multi-tenant hierarchy, compliance scoring 
         string definitionKey "ic-01 etc"
         string evidenceStatus "missing|partial|sufficient"
         jsonb linkedEvidence
+        vector embedding "1024d for classification"
     }
     obligations {
         string id PK "OB-YYYY-NNN"
@@ -288,10 +289,13 @@ Core table relationships showing the multi-tenant hierarchy, compliance scoring 
     evidence {
         string id PK
         string sourceType "exam|domain|library|connector"
+        string classificationStatus "pending|classified|no_match|skipped|error"
     }
     evidenceLinks {
         string status "auto_applied|confirmed|rejected"
         number similarityScore
+        string matchType "semantic|criterion_key"
+        string sourceCriterionId "for criterion-key links"
     }
     notifications {
         string id PK

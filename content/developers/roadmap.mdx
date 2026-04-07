@@ -128,6 +128,15 @@ Structured quarterly progress reports for regulators. Planned for consent order 
 
 ---
 
+## Library evidence classification — deferred
+
+- Auto-refresh criteria embeddings when `SCORING_CRITERIA_DEFINITIONS` change (re-run backfill or incremental update)
+- Retroactive classification of existing library evidence uploaded before this feature
+- Manual "re-classify" button in evidence library UI
+- Reclassification when criteria definitions are updated (shared concern with connector reclassification below)
+
+---
+
 ## Google Drive connector — V2 deferred
 
 - Automatic polling — EventBridge scheduled sync (hourly/daily per connector)
@@ -149,7 +158,10 @@ Structured quarterly progress reports for regulators. Planned for consent order 
 - ~~Partial unique indexes to prevent duplicate linked accounts and pending invites~~ — Done
 - ~~GIN index on `scoring_criteria.linked_evidence` for evidence library queries~~ — Done in PR #270
 - ~~Index on `evidence(org_id)` for evidence library filtering~~ — Done
-- Voyage AI embedding delay is now config-driven (`EMBEDDING_DELAY_MS` env var, default 100ms) — remove entirely after upgrading from free tier
+- Remove Voyage AI rate-limit sleep after upgrading from free tier (parsing drops from ~10 min to ~2 min)
+- Evidence library: `linkedCriteriaCount` correlated subquery scans all criteria JSONB per evidence row — add GIN index on `scoring_criteria.linked_evidence` or materialize the count when scale warrants
+- Evidence library: DELETE loads all org criteria for JSONB cleanup — use `linked_evidence @>` containment query with GIN index at scale
+- Add index on `evidence(org_id)` — every evidence library query filters on it
 
 ### ~~Auth and tenancy~~ — Mostly Complete
 
