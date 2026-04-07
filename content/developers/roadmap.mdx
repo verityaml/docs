@@ -58,7 +58,7 @@ Auto-classify library uploads via embedding similarity — text extraction, head
 
 ### Classification FDR Tuning
 
-Replace single-shot connector classification (60.8% FDR) with a two-stage funnel: embedding retrieval for recall (Stage 1), LLM binary confirmation for precision (Stage 2). Shared `embedAndMatch()` helper used by both connector funnel and library classification, OAuth scope upgrade to `drive.readonly` for content extraction, reconnect banner for existing connectors, CI eval workflow. Target FDR <= 10%.
+Replace single-shot connector classification (60.8% FDR) with a two-stage funnel: embedding retrieval for recall (Stage 1), LLM binary confirmation for precision (Stage 2). Shared `embedAndMatch()` helper used by both connector funnel and library classification, OAuth scope upgrade to `drive.readonly` for content extraction, reconnect banner for existing connectors, CI eval workflow. Target FDR of 10% or lower.
 
 ### Desktop App
 
