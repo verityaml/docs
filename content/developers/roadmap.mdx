@@ -5,7 +5,7 @@ description: Planned features and tracked improvements beyond the current build
 
 ## Spec status
 
-All 35 feature specs are tracked in the main repository's `SPECLOG.md`. Current status as of April 2026:
+All 36 feature specs are tracked in the main repository's `SPECLOG.md`. Current status as of April 2026:
 
 | Spec | Status |
 |------|--------|
@@ -43,9 +43,10 @@ All 35 feature specs are tracked in the main repository's `SPECLOG.md`. Current 
 | Agentic File Classification | Complete |
 | Evidence Bridge | Complete |
 | Library Evidence Classification | In Progress |
+| Classification FDR Tuning | In Progress |
 | Desktop App | In Progress |
 
-**33 complete**, 2 in progress, 1 removed.
+**33 complete**, 3 in progress, 1 removed.
 
 ---
 
@@ -54,6 +55,10 @@ All 35 feature specs are tracked in the main repository's `SPECLOG.md`. Current 
 ### Library Evidence Classification
 
 Auto-classify library uploads via embedding similarity — text extraction, heading-based chunking, pgvector cosine matching against scoring criteria, auto-link + score update. New Lambda + SQS queue, criteria embedding column + backfill, classification status badges in UI.
+
+### Classification FDR Tuning
+
+Replace single-shot connector classification (60.8% FDR) with a two-stage funnel: embedding retrieval for recall (Stage 1), LLM binary confirmation for precision (Stage 2). Shared `embedAndMatch()` helper used by both connector funnel and library classification, OAuth scope upgrade to `drive.readonly` for content extraction, reconnect banner for existing connectors, CI eval workflow. Target FDR <= 10%.
 
 ### Desktop App
 
