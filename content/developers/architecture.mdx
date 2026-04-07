@@ -18,7 +18,7 @@ Click any service box for details. See the [AWS migration plan](/developers/aws-
 | ECS Fargate | Next.js app (standalone Docker), auto-scaling |
 | RDS PostgreSQL | Database with pgvector, managed backups |
 | S3 | Evidence files, exam uploads, reports (50MB max) |
-| SQS + Lambda | Background jobs (parse, auto-match, evidence propagation, backfill, connector sync, library classification) |
+| SQS + Lambda | Background jobs (parse, auto-match, evidence propagation, backfill, connector sync, library classification, nightly recompute) |
 | CloudFront | CDN with WAF |
 | Voyage AI | voyage-law-2 embeddings (1024-dim), legal domain |
 | Anthropic Claude | Document parsing via Anthropic API |
@@ -82,8 +82,8 @@ flowchart TD
         PARSE["parse-examination"]
         SYNC["sync-connector"]
         MATCH["auto-match-evidence"]
+        CLAS["classify-library-evidence"]
         RECOMP["full-recompute\n(nightly)"]
-        CLASSIFY["classify-library-\nevidence"]
     end
 
     subgraph Services["Backend Services"]
@@ -120,7 +120,7 @@ flowchart TD
     SET --> API_ORG
 
     API_EV -->|dispatch| PROP
-    API_EV -->|dispatch| CLASSIFY
+    API_EV -->|dispatch| CLAS
     API_OB -->|dispatch| PARSE
     API_CON -->|dispatch| SYNC
     API_CP -->|dispatch| MATCH
@@ -133,6 +133,9 @@ flowchart TD
     MATCH --> SCORE
     MATCH --> NOTIFY
     SYNC --> CRYPTO
+    SYNC --> EMBED
+    CLAS --> EMBED
+    CLAS --> SCORE
     RECOMP --> SCORE
 
     PARSE --> ANTH
@@ -209,11 +212,11 @@ Six SQS queues feed six Lambda handlers. The parse job chains into backfill. The
     subgraph Lambda["Lambda Handlers"]
         L1["Parse\nPDF extract → LLM classify\n→ embed → KB match\n→ bulk insert"]
         L2["Auto-Match\nCriteria ↔ items\n→ link evidence\n→ score delta"]
-        L3["Propagate\nSemantic search\n→ cross-obligation\nevidence links"]
+        L3["Propagate\nSemantic + criterion-key\n→ cross-obligation\n+ evidence bridge"]
         L4["Backfill\nNew items →\nexisting evidence\nacross obligations"]
-        L5["Sync Connector\nList files → classify\n→ link to criteria\n→ score delta"]
+        L5["Sync Connector\nFunnel classify\n(embed → LLM confirm)\n→ link → score delta"]
         L6["Full Recompute\nAll programs →\ndrift detection\n→ corrections"]
-        L7["Classify Library\nText extract → chunk\n→ embed → cosine match\n→ link + score"]
+        L7["Classify Library\nExtract → chunk → embed\n→ pgvector match\n→ link → score delta"]
     end
 
     D1 --> Q1 --> L1
@@ -226,6 +229,7 @@ Six SQS queues feed six Lambda handlers. The parse job chains into backfill. The
     L1 -->|chains| Q4 --> L4
     L2 -->|notify| NOTIF2["Notifications"]
     L5 -->|notify| NOTIF2
+    L7 -->|notify| NOTIF2
 `} caption="Background job architecture — SQS queues, Lambda handlers, and chaining" />
 
 ### Data model overview

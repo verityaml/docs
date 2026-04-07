@@ -42,9 +42,9 @@ All 36 feature specs are tracked in the main repository's `SPECLOG.md`. Current 
 | Google Drive Connector | Complete |
 | Agentic File Classification | Complete |
 | Evidence Bridge | Complete |
+| Desktop App | In Progress |
 | Library Evidence Classification | In Progress |
 | Classification FDR Tuning | In Progress |
-| Desktop App | In Progress |
 
 **33 complete**, 3 in progress, 1 removed.
 
@@ -52,13 +52,13 @@ All 36 feature specs are tracked in the main repository's `SPECLOG.md`. Current 
 
 ## In progress
 
-### Library Evidence Classification
-
-Auto-classify library uploads via embedding similarity — text extraction, heading-based chunking, pgvector cosine matching against scoring criteria, auto-link + score update. New Lambda + SQS queue, criteria embedding column + backfill, classification status badges in UI.
-
 ### Classification FDR Tuning
 
-Replace single-shot connector classification (60.8% FDR) with a two-stage funnel: embedding retrieval for recall (Stage 1), LLM binary confirmation for precision (Stage 2). Shared `embedAndMatch()` helper used by both connector funnel and library classification, OAuth scope upgrade to `drive.readonly` for content extraction, reconnect banner for existing connectors, CI eval workflow. Target FDR of 10% or lower.
+Replacing single-shot connector classification (60.8% FDR) with a two-stage funnel: embedding retrieval for recall, LLM binary confirmation for precision. Shared `embedAndMatch()` helper powers both the connector funnel and library classification. OAuth scope defaulted to `drive.readonly` for all new connections (enables content extraction). Reconnect banner shown when an existing connector lacks the `drive.readonly` scope. CI eval workflow gates changes to classification files. Target FDR ≤ 10%.
+
+### Library Evidence Classification
+
+Auto-classifying evidence library uploads via embedding similarity. Text extraction (PDF, text/*), heading-based chunking, pgvector cosine matching against scoring criteria, auto-link on high-confidence matches with score updates propagated through `applyScoreDelta()`. New `classify-library-evidence` SQS queue and Lambda. Criteria embedding column + backfill script. Classification status badges in the evidence table (pending, classified, no match, skipped, error).
 
 ### Desktop App
 
@@ -79,7 +79,7 @@ Replace single-shot connector classification (60.8% FDR) with a two-stage funnel
 
 ### Evidence Bridge (Complete)
 
-Criteria → request item evidence propagation. When evidence is linked to a scoring criterion, auto-suggest on request items sharing the same `definition_key`. Extends `evidence_links` table with `source_criterion_id` + `match_type`. Async via existing propagate-evidence SQS queue.
+Criteria → request item evidence propagation. When evidence is linked to a scoring criterion (manual, accept suggestion, or connector auto-link), matching request items automatically receive the evidence as a suggestion. Deterministic matching via `definition_key` = `scoring_criterion_key`. Async via the existing `propagate-evidence` SQS queue with discriminated union message routing. `EvidenceLinkBanner` conditionally renders criterion-key links ("From: [Program] · [Domain] · [key]") alongside existing semantic links ("From: [Obligation] · RI-XXX").
 
 ### Google Drive Connector (Complete)
 
