@@ -4,25 +4,51 @@ Checkpoint for `/sync-from-app` runs. Used to determine which PRs are new since 
 
 ## Last Sync
 
-- **Date:** 2026-04-07
-- **Latest merged PR:** #438 (fix(backend): tighten Stage 2 funnel + plumb sustained-failure guard end-to-end)
-- **Main repo commit:** 966239a8e40173f95a9f1ca89393d227bf82bd97
-- **Merged at:** 2026-04-07
+- **Date:** 2026-04-08
+- **Latest merged PR:** #444 (docs: spec for funnel eval calibration (#430))
+- **Main repo commit:** c6a5913e5b2cfe897854bc2540269773e2bc6edd
+- **Merged at:** 2026-04-08
 
 ## PRs Included in This Sync
+
+PRs since previous checkpoint (#438):
+
+- #435 feat: DOCX content extraction + content-processing disclosure (#255) — adds DOCX content extraction to `GoogleDriveClient.getFileContent()` and `extractTextFromBuffer()` via `mammoth`, so `.docx` files now flow through funnel classification with real content instead of falling back to metadata-only. Adds a content-processing disclosure on Google Drive connector setup cards (one-line explainer that file content is processed transiently, never stored, with link to DPA). Adds a public `/legal/dpa` page (Data Processing Addendum template) covering connector content reading, sub-processors (Anthropic, Voyage AI, AWS, Google), retention, and security measures. Also resolves 7 pre-existing `react-hooks/set-state-in-effect` and Playwright lint errors (#437) and renames the `no-failure-sentinel-return` rule to `no-bracketed-sentinel-return` with a wider pattern (#446).
+- #447 fix(frontend): replace setInterval polling in examination-detail — replaces `setInterval(pollItems, 2000)` with the recursive `setTimeout` pattern (cancelled flag + cleanup) used in `notification-bell.tsx` to prevent overlapping polls and out-of-order state updates. Frontend internal fix, no doc impact (#446).
+- #444 docs: spec for funnel eval calibration (#430) — adds `.claude/specs/funnel-eval-calibration/` (requirements, design, tasks, diagrams) and `docs/plans/2026-04-06-funnel-eval-calibration.md` for spec #37. Recalibrates the connector classification golden set against real Voyage embeddings (currently 12% accuracy vs 100% mocked). Shared `criteria-embeddings.ts` helper wired into all 5 scoring-criteria insert sites, lazy heal at sync entry, ECS `run-task` deploy backfill safety net, dedicated `verity-eval` seed org, combined `--calibrate` mode that caches Stage 2 across thresholds. Merge gate: global ≥ 80% accuracy / ≤ 10% FDR with per-domain breakdown for operator spot-check.
+
+### Impact
+
+- **roadmap.mdx**: Added spec #37 "Funnel Eval Calibration" (Specified) row + a new "Funnel Eval Calibration (Specified)" subsection under "In progress" describing the 5 insert sites + lazy heal + deploy backfill calibration plan. Updated header total from "All 36 feature specs" to "All 37 feature specs". Fixed pre-existing miscount: was "**33 complete**, 3 in progress, 1 removed" (off-by-one); now "**32 complete**, 3 in progress, 1 specified, 1 removed". Also added DOCX → mammoth note to the existing "Classification FDR Tuning" in-progress description.
+- **walkthrough.mdx**: Google Drive connector section — added the content-processing disclosure paragraph with DPA link, and rewrote the Stage 1 / extraction sentence to enumerate the new content-extraction routes (Google Docs/Sheets/Slides export, PDF via `unpdf`, **DOCX via `mammoth`**, text/* direct) so Word docs now flow through the funnel with real content.
+- **features/evidence.mdx**: Library auto-classification paragraph updated — `classify-library-evidence` Lambda now described as extracting text "via the shared `extractTextFromBuffer()` helper (PDF via `unpdf`, DOCX via `mammoth`, text/* directly)" instead of "(PDF, text/*)".
+- No other pages updated — #447 is a frontend internal fix with no user-visible behaviour change.
+
+### Build verification
+
+- Full `next build` blocked in sandbox by Google Fonts network access (unrelated to docs changes).
+- All three changed MDX files compile cleanly via `@mdx-js/mdx`.
+- `tsc --noEmit` passes.
+
+---
+
+## Previous Sync (2026-04-07)
+
+- **Latest merged PR:** #438 (fix(backend): tighten Stage 2 funnel + plumb sustained-failure guard end-to-end)
+- **Main repo commit:** 966239a8e40173f95a9f1ca89393d227bf82bd97
 
 PRs since previous checkpoint (#434):
 
 - #438 fix(backend): tighten Stage 2 funnel + plumb sustained-failure guard end-to-end — refactors `ConfirmMatchResult` to use `outcome` as the sole source of truth (#431), adds a per-sync Stage 2 error+timeout rate guard (50% threshold over a minimum 5-decision sample) that propagates across batch/folder boundaries (#432), and plumbs new `deferredFileList` / `stage2WarningMessage` fields end-to-end so the UI can surface non-fatal degradations.
 
-### Impact
+### Impact (previous sync)
 
 - **walkthrough.mdx**: Scene 14 (Google Drive Connector) — added one paragraph on the sustained-failure guard: 50% error+timeout threshold over 5 decisions, propagates across batches, surfaces `deferredFileList` distinct from `unmatchedFileList`, non-fatal warning on the connector card.
 - No other pages updated — #438 is a robustness fix under the existing "Classification FDR Tuning" in-progress spec (#36), which the previous sync (PR #434) already documented.
 
 ---
 
-## Previous Sync (2026-04-06)
+## Earlier Sync (2026-04-06)
 
 - **Latest merged PR:** #434 (fix(docker): copy nested workspace node_modules into builder)
 - **Main repo commit:** 61a3a190156a6b41bf8879df08304f71625a68bc

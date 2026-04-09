@@ -5,7 +5,7 @@ description: Planned features and tracked improvements beyond the current build
 
 ## Spec status
 
-All 36 feature specs are tracked in the main repository's `SPECLOG.md`. Current status as of April 2026:
+All 37 feature specs are tracked in the main repository's `SPECLOG.md`. Current status as of April 2026:
 
 | Spec | Status |
 |------|--------|
@@ -45,8 +45,9 @@ All 36 feature specs are tracked in the main repository's `SPECLOG.md`. Current 
 | Desktop App | In Progress |
 | Library Evidence Classification | In Progress |
 | Classification FDR Tuning | In Progress |
+| Funnel Eval Calibration | Specified |
 
-**33 complete**, 3 in progress, 1 removed.
+**32 complete**, 3 in progress, 1 specified, 1 removed.
 
 ---
 
@@ -54,7 +55,11 @@ All 36 feature specs are tracked in the main repository's `SPECLOG.md`. Current 
 
 ### Classification FDR Tuning
 
-Replacing single-shot connector classification (60.8% FDR) with a two-stage funnel: embedding retrieval for recall, LLM binary confirmation for precision. Shared `embedAndMatch()` helper powers both the connector funnel and library classification. OAuth scope defaulted to `drive.readonly` for all new connections (enables content extraction). Reconnect banner shown when an existing connector lacks the `drive.readonly` scope. CI eval workflow gates changes to classification files. Target FDR ≤ 10%.
+Replacing single-shot connector classification (60.8% FDR) with a two-stage funnel: embedding retrieval for recall, LLM binary confirmation for precision. Shared `embedAndMatch()` helper powers both the connector funnel and library classification. OAuth scope defaulted to `drive.readonly` for all new connections (enables content extraction). DOCX content extraction added via `mammoth` so Word documents now flow through the funnel instead of falling back to metadata-only. Reconnect banner shown when an existing connector lacks the `drive.readonly` scope. CI eval workflow gates changes to classification files. Target FDR ≤ 10%.
+
+### Funnel Eval Calibration (Specified)
+
+Specified — recalibrates the connector classification golden set against real Voyage embeddings (currently 12% accuracy vs 100% mocked). A shared `criteria-embeddings.ts` helper is wired into all 5 scoring-criteria insert sites so embeddings are written inline at create time, with a lazy heal at sync entry and an ECS `run-task` deploy backfill safety net for any rows that slipped through. A dedicated `verity-eval` seed org isolates eval data, and a combined `--calibrate` mode in `eval-connector-classification.ts` caches Stage 2 confirmations across thresholds to make sweep runs cheap. Merge gate: global ≥ 80% accuracy / ≤ 10% FDR with a per-domain breakdown for operator spot-check. Tracks issue #430.
 
 ### Library Evidence Classification
 
