@@ -4,12 +4,38 @@ Checkpoint for `/sync-from-app` runs. Used to determine which PRs are new since 
 
 ## Last Sync
 
-- **Date:** 2026-04-08
+- **Date:** 2026-04-11
+- **Latest merged PR:** #450 (chore(deps): bump the npm_and_yarn group across 2 directories with 1 update)
+- **Main repo commit:** 15eee8beb6997696343fce2882be7ec9cfc003fd
+- **Merged at:** 2026-04-11
+
+## PRs Included in This Sync
+
+PRs since previous checkpoint (#444):
+
+- #448 feat: funnel eval calibration phases 1-4 — silent-degradation fix + tooling — lands the tooling spine for spec #37 (#430). Phase 1 adds shared `backend/src/lib/criteria-embeddings.ts` with `embedCriteria()` (hot path, never throws) and `embedMissingCriteria()` (cold path, batched per KB source table); Voyage chunking pushed into `generateEmbeddings()` (VOYAGE_MAX_BATCH=100). Phase 2 wires `embedCriteria()` into `POST /compliance-programs`, `POST /compliance-programs/[id]/scan`, and seed scripts; adds a lazy heal at `syncConnectorJob` entry that fails loudly on Voyage outage; surfaces "Classification will activate after the next embedding refresh" banners on the dashboard scan button and the create-program wizard (persistent, requires acknowledgement). Phase 3 adds `npm run seed:eval-org` (deterministic `verity-eval` slug-derived IDs, `--check` smoke mode, hash drift delete-and-re-seed), a `docker/backfill-criteria-embeddings.mjs` self-contained script, and a "Backfill criteria embeddings" `aws ecs run-task` step in both staging and production deploy jobs (after migrations, before service update, 5-min timeout). Phase 4 restructures the golden set with `metadata.voyage_model` + per-case `id`/`_calibrated_at`, adds `--calibrate` mode to `eval-connector-classification.ts` (pre-flight `checkEvalOrg`, Stage 2 cache at lowest threshold, offline scoring across `[0.45, 0.50, 0.55, 0.60, 0.65]`, model-drift forces full recalibration, sustained-failure guard ports into the loop, exit 1 on any broken sweep), and emits `calibration-diff.md` + `funnel-sweep-results.md`. Review hardening: human-readable ID generation now enforced via `generateId()` + `pg_advisory_xact_lock` on scan and create-program routes (caught a concurrent-scan lexicographic-max collision past 999 criteria), two new lint-gate rules (`no-inline-sequential-id-generation`, `seed-scripts-use-embedMissingCriteria`), docker backfill timeout + definition_key fallback + PgBouncer detection. Phases 1–4 ship the infrastructure; the operator calibration run + merge-gate review (≥ 80% accuracy / ≤ 10% FDR) is still pending.
+- #449 fix: allowlist backfill-criteria-embeddings.mjs in `.dockerignore` — follow-up to #448, the Dockerfile `COPY` added in #448 was breaking the staging Docker build because the `.dockerignore` allowlist wasn't updated. No user-visible impact.
+- #450 chore(deps): bump the npm_and_yarn group across 2 directories with 1 update — Dependabot bump of `next` from 16.1.7 to 16.2.3 in both root and `frontend/`. No user-visible impact.
+
+### Impact
+
+- **roadmap.mdx**: Rewrote the "Funnel Eval Calibration (Specified)" in-progress section to reflect that phases 1-4 have landed in PR #448. Enumerates the shared `criteria-embeddings.ts` helper (hot `embedCriteria` + cold `embedMissingCriteria`), the lazy heal at sync entry, the dashboard + create-program degradation banners, the deploy-time ECS `run-task` safety net, the `verity-eval` seed org + `--check` mode + hash-drift re-seed, the combined `--calibrate` mode with Stage 2 caching across thresholds, and the Voyage model-drift check + sustained-failure guard. Preserves the `≥ 80% accuracy / ≤ 10% FDR` merge gate as pending operator work, and notes the two new lint-gate rules. SPECLOG.md still reads "Specified" for spec #37, so the main roadmap table status row was left unchanged.
+- **todo.mdx**: Added a new "Funnel eval calibration — deferred" section mirroring TODO.md line 69 — the staging `seed-eval-org --check` smoke job in `deploy.yml` is built and unit-tested but not wired into CI (needs its own ECS run-task wrapper since GHA can't reach private RDS). Deferred until drift becomes recurring.
+- No other pages updated. #449 and #450 have no user-visible impact; #448 introduces no new product features (the dashboard/wizard banners are only visible on a Voyage outage or post-create embedding delay, so the walkthrough isn't affected).
+
+### Build verification
+
+- `next build` blocked in sandbox by Google Fonts network access (unrelated — same as previous syncs, blocks `next/font/google` for Fraunces/Inter/JetBrains Mono).
+- Both changed MDX files compile cleanly via `@mdx-js/mdx`.
+- `tsc --noEmit` passes.
+
+---
+
+## Previous Sync (2026-04-08)
+
 - **Latest merged PR:** #444 (docs: spec for funnel eval calibration (#430))
 - **Main repo commit:** c6a5913e5b2cfe897854bc2540269773e2bc6edd
 - **Merged at:** 2026-04-08
-
-## PRs Included in This Sync
 
 PRs since previous checkpoint (#438):
 
