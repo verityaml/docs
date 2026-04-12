@@ -59,7 +59,18 @@ Replacing single-shot connector classification (60.8% FDR) with a two-stage funn
 
 ### Funnel Eval Calibration (Specified)
 
-Specified — recalibrates the connector classification golden set against real Voyage embeddings (currently 12% accuracy vs 100% mocked). A shared `criteria-embeddings.ts` helper is wired into all 5 scoring-criteria insert sites so embeddings are written inline at create time, with a lazy heal at sync entry and an ECS `run-task` deploy backfill safety net for any rows that slipped through. A dedicated `verity-eval` seed org isolates eval data, and a combined `--calibrate` mode in `eval-connector-classification.ts` caches Stage 2 confirmations across thresholds to make sweep runs cheap. Merge gate: global ≥ 80% accuracy / ≤ 10% FDR with a per-domain breakdown for operator spot-check. Tracks issue #430.
+Tooling built (phases 1–4 landed in PR #448); operator calibration run + merge-gate review still pending. The goal is to recalibrate the connector classification golden set against real Voyage embeddings (currently 12% accuracy vs 100% mocked) and choose a defensible retrieval threshold.
+
+**What's in place:**
+
+- A shared `criteria-embeddings.ts` helper with two entry points — `embedCriteria()` for hot paths (wired into scan, program create, and the seed scripts so embeddings are written inline at create time, never throws) and `embedMissingCriteria()` for cold paths (batched per KB source table, no N+1). Voyage chunking is now an internal concern of `generateEmbeddings()`.
+- A **lazy heal** at the top of every connector sync — counts `NULL` embeddings, calls `embedMissingCriteria(orgId)`, and fails loudly with an actionable message on Voyage outage instead of silently falling back to metadata-only classification.
+- Frontend warnings on the degraded path: the dashboard **Run Gap Analysis** button surfaces a dismissible amber banner when `embeddingsGenerated:false`, and the **Create Program wizard** shows a persistent "Classification will activate after the next embedding refresh" banner with an explicit **Continue** button — users must acknowledge the degradation before navigating.
+- A deploy-time ECS `run-task` safety net — `docker/backfill-criteria-embeddings.mjs` runs in both staging and production deploys, after migrations and before the service update, using the same postgres driver and Voyage REST calls as the app image. `no-inline-sequential-id-generation` and `seed-scripts-use-embedMissingCriteria` lint-gate rules prevent regressions.
+- A dedicated `verity-eval` seed org (slug-derived deterministic IDs) provisioned by `npm run seed:eval-org`, with a `--check` smoke mode that validates fixture counts, embedding presence, and a sha256 hash of `SCORING_CRITERIA_DEFINITIONS`. Hash drift now deletes and re-seeds cleanly instead of leaving stale rows under a new hash.
+- A combined `--calibrate` mode in `eval-connector-classification.ts` that caches Stage 2 confirmations at the lowest threshold once and scores every threshold in `[0.45, 0.50, 0.55, 0.60, 0.65]` offline by filtering the cache. Outputs `calibration-diff.md` (per-case removed/added/unchanged deltas) and `funnel-sweep-results.md` (threshold table + per-domain breakdown + chosen threshold + cost estimate). A Voyage model-drift check forces full recalibration when the deployed model differs from `goldenSet.metadata.voyage_model`, and the sustained-failure guard is ported into the Stage 2 loop so outages abort the sweep loudly instead of producing an unreliable table.
+
+**Merge gate:** global ≥ 80% accuracy / ≤ 10% FDR with a per-domain breakdown for operator spot-check. Tracks issue #430.
 
 ### Library Evidence Classification
 

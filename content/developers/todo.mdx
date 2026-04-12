@@ -67,6 +67,12 @@ See the [Roadmap](/developers/roadmap) for planned post-partnership features (co
 
 ---
 
+## Funnel eval calibration — deferred
+
+- **Staging `seed-eval-org --check` smoke job in `deploy.yml`.** The `--check` CLI is built and unit-tested but not yet wired into CI. Wiring requires either a thin `docker/check-eval-org.mjs` that ships in the app image and runs via `aws ecs run-task` (because GHA runners can't reach private RDS), or a Lambda. Deferred until drift becomes a recurring issue — the deploy-time backfill (which does run via `run-task`) provides the actual healing, so the smoke job is verification only.
+
+---
+
 ## Library evidence classification — deferred
 
 - Auto-refresh criteria embeddings when `SCORING_CRITERIA_DEFINITIONS` change (re-run backfill or incremental update)
