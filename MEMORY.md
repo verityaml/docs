@@ -4,12 +4,37 @@ Checkpoint for `/sync-from-app` runs. Used to determine which PRs are new since 
 
 ## Last Sync
 
-- **Date:** 2026-04-11
+- **Date:** 2026-04-14
+- **Latest merged PR:** #452 (chore: add layman skill and auto permissions)
+- **Main repo commit:** 98230dd46b2ea0824a3b02896b472ed01f4ffc0c
+- **Merged at:** 2026-04-12
+
+## PRs Included in This Sync
+
+PRs since previous checkpoint (#450):
+
+- #451 feat: calibrate RETRIEVAL_THRESHOLD to 0.50 + docs (phases 5-6) — completes spec #37 (funnel-eval-calibration), closes #430. Phase 5: ran `--calibrate` 5× against staging `verity-eval` org with `voyage-law-2` embeddings; best stable run **~87% accuracy / ~5% FDR** at threshold **0.50** (passes the 80%/10% merge gate). Lowered `RETRIEVAL_THRESHOLD` from 0.55 → 0.50 in `embedding-classification-config.ts` with a calibration-context JSDoc comment. Haiku Stage 2 non-determinism produces ~20pp variance run-to-run; 0.50 picked as the most stable operating point (0.45 is borderline on FDR at 10.6%). Golden set recalibrated to **41 cases / 49 expected matches**: 10 cases had `contentPreview` enriched from ~200 → ~800-1200 chars matching production `getFileContent()` output (short previews produced artificially weak embeddings); 13 valid "added" matches the curators missed accepted; 5 unrealistic expectations removed (Baselayer KYB ck-01 where `voyage-law-2` can't bridge KYB→CDD framing, case-023 short content); 3 criteria-ambiguity cases reclassified to accept sibling criteria. `seed-eval-org.ts` Date serialization fixed (ISO string + `::timestamptz` for postgres.js compat). Phase 6: root + backend `CLAUDE.md` updated with new threshold and the three eval modes (`funnel-ci`, `funnel`, `--calibrate`); `docs/test-data/funnel-sweep-results.md` regenerated from Run 4 (last healthy run, 212 Stage 2 calls, 0 errors) with the final FP→TP reclassifications applied; `calibration-diff.md` flipped to 0/41 uncalibrated. Spec `tasks.md` Phases 5-6 marked `[x]`; post-merge baseline calibration deferred until SSM tunnel stability is fixed.
+- #452 chore: add layman skill and auto permissions — internal Claude Code tooling (new `/layman` skill for plain-language change summaries, default permissions set to auto, `/simplify` step inserted into the `/execute` workflow). No user-visible product change; no doc impact.
+
+### Impact
+
+- **roadmap.mdx**: Rewrote the "Funnel Eval Calibration (Specified)" in-progress section to reflect that all six phases shipped — phases 1–4 in #448, phases 5–6 in #451. Added a "Calibration outcome" sub-block with the threshold change (0.55 → 0.50), the headline ~87% accuracy / ~5% FDR result, the golden set recalibration (41 cases / 49 expected matches, contentPreview enrichment, ±13 acceptances/-5 removals/3 reclassifications), and the doc sync (root + backend `CLAUDE.md` + #430 close). Merge gate line now reads "**achieved**". Spec table row left at "Specified" (mirrors SPECLOG.md verbatim — the SPECLOG bump for #37 is the only remaining gap and is called out in the narrative as "awaiting a bump"). Spec count line therefore unchanged.
+- **walkthrough.mdx**: Scene "Google Drive connector" — Stage 2 medium-confidence range updated from `0.55–0.85` to `0.50–0.85` to match the calibrated `RETRIEVAL_THRESHOLD`.
+- No other pages updated. `todo.mdx` mirrors `TODO.md` which was unchanged in this window (the existing "Funnel eval calibration — deferred" entry for the staging `seed-eval-org --check` smoke job is still accurate). `architecture.mdx` only mentions the funnel at a flow-diagram level ("Funnel classify (embed → LLM confirm)") which doesn't reference the threshold value. README/SPECLOG/WALKTHROUGH source-of-truth files were unchanged.
+
+### Build verification
+
+- `next build` blocked in sandbox by Google Fonts network access (unchanged from previous syncs — `next/font/google` can't reach Fraunces/Inter/JetBrains Mono).
+- Both changed MDX files compile cleanly via `@mdx-js/mdx`.
+- `tsc --noEmit` passes.
+
+---
+
+## Previous Sync (2026-04-11)
+
 - **Latest merged PR:** #450 (chore(deps): bump the npm_and_yarn group across 2 directories with 1 update)
 - **Main repo commit:** 15eee8beb6997696343fce2882be7ec9cfc003fd
 - **Merged at:** 2026-04-11
-
-## PRs Included in This Sync
 
 PRs since previous checkpoint (#444):
 
