@@ -137,6 +137,105 @@ The Lambda IAM role grants `kms:Decrypt` and `kms:GenerateDataKey` only on `CONN
 Decryption mirrors encryption: KMS unwraps the data key, AES-256-GCM decrypts (verifying the authTag), the plaintext key is zeroed. See `decryptCredentials()` in the same file.
 </Tip>
 
+The `connector_configs` row stores: `credentials` (encrypted Buffer), `credentialsDataKey` (KMS-wrapped), and `providerConfig` JSON with `{ googleEmail, googleSub, watchedFolders, grantedScope }`, plus `enabled: true`.
+
+### Phase 3 — Sync trigger (`POST /api/connectors/[id]/sync`)
+
+Once the connector is persisted, the user configures `watchedFolders[]` via `PATCH /api/connectors/[id]` and clicks **Sync**.
+
+<Steps>
+  <Step title="Validate">
+    `requireAuth()`, verify the connector is `enabled` and has at least one watched folder.
+  </Step>
+  <Step title="Atomic status flip">
+    Update `lastSyncStatus` from `idle` → `syncing` guarded by an `ne()` clause so concurrent clicks are idempotent. Only the first writer wins; subsequent calls no-op.
+  </Step>
+  <Step title="Enqueue">
+    `sendMessage("sync-connector", { connectorId, orgId })` from `backend/src/queue/index.ts`. Queue URL resolves from `SQS_QUEUE_URL_SYNC_CONNECTOR` env var.
+  </Step>
+  <Step title="Poll">
+    Respond `{ data: { syncing: true } }`. The frontend polls `/api/connectors/[id]/results` for progress and outcomes.
+  </Step>
+</Steps>
+
+### Phase 4 — Lambda bootstrap & SQS dispatch
+
+`infra/lambda/sync-connector.ts` wraps `createSqsHandler()`. On cold start, `initSecrets()` (in `infra/lambda/init-secrets.ts`) runs **once** and caches results for the lifetime of the warm container — see [service-to-service auth](#lambda-aws-secrets-manager) below for the ARN → env var mapping.
+
+`infra/lambda/sqs-handler.ts` then iterates `event.Records[]`:
+
+| Check | Outcome |
+|-------|---------|
+| JSON parse + Zod validate | Fail → log + skip (no retry, poison pill dropped) |
+| Job function throws | `onError()` hook runs, then re-throw → SQS retries → DLQ |
+| Job returns | Record acked |
+
+### Phase 5 — Credential decryption
+
+`backend/src/jobs/sync-connector.ts` loads the `connector_configs` row, verifies org ownership, and calls `decryptCredentials(encryptedData, encryptedDataKey)`:
+
+1. `kms.send(new DecryptCommand({ CiphertextBlob: encryptedDataKey }))` → plaintext data key (IAM scoped to `CONNECTOR_KMS_KEY_ARN` only)
+2. Slice `encryptedData`: `iv = [0..12]`, `authTag = [12..28]`, `ciphertext = [28..]`
+3. AES-256-GCM decrypt → `JSON.parse()` → `{ access_token, refresh_token, token_expiry }`
+4. Zero the plaintext key in memory immediately
+
+### Phase 6 — Google Drive API calls
+
+`getProvider("google_drive")` from `backend/src/connectors/registry.ts` returns the provider implementation. `backend/src/connectors/google-drive-provider.ts` exposes `listFiles(creds, config)` as an async generator, backed by `GoogleDriveClient` in `backend/src/lib/clients/google-drive-client.ts`.
+
+| Behavior | Detail |
+|----------|--------|
+| Token refresh | `googleapis` client auto-refreshes `access_token` via `refresh_token` when expired |
+| List query | `drive.files.list({ q: "'<folderId>' in parents and trashed = false" })`, paginated |
+| Retry | All calls wrapped in `withRetry()`: 200/400/800 ms exponential backoff on 429 / `rateLimitExceeded` |
+| Content fetch | `getFileContent(fileId, maxChars=1500)` routes by MIME type: Docs/Sheets/Slides → export, PDF → `unpdf`, text → download, binary → skip |
+
+### Phase 7 — Diff, classify, score
+
+With files in hand, the job runs the classification pipeline:
+
+<Steps>
+  <Step title="Diff">
+    `diffFiles()` → `{ newFiles, modifiedFiles, deletedFileIds, recoveredFiles }`. Upsert `connector_files` with `syncHash` for change detection.
+  </Step>
+  <Step title="Classify">
+    Per watched folder, load `program / domains / criteria`. Funnel: `classifyFileBatch()` → `embedAndMatch()` (Voyage embeddings + pgvector) → Stage 2 Haiku confirm for medium-confidence (0.55–0.85). Agentic alt path if `hasFeature(org, "agentic_classification")`.
+  </Step>
+  <Step title="Persist">
+    `applyClassifications()` writes `evidence` + `evidence_links`.
+  </Step>
+  <Step title="Score cascade">
+    `applyScoreDelta(domainId, ...)` → `cascadeProgramScore(programId)`. Cascade runs **before** notify so notifications see the final state.
+  </Step>
+  <Step title="Notify">
+    `emitScoreNotifications()` writes `notifications` rows.
+  </Step>
+</Steps>
+
+### Phase 8 — Completion
+
+On success the job updates `connector_configs`:
+
+- `lastSyncStatus = "success"`, `lastSyncAt = now()`
+- `lastSyncResults` (JSON summary), `syncProgress.phase = "complete"`
+- `lastError = null`, updated `fileCount`
+- `audit_log` row inserted with `action = "connector_sync"` and metadata (file / domain counts)
+
+On throw, `onError()` sets `lastSyncStatus = "error"` + `lastError = message`. SQS retries per the queue policy; terminal failures land in the DLQ.
+
+### Token & data in-flight summary
+
+| Step | Token | Storage |
+|------|-------|---------|
+| 1 | Password → scrypt hash | `user.password` (DB) |
+| 2 | BetterAuth session ID | Signed cookie + `session` table |
+| 3 | OAuth state JWT (HMAC, 5 min) | URL param only |
+| 4 | Google auth code (single-use) | URL param → exchanged immediately |
+| 5 | Google access + refresh tokens | KMS-encrypted in `connector_configs.credentials` |
+| 7 | AWS service secrets | Secrets Manager → Lambda env vars (warm) |
+| 9 | Decrypted Google tokens | Lambda memory only (per-invocation) |
+| 10 | Refreshed Google access token | `googleapis` client memory |
+
 ---
 
 ## 3. Desktop app auth (device code + JWT)
