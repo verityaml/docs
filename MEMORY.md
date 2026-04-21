@@ -4,12 +4,34 @@ Checkpoint for `/sync-from-app` runs. Used to determine which PRs are new since 
 
 ## Last Sync
 
+- **Date:** 2026-04-20
+- **Latest merged PR:** #461 (chore(claude): add calsuite skills, configs, and ESLint baseline)
+- **Main repo commit:** f2ac5334f7d48268ba8b9f46459a0187f7915017
+- **Merged at:** 2026-04-19
+
+## PRs Included in This Sync
+
+PRs since previous checkpoint (#452):
+
+- #460 chore(skills): adopt calsuite retro/review improvements — adopts retro v1.1.0 (author-scoped git queries, skill usage telemetry, learning loop) and review v3.2.0 (hardened --converse CLI allowlist, run_adversary helper, Greptile bot comment triage). Internal Claude Code tooling only, no user-visible impact.
+- #461 chore(claude): add calsuite skills, configs, and ESLint baseline — vendors portable calsuite additions: guardian/learn skills, guardian-rules.json, suggest-compact.cjs, root .eslintrc.json, .gitignore patterns for per-developer symlinks. Renames hook .js → .cjs for CommonJS correctness. Converts hardcoded user paths to $CLAUDE_PROJECT_DIR. Removes redundant workspace .claude/ duplicates. Adds README "calsuite setup (per-developer)" subsection. Internal tooling only, no user-visible impact.
+
+### Impact
+
+- No docs pages updated. Both PRs are purely internal Claude Code developer tooling changes — skill definitions, ESLint configs, hook script renames, gitignore patterns, and README calsuite setup instructions. No user-facing features, API routes, database schema, or application behaviour changed. The only source-of-truth file modified was README.md (calsuite setup subsection under "Claude Code Tooling"), which is not mirrored in any docs page. Roadmap, architecture, quickstart, index, walkthrough, and todo pages are all current.
+
+### Build verification
+
+- No MDX files changed — build verification not required.
+
+---
+
+## Previous Sync (2026-04-13)
+
 - **Date:** 2026-04-13
 - **Latest merged PR:** #452 (chore: add layman skill and auto permissions)
 - **Main repo commit:** 98230dd46b2ea0824a3b02896b472ed01f4ffc0c
 - **Merged at:** 2026-04-12
-
-## PRs Included in This Sync
 
 PRs since previous checkpoint (#450):
 
