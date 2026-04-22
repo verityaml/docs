@@ -4,12 +4,31 @@ Checkpoint for `/sync-from-app` runs. Used to determine which PRs are new since 
 
 ## Last Sync
 
-- **Date:** 2026-04-20
+- **Date:** 2026-04-21
 - **Latest merged PR:** #461 (chore(claude): add calsuite skills, configs, and ESLint baseline)
 - **Main repo commit:** f2ac5334f7d48268ba8b9f46459a0187f7915017
 - **Merged at:** 2026-04-19
 
 ## PRs Included in This Sync
+
+No new merged PRs since previous checkpoint (#461). Verity `main` has not moved.
+
+### Impact
+
+- No docs pages updated. Full diff of all 5 source-of-truth files (CHANGELOG.md, TODO.md, SPECLOG.md, WALKTHROUGH.md, README.md) against all 6 docs pages (roadmap, architecture, quickstart, index, walkthrough, todo) confirmed no drift. All pages are current.
+
+### Build verification
+
+- No MDX files changed — build verification not required.
+
+---
+
+## Previous Sync (2026-04-20)
+
+- **Date:** 2026-04-20
+- **Latest merged PR:** #461 (chore(claude): add calsuite skills, configs, and ESLint baseline)
+- **Main repo commit:** f2ac5334f7d48268ba8b9f46459a0187f7915017
+- **Merged at:** 2026-04-19
 
 PRs since previous checkpoint (#452):
 
