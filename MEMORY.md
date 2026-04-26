@@ -4,18 +4,21 @@ Checkpoint for `/sync-from-app` runs. Used to determine which PRs are new since 
 
 ## Last Sync
 
-- **Date:** 2026-04-21
-- **Latest merged PR:** #461 (chore(claude): add calsuite skills, configs, and ESLint baseline)
-- **Main repo commit:** f2ac5334f7d48268ba8b9f46459a0187f7915017
-- **Merged at:** 2026-04-19
+- **Date:** 2026-04-26
+- **Latest merged PR:** #464 (chore(claude): delete workspace .claude/ harness duplicates)
+- **Main repo commit:** 5e047c890ac23a535e453ad9543e3b59ff200c0e
+- **Merged at:** 2026-04-23
 
 ## PRs Included in This Sync
 
-No new merged PRs since previous checkpoint (#461). Verity `main` has not moved.
+PRs since previous checkpoint (#461):
+
+- #463 chore(claude): reconcile calsuite skills, drop workspace harness duplicates — adopts calsuite skill rewrites (/ship, /execute, /review, /babysit-pr, /retro, /skill-builder, /receiving-pr-feedback), adds /customise skill, drops /reconcile-targets, removes workspace-level harness duplicates (backend/.claude and frontend/.claude no longer carry their own skills/agents/config — only root .claude/ is the harness). Internal Claude Code tooling only, no user-visible impact.
+- #464 chore(claude): delete workspace .claude/ harness duplicates — removes orphaned pre-refactor artifacts from backend/.claude/scripts/ and frontend/.claude/scripts/ (hook scripts, lib utilities, settings.json) that were never being read. Internal tooling cleanup only, no user-visible impact.
 
 ### Impact
 
-- No docs pages updated. Full diff of all 5 source-of-truth files (CHANGELOG.md, TODO.md, SPECLOG.md, WALKTHROUGH.md, README.md) against all 6 docs pages (roadmap, architecture, quickstart, index, walkthrough, todo) confirmed no drift. All pages are current.
+- No docs pages updated. Both PRs are purely internal Claude Code harness/skills cleanup. No user-facing features, API routes, database schema, or application behaviour changed. Full diff of all 5 source-of-truth files (CHANGELOG.md, TODO.md, SPECLOG.md, WALKTHROUGH.md, README.md) between checkpoint f2ac533 and current main 5e047c8 confirmed zero changes. All 6 docs pages (roadmap, architecture, quickstart, index, walkthrough, todo) remain current with no drift.
 
 ### Build verification
 
@@ -23,9 +26,9 @@ No new merged PRs since previous checkpoint (#461). Verity `main` has not moved.
 
 ---
 
-## Previous Sync (2026-04-20)
+## Previous Sync (2026-04-21)
 
-- **Date:** 2026-04-20
+- **Date:** 2026-04-21
 - **Latest merged PR:** #461 (chore(claude): add calsuite skills, configs, and ESLint baseline)
 - **Main repo commit:** f2ac5334f7d48268ba8b9f46459a0187f7915017
 - **Merged at:** 2026-04-19
