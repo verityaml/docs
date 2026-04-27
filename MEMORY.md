@@ -4,18 +4,39 @@ Checkpoint for `/sync-from-app` runs. Used to determine which PRs are new since 
 
 ## Last Sync
 
+- **Date:** 2026-04-27
+- **Latest merged PR:** #468 (chore(claude): bump calsuite skill fingerprints, drop workspace harness duplicates)
+- **Main repo commit:** aa3e4d462343af42c1fd89e6e0ee6c5beaf54115
+- **Merged at:** 2026-04-27
+
+## PRs Included in This Sync
+
+- #463 chore(claude): reconcile calsuite skills, drop workspace harness duplicates — reconciles calsuite skill versions and removes duplicated workspace `.claude/` harness files. Internal Claude Code tooling only, no user-visible impact.
+- #464 chore(claude): delete workspace .claude/ harness duplicates — follow-up cleanup of workspace harness duplicate files. Internal tooling only.
+- #468 chore(claude): bump calsuite skill fingerprints, drop workspace harness duplicates — bumps skill fingerprints and final workspace harness cleanup. Internal tooling only.
+
+### Impact
+
+- No docs pages updated. All 3 PRs are purely internal Claude Code developer tooling changes — skill fingerprint bumps, workspace `.claude/` harness deduplication, and settings reconciliation. No source-of-truth files (CHANGELOG.md, TODO.md, SPECLOG.md, WALKTHROUGH.md, README.md) were modified. `git diff` of those 5 files between the previous checkpoint and current `origin/main` is empty. All 6 docs pages (roadmap, architecture, quickstart, index, walkthrough, todo) remain current.
+
+### Build verification
+
+- No MDX files changed — build verification not required.
+
+---
+
+## Previous Sync (2026-04-21)
+
 - **Date:** 2026-04-21
 - **Latest merged PR:** #461 (chore(claude): add calsuite skills, configs, and ESLint baseline)
 - **Main repo commit:** f2ac5334f7d48268ba8b9f46459a0187f7915017
 - **Merged at:** 2026-04-19
 
-## PRs Included in This Sync
-
-No new merged PRs since previous checkpoint (#461). Verity `main` has not moved.
+No new merged PRs since previous checkpoint (#461). Verity `main` had not moved.
 
 ### Impact
 
-- No docs pages updated. Full diff of all 5 source-of-truth files (CHANGELOG.md, TODO.md, SPECLOG.md, WALKTHROUGH.md, README.md) against all 6 docs pages (roadmap, architecture, quickstart, index, walkthrough, todo) confirmed no drift. All pages are current.
+- No docs pages updated. Full diff of all 5 source-of-truth files confirmed no drift. All pages were current.
 
 ### Build verification
 
