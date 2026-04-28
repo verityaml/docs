@@ -4,12 +4,31 @@ Checkpoint for `/sync-from-app` runs. Used to determine which PRs are new since 
 
 ## Last Sync
 
+- **Date:** 2026-04-28
+- **Latest merged PR:** #468 (chore(claude): bump calsuite skill fingerprints, drop workspace harness duplicates)
+- **Main repo commit:** aa3e4d462343af42c1fd89e6e0ee6c5beaf54115
+- **Merged at:** 2026-04-27
+
+No new merged PRs since previous checkpoint (#468). Verity `main` has not moved.
+
+### Impact
+
+- No docs pages updated. Full diff of all 5 source-of-truth files confirmed no drift. All pages are current.
+
+### Build verification
+
+- No MDX files changed — build verification not required.
+
+---
+
+## Previous Sync (2026-04-27)
+
 - **Date:** 2026-04-27
 - **Latest merged PR:** #468 (chore(claude): bump calsuite skill fingerprints, drop workspace harness duplicates)
 - **Main repo commit:** aa3e4d462343af42c1fd89e6e0ee6c5beaf54115
 - **Merged at:** 2026-04-27
 
-## PRs Included in This Sync
+PRs since previous checkpoint (#461):
 
 - #463 chore(claude): reconcile calsuite skills, drop workspace harness duplicates — reconciles calsuite skill versions and removes duplicated workspace `.claude/` harness files. Internal Claude Code tooling only, no user-visible impact.
 - #464 chore(claude): delete workspace .claude/ harness duplicates — follow-up cleanup of workspace harness duplicate files. Internal tooling only.
