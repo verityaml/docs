@@ -4,6 +4,30 @@ Checkpoint for `/sync-from-app` runs. Used to determine which PRs are new since 
 
 ## Last Sync
 
+- **Date:** 2026-05-05
+- **Latest merged PR:** #495 (docs: add markdown copies of agent session transcripts)
+- **Main repo commit:** aa0a2c32f4efa92062515a2946425cf9fc60df5e
+- **Merged at:** 2026-05-05
+
+PRs since previous checkpoint (#468):
+
+- #470 chore(claude): reconcile calsuite skills + sync v2.23 — reconciles calsuite skill versions to v2.23. Internal Claude Code tooling only, no user-visible impact.
+- #471 chore: add /humanize skill from calsuite — adds the `/humanize` skill for prose auditing. Internal tooling only.
+- #472 chore: refresh _origin markers from calsuite@73b2e03 — refreshes `_origin` markers in skill files. Internal tooling only.
+- #495 docs: add markdown copies of agent session transcripts — adds raw session transcript markdown files under `.claude/` for classification-fdr-tuning, gsuite-connector, score-notifications, and other specs. Internal developer documentation only, no user-visible impact.
+
+### Impact
+
+- No docs pages updated. All 4 PRs are purely internal Claude Code developer tooling changes — skill reconciliation, humanize skill addition, origin marker refresh, and session transcript archival. No source-of-truth files (CHANGELOG.md, TODO.md, SPECLOG.md, WALKTHROUGH.md, README.md) were modified. `git diff` of those 5 files between the previous checkpoint and current `origin/main` is empty. All docs pages (roadmap, architecture, quickstart, index, walkthrough, todo) remain current.
+
+### Build verification
+
+- No MDX files changed — build verification not required.
+
+---
+
+## Previous Sync (2026-04-28)
+
 - **Date:** 2026-04-28
 - **Latest merged PR:** #468 (chore(claude): bump calsuite skill fingerprints, drop workspace harness duplicates)
 - **Main repo commit:** aa3e4d462343af42c1fd89e6e0ee6c5beaf54115
