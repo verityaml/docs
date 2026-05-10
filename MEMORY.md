@@ -4,6 +4,25 @@ Checkpoint for `/sync-from-app` runs. Used to determine which PRs are new since 
 
 ## Last Sync
 
+- **Date:** 2026-05-10
+- **Latest merged PR:** #495 (docs: add markdown copies of agent session transcripts)
+- **Main repo commit:** aa0a2c32f4efa92062515a2946425cf9fc60df5e
+- **Merged at:** 2026-05-05
+
+No new merged PRs since previous checkpoint (#495). Verity `main` has not moved.
+
+### Impact
+
+- No docs pages updated. Full diff of all 5 source-of-truth files confirmed no drift. All pages are current.
+
+### Build verification
+
+- No MDX files changed — build verification not required.
+
+---
+
+## Previous Sync (2026-05-05)
+
 - **Date:** 2026-05-05
 - **Latest merged PR:** #495 (docs: add markdown copies of agent session transcripts)
 - **Main repo commit:** aa0a2c32f4efa92062515a2946425cf9fc60df5e
