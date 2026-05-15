@@ -106,9 +106,9 @@ No new merged PRs since previous checkpoint (#461). Verity `main` had not moved.
 
 ---
 
-## Previous Sync (2026-04-20)
+## Previous Sync (2026-04-21)
 
-- **Date:** 2026-04-20
+- **Date:** 2026-04-21
 - **Latest merged PR:** #461 (chore(claude): add calsuite skills, configs, and ESLint baseline)
 - **Main repo commit:** f2ac5334f7d48268ba8b9f46459a0187f7915017
 - **Merged at:** 2026-04-19
