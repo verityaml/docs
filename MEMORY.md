@@ -4,21 +4,101 @@ Checkpoint for `/sync-from-app` runs. Used to determine which PRs are new since 
 
 ## Last Sync
 
-- **Date:** 2026-04-26
-- **Latest merged PR:** #464 (chore(claude): delete workspace .claude/ harness duplicates)
-- **Main repo commit:** 5e047c890ac23a535e453ad9543e3b59ff200c0e
-- **Merged at:** 2026-04-23
+- **Date:** 2026-05-10
+- **Latest merged PR:** #495 (docs: add markdown copies of agent session transcripts)
+- **Main repo commit:** aa0a2c32f4efa92062515a2946425cf9fc60df5e
+- **Merged at:** 2026-05-05
 
-## PRs Included in This Sync
-
-PRs since previous checkpoint (#461):
-
-- #463 chore(claude): reconcile calsuite skills, drop workspace harness duplicates — adopts calsuite skill rewrites (/ship, /execute, /review, /babysit-pr, /retro, /skill-builder, /receiving-pr-feedback), adds /customise skill, drops /reconcile-targets, removes workspace-level harness duplicates (backend/.claude and frontend/.claude no longer carry their own skills/agents/config — only root .claude/ is the harness). Internal Claude Code tooling only, no user-visible impact.
-- #464 chore(claude): delete workspace .claude/ harness duplicates — removes orphaned pre-refactor artifacts from backend/.claude/scripts/ and frontend/.claude/scripts/ (hook scripts, lib utilities, settings.json) that were never being read. Internal tooling cleanup only, no user-visible impact.
+No new merged PRs since previous checkpoint (#495). Verity `main` has not moved.
 
 ### Impact
 
-- No docs pages updated. Both PRs are purely internal Claude Code harness/skills cleanup. No user-facing features, API routes, database schema, or application behaviour changed. Full diff of all 5 source-of-truth files (CHANGELOG.md, TODO.md, SPECLOG.md, WALKTHROUGH.md, README.md) between checkpoint f2ac533 and current main 5e047c8 confirmed zero changes. All 6 docs pages (roadmap, architecture, quickstart, index, walkthrough, todo) remain current with no drift.
+- No docs pages updated. Full diff of all 5 source-of-truth files confirmed no drift. All pages are current.
+
+### Build verification
+
+- No MDX files changed — build verification not required.
+
+---
+
+## Previous Sync (2026-05-05)
+
+- **Date:** 2026-05-05
+- **Latest merged PR:** #495 (docs: add markdown copies of agent session transcripts)
+- **Main repo commit:** aa0a2c32f4efa92062515a2946425cf9fc60df5e
+- **Merged at:** 2026-05-05
+
+PRs since previous checkpoint (#468):
+
+- #470 chore(claude): reconcile calsuite skills + sync v2.23 — reconciles calsuite skill versions to v2.23. Internal Claude Code tooling only, no user-visible impact.
+- #471 chore: add /humanize skill from calsuite — adds the `/humanize` skill for prose auditing. Internal tooling only.
+- #472 chore: refresh _origin markers from calsuite@73b2e03 — refreshes `_origin` markers in skill files. Internal tooling only.
+- #495 docs: add markdown copies of agent session transcripts — adds raw session transcript markdown files under `.claude/` for classification-fdr-tuning, gsuite-connector, score-notifications, and other specs. Internal developer documentation only, no user-visible impact.
+
+### Impact
+
+- No docs pages updated. All 4 PRs are purely internal Claude Code developer tooling changes — skill reconciliation, humanize skill addition, origin marker refresh, and session transcript archival. No source-of-truth files (CHANGELOG.md, TODO.md, SPECLOG.md, WALKTHROUGH.md, README.md) were modified. `git diff` of those 5 files between the previous checkpoint and current `origin/main` is empty. All docs pages (roadmap, architecture, quickstart, index, walkthrough, todo) remain current.
+
+### Build verification
+
+- No MDX files changed — build verification not required.
+
+---
+
+## Previous Sync (2026-04-28)
+
+- **Date:** 2026-04-28
+- **Latest merged PR:** #468 (chore(claude): bump calsuite skill fingerprints, drop workspace harness duplicates)
+- **Main repo commit:** aa3e4d462343af42c1fd89e6e0ee6c5beaf54115
+- **Merged at:** 2026-04-27
+
+No new merged PRs since previous checkpoint (#468). Verity `main` has not moved.
+
+### Impact
+
+- No docs pages updated. Full diff of all 5 source-of-truth files confirmed no drift. All pages are current.
+
+### Build verification
+
+- No MDX files changed — build verification not required.
+
+---
+
+## Previous Sync (2026-04-27)
+
+- **Date:** 2026-04-27
+- **Latest merged PR:** #468 (chore(claude): bump calsuite skill fingerprints, drop workspace harness duplicates)
+- **Main repo commit:** aa3e4d462343af42c1fd89e6e0ee6c5beaf54115
+- **Merged at:** 2026-04-27
+
+PRs since previous checkpoint (#461):
+
+- #463 chore(claude): reconcile calsuite skills, drop workspace harness duplicates — reconciles calsuite skill versions and removes duplicated workspace `.claude/` harness files. Internal Claude Code tooling only, no user-visible impact.
+- #464 chore(claude): delete workspace .claude/ harness duplicates — follow-up cleanup of workspace harness duplicate files. Internal tooling only.
+- #468 chore(claude): bump calsuite skill fingerprints, drop workspace harness duplicates — bumps skill fingerprints and final workspace harness cleanup. Internal tooling only.
+
+### Impact
+
+- No docs pages updated. All 3 PRs are purely internal Claude Code developer tooling changes — skill fingerprint bumps, workspace `.claude/` harness deduplication, and settings reconciliation. No source-of-truth files (CHANGELOG.md, TODO.md, SPECLOG.md, WALKTHROUGH.md, README.md) were modified. `git diff` of those 5 files between the previous checkpoint and current `origin/main` is empty. All 6 docs pages (roadmap, architecture, quickstart, index, walkthrough, todo) remain current.
+
+### Build verification
+
+- No MDX files changed — build verification not required.
+
+---
+
+## Previous Sync (2026-04-21)
+
+- **Date:** 2026-04-21
+- **Latest merged PR:** #461 (chore(claude): add calsuite skills, configs, and ESLint baseline)
+- **Main repo commit:** f2ac5334f7d48268ba8b9f46459a0187f7915017
+- **Merged at:** 2026-04-19
+
+No new merged PRs since previous checkpoint (#461). Verity `main` had not moved.
+
+### Impact
+
+- No docs pages updated. Full diff of all 5 source-of-truth files confirmed no drift. All pages were current.
 
 ### Build verification
 
