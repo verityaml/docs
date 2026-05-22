@@ -4,24 +4,35 @@ Checkpoint for `/sync-from-app` runs. Used to determine which PRs are new since 
 
 ## Last Sync
 
-- **Date:** 2026-05-12
-- **Latest merged PR:** #495 (docs: add markdown copies of agent session transcripts)
-- **Main repo commit:** aa0a2c32f4efa92062515a2946425cf9fc60df5e
-- **Merged at:** 2026-05-05
+- **Date:** 2026-05-22
+- **Latest merged PR:** #498 (chore(deps): bump the npm_and_yarn group across 3 directories with 10 updates)
+- **Main repo commit:** 6420378eb04c6dc64b9078cdd475700f88ca8b4a
+- **Merged at:** 2026-05-20
 
-No new merged PRs since previous checkpoint (#495). Verity `main` has not moved.
+PRs since previous checkpoint (#495):
+
+- #453 feat: scoring engine v2 — novelty-weighted additive model + trends page — replaces the percentage-based scoring formula with a novelty-weighted additive model using evidence embeddings (voyage-law-2). Per-domain configurable thresholds replace the global 70%. Trends page added. Evidence embedding pipeline (embed-evidence SQS + Lambda). Content-hash deduplication. `recomputeAndCascade()` canonical helper. `stale` removed from evidence_status enum. Many security fixes. Spec #38 (Scoring Refactor) marked Complete.
+- #465 chore(deps): bump rustls-webpki — Rust dependency bump for the desktop app. No user-visible impact.
+- #498 chore(deps): bump the npm_and_yarn group across 3 directories with 10 updates — Dependabot npm/yarn dependency bumps. No user-visible impact.
 
 ### Impact
 
-- No docs pages updated. Full diff of all 5 source-of-truth files confirmed no drift. All pages are current.
+- **roadmap.mdx**: Added spec #38 "Scoring Refactor" (Complete) to the spec status table. Updated total from "All 37 feature specs" to "All 38 feature specs". Updated count from "32 complete" to "33 complete". Added "Scoring Refactor (Complete)" to recently completed section with description of novelty-weighted additive model, per-domain thresholds, trends page, embed-evidence pipeline, content-hash dedup, and `recomputeAndCascade()`. Updated Library Evidence Classification in-progress description to reference `recomputeAndCascade()` instead of `applyScoreDelta()`.
+- **scoring.mdx**: Replaced old percentage formula with novelty-weighted additive model. Removed `stale` from evidence status enum. Added sections for per-domain thresholds, evidence embeddings pipeline, and trends page. Updated criteria table to show auto-derived evidence status.
+- **walkthrough.mdx**: Removed "Stale" from evidence status list. Updated threshold references from "70%" to "configured threshold". Updated notification triggers to use percentage-based thresholds. Added trends page section under domain detail.
+- **todo.mdx**: Added "Scoring refactor — deferred" section with 3 items (variable per-criterion weights, evidence quality indicators, MD5→SHA-256 migration).
+- **evidence.mdx**: Replaced evidence status table with novelty-weighted score bands. Removed Stale status. Updated library classification pipeline reference from `applyScoreDelta()` to `recomputeAndCascade()`.
+- **architecture.mdx**: Added `embed-evidence` SQS queue and Lambda to both internal application and background job flow diagrams. Updated scoring pipeline diagram to show `recomputeAndCascade()` as the entry point wrapping `recomputeCriterionScore()` → `applyScoreDelta()` → `cascadeProgramScore()`. Updated service breakdown to include evidence embedding. Added `criterionScore`, `embeddingStatus`, `embedding`, and `contentHash` to data model diagram.
+- **data-model.mdx**: Added `thresholdPct` to complianceDomains schema. Replaced `stale` in evidence status with auto-derived annotation. Added `criterionScore` to scoringCriteria. Added `formulaVersion` to scoreChangeEvents. Added `contentHash`, `embedding`, `embeddingStatus`, `lastVerifiedAt` to evidence schema. Updated scoring formula section to v2 novelty-weighted model. Updated PATCH criteria note to reflect auto-derived status and `recomputeAndCascade()`.
+- **index.mdx**: Updated scoring card description to mention novelty-weighted model and per-domain thresholds. Added "Score trends" feature card.
 
 ### Build verification
 
-- No MDX files changed — build verification not required.
+- `next build` passes cleanly — all 33 static pages generated without errors.
 
 ---
 
-## Previous Sync (2026-05-10)
+## Previous Sync (2026-05-12)
 
 - **Date:** 2026-05-05
 - **Latest merged PR:** #495 (docs: add markdown copies of agent session transcripts)

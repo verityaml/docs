@@ -5,7 +5,7 @@ description: Planned features and tracked improvements beyond the current build
 
 ## Spec status
 
-All 37 feature specs are tracked in the main repository's `SPECLOG.md`. Current status as of April 2026:
+All 38 feature specs are tracked in the main repository's `SPECLOG.md`. Current status as of May 2026:
 
 | Spec | Status |
 |------|--------|
@@ -46,8 +46,9 @@ All 37 feature specs are tracked in the main repository's `SPECLOG.md`. Current 
 | Library Evidence Classification | In Progress |
 | Classification FDR Tuning | In Progress |
 | Funnel Eval Calibration | Specified |
+| Scoring Refactor | Complete |
 
-**32 complete**, 3 in progress, 1 specified, 1 removed.
+**33 complete**, 3 in progress, 1 specified, 1 removed.
 
 ---
 
@@ -69,7 +70,7 @@ All six phases complete (PR #448 phases 1–4 tooling, PR #451 phases 5–6 cali
 
 ### Library Evidence Classification
 
-Auto-classifying evidence library uploads via embedding similarity. Text extraction (PDF, text/*), heading-based chunking, pgvector cosine matching against scoring criteria, auto-link on high-confidence matches with score updates propagated through `applyScoreDelta()`. New `classify-library-evidence` SQS queue and Lambda. Criteria embedding column + backfill script. Classification status badges in the evidence table (pending, classified, no match, skipped, error).
+Auto-classifying evidence library uploads via embedding similarity. Text extraction (PDF, DOCX via `mammoth`, text/*), heading-based chunking, pgvector cosine matching against scoring criteria, auto-link on high-confidence matches with score updates propagated through `recomputeAndCascade()`. New `classify-library-evidence` SQS queue and Lambda. Criteria embedding column + backfill script. Classification status badges in the evidence table (pending, classified, no match, skipped, error).
 
 ### Desktop App
 
@@ -87,6 +88,10 @@ Auto-classifying evidence library uploads via embedding similarity. Text extract
 ---
 
 ## Recently completed
+
+### Scoring Refactor (Complete)
+
+Novelty-weighted additive scoring replacing the percentage-based formula. Evidence embeddings via `voyage-law-2` drive cosine-similarity novelty weighting — first evidence contributes full 100 points, subsequent evidence weighted by `100 × (1 − max_similarity_to_prior)`. Scores are unbounded integers rewarding diverse evidence. Evidence status (`missing | partial | sufficient`) is now auto-derived from criterion score bands instead of set manually. Per-domain configurable thresholds (`compliance_domains.threshold_pct`) replace the global 70%. New `embed-evidence` SQS queue + Lambda for asynchronous embedding generation. Content-hash deduplication (SHA-256) prevents identical files being linked twice. `recomputeAndCascade()` canonical helper bundles the full score pipeline. Trends page (`/compliance/[programId]/trends`) with time-series visualization, date range presets, and domain filtering.
 
 ### Evidence Bridge (Complete)
 

@@ -72,7 +72,7 @@ Each row shows:
 - **Criterion text** — what the regulation requires (e.g., "Board-approved BSA/AML compliance program documented and updated annually")
 - **Regulatory source** — the specific FFIEC section or OCC 2023-17 paragraph it traces back to
 - **Evidence count** — how many documents are linked to this criterion
-- **Evidence status** — where you stand: Missing, Stale, Partial, or Sufficient
+- **Evidence status** — where you stand: Missing, Partial, or Sufficient (auto-derived from the criterion's novelty-weighted score)
 
 ### Updating evidence status
 
@@ -96,7 +96,11 @@ Each timeline entry shows the score delta (e.g., "+8pts"), the trigger type, a t
 
 Use the **filter buttons** (All, Manual, Auto-match, Propagation, Correction) to focus on specific event types. The timeline supports cursor pagination via a "Load more" button.
 
-A **sparkline** in the timeline header shows the 30-day score trend at a glance. The same sparkline appears on each domain card on the dashboard, along with a threshold warning badge (amber ▲) on domains scoring below 70%.
+A **sparkline** in the timeline header shows the 30-day score trend at a glance. The same sparkline appears on each domain card on the dashboard, along with a threshold warning badge (amber ▲) on domains scoring below their configured readiness threshold.
+
+### Trends page
+
+For program-wide score analysis, the **Trends page** at `/compliance/[programId]/trends` shows time-series score visualization with date range presets (7d / 30d / 90d / 180d / 1y), auto-bucketing by time period, domain filtering with URL state, and a paginated score events table.
 
 ### Domain-level evidence upload
 
@@ -110,9 +114,9 @@ Above the criteria table, a drag-and-drop **upload zone** lets you upload eviden
 
 The **notification bell** shows a badge with the count of unread notifications (capped at "9+"), polling every 30 seconds with Page Visibility API pause/resume. Notifications are generated automatically when:
 
-- A domain score changes by 5 or more points
-- A domain crosses the 70% readiness threshold (up or down)
-- A program reaches a milestone (50%, 60%, 70%, 80%, 90%)
+- A domain score changes by more than 5% of its reference maximum
+- A domain crosses its configured readiness threshold (up or down)
+- A program reaches a milestone (25%, 50%, 75%, 90%, 100% of its reference maximum)
 - The nightly recompute detects and corrects score drift
 
 **Click the bell** to open the notification panel — a slide-out panel on desktop (280px from right) or a full-height bottom sheet on mobile. Notifications are grouped by date (Today, Yesterday, This Week, Earlier) with type-based color borders: forest for score changes, amber for threshold crossings, stone for milestones, and red for corrections.

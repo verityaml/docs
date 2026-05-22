@@ -16,16 +16,48 @@ Bank-readiness scoring maps regulatory requirements to scoring criteria by compl
 The scoring model is a three-tier hierarchy: **Program** → **Domain** → **Criteria**.
 
 - **Programs** are scoped by regulation type — BSA/AML maps to 5 FFIEC pillars, Third-Party Oversight maps to 8 OCC 2023-17 monitoring areas
-- **Domains** correspond to regulatory categories (e.g., Internal Controls, Independent Testing)
-- **Criteria** have an evidence status: `missing`, `stale`, `partial`, or `sufficient`
+- **Domains** correspond to regulatory categories (e.g., Internal Controls, Independent Testing) with optional per-domain readiness thresholds
+- **Criteria** have an evidence status: `missing`, `partial`, or `sufficient` — auto-derived from the criterion score
 
-### Score formula
+### Score formula (v2 — novelty-weighted additive)
+
+Scoring uses a novelty-weighted additive model based on evidence embedding similarity:
 
 ```
-domain_score = ((sufficient_count × 100) + (partial_count × 50)) / total_criteria
+criterion_score = sum(contribution_i)
+contribution_i  = 100 × (1 − max_cosine_sim(new_embedding, prior_embeddings))
 ```
 
-Each "sufficient" criterion contributes 100 points, each "partial" contributes 50, and everything else contributes zero. The domain score updates in real time as you change evidence statuses.
+The first evidence with a valid embedding contributes **100 points** (full novelty). Each subsequent evidence is weighted by how different it is from all prior evidence — duplicate documents contribute near zero, while complementary evidence contributes close to the full 100. Non-embeddable evidence (null or zero-magnitude embeddings) contributes a flat **50 points**.
+
+- **Domain score** = sum of all criterion scores in the domain (unbounded)
+- **Program score** = sum of all domain scores (unbounded)
+
+Evidence status is **auto-derived** from the criterion score: `0` → missing, `< 100` → partial, `≥ 100` → sufficient. The PATCH criteria route rejects manual `evidenceStatus` updates with 400.
+
+### Per-domain thresholds
+
+Each domain can have a configurable readiness threshold (`compliance_domains.threshold_pct`, 1–100). Admins set targets per domain via an inline slider on the domain card. Threshold-crossing notifications fire per-domain using each domain's configured target. Domains without a threshold display scores as raw points.
+
+### Evidence embeddings
+
+All evidence uploads are processed through the **embed-evidence** pipeline:
+
+1. Upload sets `embedding_status = 'pending'` and dispatches to the `embed-evidence` SQS queue
+2. Lambda downloads the file, runs `extractTextFromBuffer()` (PDF via `unpdf`, DOCX via `mammoth`, text/* directly)
+3. Generates a `voyage-law-2` embedding (1024 dimensions)
+4. Stores the embedding on the evidence row and calls `recomputeCriterionScore()` for each linked criterion
+
+Evidence with `pending` or `failed` embedding status contributes a flat 50 until the embedding succeeds. Content-hash deduplication (SHA-256) prevents identical files being linked twice to the same criterion (returns 409 DUPLICATE_EVIDENCE).
+
+### Trends page
+
+The trends page at `/compliance/[programId]/trends` shows time-series score visualization with:
+
+- Date range presets (7d / 30d / 90d / 180d / 1y)
+- Auto-bucketing (daily / weekly / monthly based on range)
+- Domain filter with URL state persistence
+- Paginated score events table
 
 ## Criteria table
 
@@ -36,7 +68,7 @@ The domain detail page lists every scoring criterion, each one mapped to a speci
 | Criterion text | What the regulation requires |
 | Regulatory source | The specific FFIEC section or OCC 2023-17 paragraph |
 | Evidence count | How many documents are linked |
-| Evidence status | Missing, Stale, Partial, or Sufficient |
+| Evidence status | Missing, Partial, or Sufficient (auto-derived from score) |
 
 Each row also shows the **criterion definition key** (e.g., `ic-01`, `tr-03`) in the Source column above the regulatory source link, making it easy to cross-reference with parsed examination items.
 

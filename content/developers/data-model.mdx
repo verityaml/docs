@@ -71,8 +71,9 @@ Track compliance readiness across regulatory frameworks. Three-tier scoring: **P
 | orgId | text FK | → organization |
 | domainKey | text | e.g. `internal_controls` |
 | domainLabel | text | Human-readable label |
-| currentScore | integer? | `((sufficient × 100) + (partial × 50)) / total` |
+| currentScore | integer? | Sum of criterion scores (unbounded) |
 | totalCriteria | integer | |
+| thresholdPct | integer? | Per-domain readiness threshold (1-100, nullable) |
 | sufficientCriteria | integer | |
 | partialCriteria | integer | |
 | missingCriteria | integer | |
@@ -89,7 +90,8 @@ Track compliance readiness across regulatory frameworks. Three-tier scoring: **P
 | regulatorySourceId | text? | FK to knowledge base entry |
 | regulatorySourceTable | text? | Which KB table |
 | definitionKey | text? | Stable config key |
-| evidenceStatus | text | `missing` \| `stale` \| `partial` \| `sufficient` |
+| evidenceStatus | text | `missing` \| `partial` \| `sufficient` (auto-derived from criterionScore) |
+| criterionScore | integer | Novelty-weighted sum from evidence embeddings |
 | linkedEvidence | jsonb | Array of linked evidence objects |
 | reviewerNotes | text? | |
 | sortOrder | integer | |
@@ -116,6 +118,7 @@ Track compliance readiness across regulatory frameworks. Three-tier scoring: **P
 | criterionId | text? FK | → scoringCriteria |
 | oldStatus / newStatus | text? | Evidence status before/after |
 | oldScore / newScore | integer | Domain score before/after |
+| formulaVersion | integer | `1` (percentage) or `2` (novelty-weighted) |
 | trigger | text | What caused the change |
 | actorId | text? | User or system |
 | actorType | text | `user` \| `system` \| `job` |
@@ -170,11 +173,10 @@ Track compliance readiness across regulatory frameworks. Three-tier scoring: **P
 
 **PATCH /api/compliance-programs/CP-2026-001/domains/CD-2026-001/criteria/SC-2026-001** — update a criterion
 
-Request:
+Request (link evidence — status is auto-derived from the novelty-weighted score):
 
 ```json
 {
-  "evidenceStatus": "sufficient",
   "reviewerNotes": "Board minutes confirm quarterly review",
   "addEvidence": {
     "sourceType": "evidence_attachment",
@@ -215,7 +217,7 @@ Response:
 ```
 
 <Note>
-Updating `evidenceStatus` triggers `applyScoreDelta()` → domain score update → `cascadeProgramScore()` → `scoreChangeEvents` audit record. If the program score changes by 5+ points, an auto-snapshot is taken (1 hour cooldown).
+Evidence status is auto-derived from the criterion score — the PATCH criteria route rejects manual `evidenceStatus` updates with 400. Evidence link/unlink operations trigger `recomputeAndCascade()` → criterion recompute → domain update → `cascadeProgramScore()` → `scoreChangeEvents` audit record. Auto-snapshots fire on 5%+ program score change (1 hour cooldown).
 </Note>
 
 ---
@@ -377,6 +379,10 @@ Evidence files can be attached to request items, compliance domains, remediation
 | fileSize | integer? | |
 | mimeType | text? | |
 | notes | text? | |
+| contentHash | text? | SHA-256 for deduplication |
+| embedding | vector(1024)? | Voyage AI embedding for novelty scoring |
+| embeddingStatus | text? | `pending` \| `embedded` \| `non_embeddable` \| `failed` |
+| lastVerifiedAt | timestamptz? | Connector freshness tracking |
 | sourceSystem | text? | e.g. `sharepoint`, `google_drive` |
 | uploadedBy | text? FK | → user |
 | uploadedAt | timestamptz | |
@@ -812,10 +818,13 @@ REGULATION_CONFIG = {
 Never hardcode regulation types, category labels, or obligation types in UI or API routes. Always import from `@verity/backend/config`.
 </Note>
 
-### Scoring formula
+### Scoring formula (v2 — novelty-weighted additive)
 
 ```
-domain_score = ((sufficient_count × 100) + (partial_count × 50)) / total_criteria
+criterion_score = sum(100 × (1 − max_cosine_sim(new_embedding, prior_embeddings)))
+domain_score    = sum(criterion_scores)         # unbounded
+program_score   = sum(domain_scores)            # unbounded
+evidence_status = 0 → missing | <100 → partial | ≥100 → sufficient   # auto-derived
 ```
 
-All score changes flow through `applyScoreDelta()` → domain update → `cascadeProgramScore()` → audit event. Notifications fire on 5+ point deltas, 70% threshold crossings, and program milestones.
+All evidence mutations flow through `recomputeAndCascade()` → per-criterion recompute → `applyScoreDelta()` → domain update → `cascadeProgramScore()` → audit event. Notifications fire on 5%+ domain reference delta, per-domain threshold crossings, and program milestones (25/50/75/90/100%).

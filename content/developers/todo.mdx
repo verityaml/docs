@@ -67,6 +67,14 @@ See the [Roadmap](/developers/roadmap) for planned post-partnership features (co
 
 ---
 
+## Scoring refactor — deferred
+
+- Variable per-criterion weights — multiply novelty contribution by weight factor. Currently all criteria equally weighted. P2.
+- Evidence quality indicators in UI — show "low novelty" hints when evidence is highly similar to existing. Help users upload diverse evidence. P3.
+- Migrate connector MD5 checksums (`sync-connector.ts` `createHash("md5")`) to SHA-256 for consistency with evidence `content_hash`. Internal cleanup.
+
+---
+
 ## Funnel eval calibration — deferred
 
 - **Staging `seed-eval-org --check` smoke job in `deploy.yml`.** The `--check` CLI is built and unit-tested but not yet wired into CI. Wiring requires either a thin `docker/check-eval-org.mjs` that ships in the app image and runs via `aws ecs run-task` (because GHA runners can't reach private RDS), or a Lambda. Deferred until drift becomes a recurring issue — the deploy-time backfill (which does run via `run-task`) provides the actual healing, so the smoke job is verification only.

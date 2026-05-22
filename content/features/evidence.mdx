@@ -30,14 +30,15 @@ evidence/{orgId}/{examId}/{itemId}/{timestamp}-{uuid}-{filename}
 
 ## Evidence status
 
-Each scoring criterion tracks evidence status with four levels:
+Each scoring criterion tracks evidence status, **auto-derived** from the criterion's novelty-weighted score:
 
-| Status | Score contribution | Description |
-|--------|-------------------|-------------|
-| Sufficient | 100 points | Full evidence coverage |
-| Partial | 50 points | Some evidence, gaps remain |
-| Stale | 0 points | Evidence exists but is outdated |
-| Missing | 0 points | No evidence provided |
+| Status | Criterion score | Description |
+|--------|----------------|-------------|
+| Sufficient | ≥ 100 | Full evidence coverage — at least one fully novel piece of evidence |
+| Partial | 1–99 | Some evidence, but insufficient novelty or diversity |
+| Missing | 0 | No evidence linked |
+
+Scores use a novelty-weighted additive model: the first evidence with a valid embedding contributes 100 points, subsequent evidence is weighted by `100 × (1 − max_cosine_similarity)` against prior embeddings. Non-embeddable evidence contributes a flat 50. See [Bank-readiness scoring](/features/scoring) for the full formula.
 
 <img
   src="/images/evidence-training.png"
@@ -63,7 +64,7 @@ The **Evidence Library** at `/evidence` is a centralised org-wide view of all ev
 
 The evidence table shows each file with its **source type badge** (EXAM, DOMAIN, or LIBRARY), the context where it was uploaded, how many scoring criteria it's linked to, upload date, and who uploaded it.
 
-**Upload files directly** using the drag-and-drop zone at the top. Files land with a LIBRARY source type and are **automatically classified** — the `classify-library-evidence` Lambda extracts text via the shared `extractTextFromBuffer()` helper (PDF via `unpdf`, DOCX via `mammoth`, text/* directly), chunks it by heading, batch-embeds each chunk via Voyage AI, runs pgvector cosine similarity against your org's scoring criteria, links high-confidence matches, and updates scores through `applyScoreDelta()`. The evidence row carries a `classification_status` — `pending` → `classified` | `no_match` | `skipped` | `error` — surfaced in the UI as a status badge.
+**Upload files directly** using the drag-and-drop zone at the top. Files land with a LIBRARY source type and are **automatically classified** — the `classify-library-evidence` Lambda extracts text via the shared `extractTextFromBuffer()` helper (PDF via `unpdf`, DOCX via `mammoth`, text/* directly), chunks it by heading, batch-embeds each chunk via Voyage AI, runs pgvector cosine similarity against your org's scoring criteria, links high-confidence matches, and updates scores through `recomputeAndCascade()`. The evidence row carries a `classification_status` — `pending` → `classified` | `no_match` | `skipped` | `error` — surfaced in the UI as a status badge.
 
 **Filter** using source type pills (toggle Exam, Domain, Library, Connector), the domain dropdown, or filename search. **Download** any file via a 5-minute signed URL. **Delete** library-sourced files with automatic JSONB cleanup across scoring criteria and score recomputation.
 
