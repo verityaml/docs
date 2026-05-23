@@ -17,15 +17,19 @@ The scoring model is a three-tier hierarchy: **Program** → **Domain** → **Cr
 
 - **Programs** are scoped by regulation type — BSA/AML maps to 5 FFIEC pillars, Third-Party Oversight maps to 8 OCC 2023-17 monitoring areas
 - **Domains** correspond to regulatory categories (e.g., Internal Controls, Independent Testing)
-- **Criteria** have an evidence status: `missing`, `stale`, `partial`, or `sufficient`
+- **Criteria** have an evidence status: `missing`, `partial`, or `sufficient` — auto-derived from the criterion's novelty-weighted score
 
-### Score formula
+### Score formula (v2 — novelty-weighted additive)
 
 ```
-domain_score = ((sufficient_count × 100) + (partial_count × 50)) / total_criteria
+criterion_score = sum(100 × (1 − max_cosine_similarity_to_priors))
+domain_score    = sum(criterion_scores)
+program_score   = sum(domain_scores)
 ```
 
-Each "sufficient" criterion contributes 100 points, each "partial" contributes 50, and everything else contributes zero. The domain score updates in real time as you change evidence statuses.
+Each piece of evidence linked to a criterion is compared against all prior evidence via cosine similarity on Voyage AI embeddings. The first evidence contributes a full 100 points. Near-duplicate evidence (high similarity) contributes close to 0. Scores are unbounded integers — a team that uploads diverse, complementary evidence sees higher scores than one uploading duplicates.
+
+Evidence status is **auto-derived** from the criterion score: 0 = missing, 1–99 = partial, ≥100 = sufficient. Per-domain configurable thresholds (`threshold_pct`, 1–100) replace the former global 70% target. The domain score updates in real time as evidence is linked or unlinked.
 
 ## Criteria table
 
@@ -36,7 +40,7 @@ The domain detail page lists every scoring criterion, each one mapped to a speci
 | Criterion text | What the regulation requires |
 | Regulatory source | The specific FFIEC section or OCC 2023-17 paragraph |
 | Evidence count | How many documents are linked |
-| Evidence status | Missing, Stale, Partial, or Sufficient |
+| Evidence status | Missing, Partial, or Sufficient (auto-derived from score) |
 
 Each row also shows the **criterion definition key** (e.g., `ic-01`, `tr-03`) in the Source column above the regulatory source link, making it easy to cross-reference with parsed examination items.
 

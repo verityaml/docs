@@ -4,6 +4,33 @@ Checkpoint for `/sync-from-app` runs. Used to determine which PRs are new since 
 
 ## Last Sync
 
+- **Date:** 2026-05-23
+- **Latest merged PR:** #498 (chore(deps): bump the npm_and_yarn group across 3 directories with 10 updates)
+- **Main repo commit:** 6420378
+- **Merged at:** 2026-05-20
+
+PRs since previous checkpoint (#495):
+
+- #453 feat: scoring engine v2 — novelty-weighted additive model + trends page — major scoring refactor: novelty-weighted additive criterion scores via cosine similarity on Voyage embeddings, per-domain configurable thresholds replacing global 70%, trends page with Recharts, embed-evidence SQS+Lambda pipeline, content-hash dedup, recomputeAndCascade() canonical helper. Evidence status now auto-derived. `stale` removed from evidence_status enum. 135 changed files, 10421 additions, 1982 deletions. Merged 2026-05-12.
+- #465 chore(deps): bump rustls-webpki from 0.103.10 to 0.103.13 in /desktop/src-tauri — Dependabot Cargo bump. No user-visible impact. Merged 2026-05-20.
+- #498 chore(deps): bump the npm_and_yarn group across 3 directories with 10 updates — Dependabot npm bump. No user-visible impact. Merged 2026-05-20.
+
+### Impact
+
+- **roadmap.mdx**: Added spec #38 "Scoring Refactor" (Complete) to the spec table. Updated total from "All 37 feature specs" to "All 38 feature specs" and count from "32 complete" to "33 complete". Added "Scoring Refactor (Complete)" subsection to "Recently completed" describing the novelty-weighted additive model, per-domain thresholds, embed-evidence pipeline, trends page, recomputeAndCascade() helper, and auto-derived evidence status.
+- **todo.mdx**: Added new "Scoring refactor — deferred" section with 3 items (variable per-criterion weights, evidence quality indicators in UI, MD5→SHA-256 migration).
+- **architecture.mdx**: Updated scoring pipeline diagram from `applyScoreDelta()` to `recomputeAndCascade()` as canonical entry point, with novelty-weighted recompute flow. Added `embed-evidence` to background jobs diagram (7th SQS queue + Lambda). Updated application layer diagram to include `embed-evidence` job. Updated data model: added `criterionScore` and auto-derived status annotation to `scoringCriteria`, `thresholdPct` to `complianceDomains`, `embedding`/`embeddingStatus`/`contentHash` to `evidence`. Updated service breakdown to mention evidence embedding.
+- **scoring.mdx**: Replaced v1 percentage formula with v2 novelty-weighted additive formula. Updated evidence status from 4 levels (including `stale`) to 3 auto-derived levels. Updated criteria table evidence status column description.
+- **evidence.mdx**: Updated evidence status table from v1 (4 statuses with fixed point values) to v2 (3 auto-derived statuses with novelty-weighted scoring explanation).
+
+### Build verification
+
+- `next build` passes — all 33 pages generated successfully including all 5 changed MDX files.
+
+---
+
+## Previous Sync (2026-05-12)
+
 - **Date:** 2026-05-12
 - **Latest merged PR:** #495 (docs: add markdown copies of agent session transcripts)
 - **Main repo commit:** aa0a2c32f4efa92062515a2946425cf9fc60df5e

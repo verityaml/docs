@@ -30,14 +30,15 @@ evidence/{orgId}/{examId}/{itemId}/{timestamp}-{uuid}-{filename}
 
 ## Evidence status
 
-Each scoring criterion tracks evidence status with four levels:
+Each scoring criterion's evidence status is **auto-derived** from its novelty-weighted score:
 
-| Status | Score contribution | Description |
-|--------|-------------------|-------------|
-| Sufficient | 100 points | Full evidence coverage |
-| Partial | 50 points | Some evidence, gaps remain |
-| Stale | 0 points | Evidence exists but is outdated |
-| Missing | 0 points | No evidence provided |
+| Status | Criterion score | Description |
+|--------|----------------|-------------|
+| Sufficient | ≥ 100 | Strong evidence coverage with diverse sources |
+| Partial | 1–99 | Some evidence, but limited diversity |
+| Missing | 0 | No evidence linked |
+
+Scores are computed using cosine similarity on Voyage AI embeddings — the first evidence contributes 100 points, and near-duplicate evidence contributes close to 0. This rewards uploading diverse, complementary evidence rather than duplicates.
 
 <img
   src="/images/evidence-training.png"

@@ -5,7 +5,7 @@ description: Planned features and tracked improvements beyond the current build
 
 ## Spec status
 
-All 37 feature specs are tracked in the main repository's `SPECLOG.md`. Current status as of April 2026:
+All 38 feature specs are tracked in the main repository's `SPECLOG.md`. Current status as of May 2026:
 
 | Spec | Status |
 |------|--------|
@@ -46,8 +46,9 @@ All 37 feature specs are tracked in the main repository's `SPECLOG.md`. Current 
 | Library Evidence Classification | In Progress |
 | Classification FDR Tuning | In Progress |
 | Funnel Eval Calibration | Specified |
+| Scoring Refactor | Complete |
 
-**32 complete**, 3 in progress, 1 specified, 1 removed.
+**33 complete**, 3 in progress, 1 specified, 1 removed.
 
 ---
 
@@ -87,6 +88,10 @@ Auto-classifying evidence library uploads via embedding similarity. Text extract
 ---
 
 ## Recently completed
+
+### Scoring Refactor (Complete)
+
+Novelty-weighted additive scoring model replacing the percentage-based formula. Criterion scores now reflect evidence diversity via cosine similarity — first evidence contributes 100 points, near-duplicates contribute close to 0. Scores are unbounded integers, rewarding complementary evidence instead of duplicate submissions. Per-domain configurable thresholds (`compliance_domains.threshold_pct`) replace the global 70% target. New evidence embedding pipeline (`embed-evidence` SQS queue + Lambda) generates voyage-law-2 embeddings asynchronously after upload, with content-hash deduplication (SHA-256) blocking identical files at link time. Trends page (`/compliance/[programId]/trends`) provides time-series score visualization with Recharts, date range presets, auto-bucketing, and domain filtering. Canonical `recomputeAndCascade()` helper bundles the four scoring primitives (`recomputeCriterionScore` → `applyScoreDelta` → `cascadeProgramScore` → `emitScoreNotifications`) with per-program cascade dedup and correct `programReferenceMax`. Evidence status is now auto-derived from criterion score bands (0 = missing, 1–99 = partial, 100+ = sufficient). Phase A (engine) shipped in PR #453; Phase B (embedding backfill) deferred to follow-up.
 
 ### Evidence Bridge (Complete)
 
