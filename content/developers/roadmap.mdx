@@ -5,7 +5,7 @@ description: Planned features and tracked improvements beyond the current build
 
 ## Spec status
 
-All 37 feature specs are tracked in the main repository's `SPECLOG.md`. Current status as of April 2026:
+All 38 feature specs are tracked in the main repository's `SPECLOG.md`. Current status as of May 2026:
 
 | Spec | Status |
 |------|--------|
@@ -45,9 +45,10 @@ All 37 feature specs are tracked in the main repository's `SPECLOG.md`. Current 
 | Desktop App | In Progress |
 | Library Evidence Classification | In Progress |
 | Classification FDR Tuning | In Progress |
+| Scoring Refactor | Complete |
 | Funnel Eval Calibration | Specified |
 
-**32 complete**, 3 in progress, 1 specified, 1 removed.
+**33 complete**, 3 in progress, 1 specified, 1 removed.
 
 ---
 
@@ -87,6 +88,10 @@ Auto-classifying evidence library uploads via embedding similarity. Text extract
 ---
 
 ## Recently completed
+
+### Scoring Refactor (Complete)
+
+Novelty-weighted additive scoring replacing the percentage-based formula. Criterion scores now reflect evidence diversity via cosine similarity — first evidence contributes full 100 points, near-duplicates contribute close to 0, and scores are unbounded integers rewarding complementary evidence. Per-domain configurable thresholds (`compliance_domains.threshold_pct`) replace the global 70% target. New `embed-evidence` SQS queue and Lambda generate `voyage-law-2` embeddings asynchronously after upload. Content-hash deduplication (SHA-256) blocks identical files at link time. Trends page (`/compliance/[programId]/trends`) with Recharts line charts, date range presets, auto-bucketing, and domain filter. Evidence deletion now triggers full score recomputation. `recomputeAndCascade()` canonical helper bundles the entire score pipeline. Phase A (engine) shipped; Phase B (embedding backfill, threshold slider UI, historical conversion) deferred to follow-up PRs.
 
 ### Evidence Bridge (Complete)
 
