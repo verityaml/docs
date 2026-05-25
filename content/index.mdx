@@ -32,7 +32,7 @@ Verity helps compliance teams continuously prove their programs work. Monitor re
     Dashboard with readiness scores computed from evidence status across all regulatory domains. Switch between programs, see per-domain scores and gap counts, and drill into criteria detail tables.
   </Card>
   <Card title="Bank-readiness scoring" icon="chart-line">
-    Maps regulatory requirements to scoring criteria by compliance domain, tracks evidence status, and computes readiness scores. BSA/AML covers 5 FFIEC pillars; Third-Party Oversight covers 8 OCC 2023-17 monitoring areas.
+    Novelty-weighted additive scoring across regulatory domains — evidence diversity drives scores via cosine similarity, with per-domain configurable thresholds. BSA/AML covers 5 FFIEC pillars; Third-Party Oversight covers 8 OCC 2023-17 monitoring areas.
   </Card>
   <Card title="Regulatory reference library" icon="book">
     Browse and search across FFIEC guidance, FinCEN advisories, OCC interagency guidance, and deficiency patterns. Semantic search powered by Voyage AI embeddings.
@@ -57,6 +57,9 @@ Verity helps compliance teams continuously prove their programs work. Monitor re
   </Card>
   <Card title="Evidence library" icon="folder-open">
     Centralised org-wide evidence view with auto-classification via embedding similarity, source type filtering, download, criteria linking, and Google Drive connector integration.
+  </Card>
+  <Card title="Score trends" icon="chart-area">
+    Time-series score visualization with date range presets, auto-bucketing, domain filtering, and paginated score events table — track how readiness scores change over time.
   </Card>
   <Card title="Score notifications" icon="bell">
     Notification bell with unread count, slide-out panel with date grouping. Score changes, threshold crossings, program milestones, and drift corrections.

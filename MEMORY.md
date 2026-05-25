@@ -4,6 +4,38 @@ Checkpoint for `/sync-from-app` runs. Used to determine which PRs are new since 
 
 ## Last Sync
 
+- **Date:** 2026-05-25
+- **Latest merged PR:** #503 (fix(claude): drop duplicate _origin in improve-prompt checklist)
+- **Main repo commit:** e9967510bfeafbd7703cef41cd144a25797aaa88
+- **Merged at:** 2026-05-24
+
+PRs since previous checkpoint (#495):
+
+- #453 feat: scoring engine v2 — novelty-weighted additive model + trends page — major feature: replaces percentage-based scoring with novelty-weighted additive model (cosine similarity on voyage-law-2 embeddings). Evidence status auto-derived from criterion score. Per-domain configurable thresholds. Trends page with Recharts. Embed-evidence SQS+Lambda pipeline. Content-hash dedup. recomputeAndCascade() canonical helper. Removed `stale` from evidence_status. Spec #38 (Complete).
+- #465 chore(deps): bump rustls-webpki — Dependabot bump. No user-visible impact.
+- #498 chore(deps): bump the npm_and_yarn group across 3 directories with 10 updates — Dependabot bump. No user-visible impact.
+- #502 chore(claude): sync calsuite skills to 2.32 — internal Claude Code tooling. No user-visible impact.
+- #503 fix(claude): drop duplicate _origin in improve-prompt checklist — internal Claude Code tooling. No user-visible impact.
+
+### Impact
+
+- **roadmap.mdx**: Added spec #38 "Scoring Refactor" (Complete) to spec status table. Updated count from 37 to 38 specs, 33 complete. Added "Scoring Refactor (Complete)" to recently completed section with novelty-weighted scoring description, embed-evidence pipeline, per-domain thresholds, trends page, and recomputeAndCascade(). Added "Scoring refactor — deferred" section (per-criterion weights, novelty hints, MD5→SHA-256 migration).
+- **todo.mdx**: Added "Scoring refactor — deferred" section with 3 deferred items matching TODO.md.
+- **scoring.mdx**: Rewrote score formula section for novelty-weighted additive model. Removed `stale` from evidence status. Updated criteria table (added Score column, status now auto-derived). Removed manual status update section. Updated auto-matching description. Added per-domain thresholds and content-hash dedup subsections. Added Trends section.
+- **evidence.mdx**: Updated evidence status table — removed `stale`, changed from fixed point values to auto-derived from novelty-weighted score. Added cross-reference to scoring page.
+- **architecture.mdx**: Added `embed-evidence` Lambda+SQS to application layer and background job flow diagrams. Updated scoring pipeline diagram from `applyScoreDelta()` to `recomputeAndCascade()` with `recomputeCriterionScore()` and novelty weighting. Added `embed-evidence` trigger. Updated data model: `criterion_score` on scoring_criteria, `thresholdPct` on compliance_domains, evidence embedding/status/hash fields, `scoreChangeEvents.formulaVersion`.
+- **walkthrough.mdx**: Updated criteria table references — removed `Stale` status, added Score column, status now auto-derived. Updated notification thresholds from fixed 5pts/70% to percentage-based/per-domain configurable. Updated sparkline threshold reference.
+- **index.mdx**: Updated bank-readiness scoring card description for novelty-weighted model. Added "Score trends" feature card.
+
+### Build verification
+
+- All 7 changed MDX files compile cleanly via `@mdx-js/mdx`.
+- Full `next build` succeeds — 33 static pages generated, no errors.
+
+---
+
+## Previous Sync (2026-05-12)
+
 - **Date:** 2026-05-12
 - **Latest merged PR:** #495 (docs: add markdown copies of agent session transcripts)
 - **Main repo commit:** aa0a2c32f4efa92062515a2946425cf9fc60df5e
