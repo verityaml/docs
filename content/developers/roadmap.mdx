@@ -5,7 +5,7 @@ description: Planned features and tracked improvements beyond the current build
 
 ## Spec status
 
-All 37 feature specs are tracked in the main repository's `SPECLOG.md`. Current status as of April 2026:
+All 38 feature specs are tracked in the main repository's `SPECLOG.md`. Current status as of May 2026:
 
 | Spec | Status |
 |------|--------|
@@ -46,8 +46,9 @@ All 37 feature specs are tracked in the main repository's `SPECLOG.md`. Current 
 | Library Evidence Classification | In Progress |
 | Classification FDR Tuning | In Progress |
 | Funnel Eval Calibration | Specified |
+| Scoring Refactor | Complete |
 
-**32 complete**, 3 in progress, 1 specified, 1 removed.
+**33 complete**, 3 in progress, 1 specified, 1 removed.
 
 ---
 
@@ -87,6 +88,14 @@ Auto-classifying evidence library uploads via embedding similarity. Text extract
 ---
 
 ## Recently completed
+
+### Scoring Refactor (Complete)
+
+Novelty-weighted additive scoring replacing the percentage-based formula. Criterion scores now reflect evidence diversity via cosine similarity — first evidence contributes full 100 points, subsequent evidence weighted by `100 × (1 − max_similarity_to_prior)`. Scores are unbounded integers. Per-domain configurable thresholds (`compliance_domains.threshold_pct`) replace the global `DOMAIN_THRESHOLD_PCT`. Evidence status is auto-derived from `criterion_score` bands (`0` → missing, `< 100` → partial, `≥ 100` → sufficient); `stale` removed from the enum.
+
+New infrastructure: `embed-evidence` SQS queue and Lambda for asynchronous voyage-law-2 embedding generation after upload. SHA-256 `content_hash` deduplication (409 DUPLICATE_EVIDENCE on identical files). `recomputeAndCascade()` canonical helper bundles the full score pipeline with cascade dedup and notification emission. Trends page at `/compliance/[programId]/trends` with Recharts, date range presets, auto-bucketing, and domain filter.
+
+PR #453 also included 7 rounds of adversarial review fixes: cross-tenant evidence injection blocked, typed errors replacing synthetic-zero anti-pattern, NotificationMetadata Zod runtime validation, per-criterion try/catch in batch jobs, and two new lint rules (`tenant-query-must-filter-orgid`, `score-events-must-filter-formula-version`).
 
 ### Evidence Bridge (Complete)
 
@@ -136,6 +145,14 @@ Select multiple request items, assign to one person. API (`PATCH /items/bulk`) +
 ### Progress report generation
 
 Structured quarterly progress reports for regulators. Planned for consent order support.
+
+---
+
+## Scoring refactor — deferred
+
+- Variable per-criterion weights — multiply novelty contribution by weight factor. Currently all criteria equally weighted. P2.
+- Evidence quality indicators in UI — show "low novelty" hints when evidence is highly similar to existing. Help users upload diverse evidence. P3.
+- Migrate connector MD5 checksums (`sync-connector.ts` `createHash("md5")`) to SHA-256 for consistency with evidence `content_hash`. Internal cleanup.
 
 ---
 
