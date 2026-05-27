@@ -5,7 +5,7 @@ description: Planned features and tracked improvements beyond the current build
 
 ## Spec status
 
-All 37 feature specs are tracked in the main repository's `SPECLOG.md`. Current status as of April 2026:
+All 38 feature specs are tracked in the main repository's `SPECLOG.md`. Current status as of May 2026:
 
 | Spec | Status |
 |------|--------|
@@ -42,12 +42,13 @@ All 37 feature specs are tracked in the main repository's `SPECLOG.md`. Current 
 | Google Drive Connector | Complete |
 | Agentic File Classification | Complete |
 | Evidence Bridge | Complete |
+| Scoring Refactor | Complete |
 | Desktop App | In Progress |
 | Library Evidence Classification | In Progress |
 | Classification FDR Tuning | In Progress |
 | Funnel Eval Calibration | Specified |
 
-**32 complete**, 3 in progress, 1 specified, 1 removed.
+**33 complete**, 3 in progress, 1 specified, 1 removed.
 
 ---
 
@@ -87,6 +88,18 @@ Auto-classifying evidence library uploads via embedding similarity. Text extract
 ---
 
 ## Recently completed
+
+### Scoring Refactor (Complete)
+
+Novelty-weighted additive scoring model replacing the percentage-based formula. Criterion scores now reflect evidence diversity via cosine similarity — first evidence contributes full 100 points; subsequent evidence weighted by `100 × (1 − max_similarity_to_prior)`. Scores are unbounded integers, rewarding complementary evidence instead of duplicate submissions. Domain score = sum of criterion scores; program score = sum of domain scores.
+
+Evidence status is auto-derived from criterion score bands (0 = missing, 1–99 = partial, 100+ = sufficient). `stale` removed from the evidence status enum — connector freshness tracked via `last_verified_at` timestamp instead. Per-domain configurable thresholds (`compliance_domains.threshold_pct`) replace the global 70% target.
+
+New evidence embedding pipeline — `embed-evidence` SQS queue and Lambda generate `voyage-law-2` embeddings asynchronously after upload. Content-hash deduplication (SHA-256) prevents identical files being linked twice to the same criterion.
+
+Trends page (`/compliance/[programId]/trends`) provides time-series score visualization with date range presets (7d/30d/90d/180d/1y), auto-bucketing (daily/weekly/monthly), domain filter with URL state, and a paginated score events table. Built with Recharts.
+
+`recomputeAndCascade()` canonical helper bundles the full criterion → domain → program → notification pipeline, replacing manual orchestration of the four score primitives in API routes.
 
 ### Evidence Bridge (Complete)
 

@@ -18,7 +18,7 @@ Click any service box for details. See the [AWS migration plan](/developers/aws-
 | ECS Fargate | Next.js app (standalone Docker), auto-scaling |
 | RDS PostgreSQL | Database with pgvector, managed backups |
 | S3 | Evidence files, exam uploads, reports (50MB max) |
-| SQS + Lambda | Background jobs (parse, auto-match, evidence propagation, backfill, connector sync, library classification, nightly recompute) |
+| SQS + Lambda | Background jobs (parse, auto-match, evidence propagation, backfill, connector sync, library classification, evidence embedding, nightly recompute) |
 | CloudFront | CDN with WAF |
 | Voyage AI | voyage-law-2 embeddings (1024-dim), legal domain |
 | Anthropic Claude | Document parsing via Anthropic API |
@@ -83,6 +83,7 @@ flowchart TD
         SYNC["sync-connector"]
         MATCH["auto-match-evidence"]
         CLAS["classify-library-evidence"]
+        EMBE["embed-evidence"]
         RECOMP["full-recompute\n(nightly)"]
     end
 
@@ -121,6 +122,7 @@ flowchart TD
 
     API_EV -->|dispatch| PROP
     API_EV -->|dispatch| CLAS
+    API_EV -->|dispatch| EMBE
     API_OB -->|dispatch| PARSE
     API_CON -->|dispatch| SYNC
     API_CP -->|dispatch| MATCH
@@ -136,6 +138,7 @@ flowchart TD
     SYNC --> EMBED
     CLAS --> EMBED
     CLAS --> SCORE
+    EMBE --> EMBED
     RECOMP --> SCORE
 
     PARSE --> ANTH
@@ -148,22 +151,23 @@ flowchart TD
 
 ### Scoring pipeline
 
-Every evidence status change flows through a single entry point (`applyScoreDelta`) that updates the domain, cascades to the program, records an audit event, and optionally triggers notifications and auto-snapshots.
+Every evidence change flows through `recomputeAndCascade()` — the canonical entry point that bundles `recomputeCriterionScore` → `applyScoreDelta` → `cascadeProgramScore` → `emitScoreNotifications`. Criterion scores are novelty-weighted (cosine similarity), evidence status is auto-derived, and notifications use percentage-based thresholds.
 
 <Mermaid chart={`flowchart LR
     subgraph Triggers["Score Change Triggers"]
-        T1["Manual status\nchange (UI)"]
+        T1["Evidence\nadd/remove"]
         T2["Auto-match\njob"]
         T3["Connector\nsync"]
         T4["Evidence\ndelete"]
         T5["Nightly\nrecompute"]
     end
 
-    ASD["applyScoreDelta()\nSELECT FOR UPDATE\non domain"]
+    RAC["recomputeAndCascade()\nrecompute criterion\n→ apply delta\n→ cascade program\n→ emit notifications"]
 
     subgraph Updates["Cascading Updates"]
         direction TB
-        DOM_UP["Domain score\nupdate counts"]
+        CRIT["Criterion score\nnovelty-weighted"]
+        DOM_UP["Domain score\nsum of criteria"]
         EVT["score_change_events\naudit record"]
         CPS["cascadeProgramScore()\nrecalculate from\nall domains"]
         PROG["Program\ncurrent_score"]
@@ -171,24 +175,24 @@ Every evidence status change flows through a single entry point (`applyScoreDelt
 
     subgraph SideEffects["Side Effects"]
         direction TB
-        NOTIF["Notifications\n5pt delta\n70% threshold\nmilestones"]
-        SNAP["Auto-snapshot\n5pt program change\n1hr cooldown"]
+        NOTIF["Notifications\n5% delta\nper-domain threshold\nmilestones"]
+        SNAP["Auto-snapshot\n5% program change\n1hr cooldown"]
     end
 
-    T1 --> ASD
-    T2 --> ASD
-    T3 --> ASD
-    T4 --> ASD
-    T5 --> ASD
+    T1 --> RAC
+    T2 --> RAC
+    T3 --> RAC
+    T4 --> RAC
+    T5 --> RAC
 
-    ASD --> DOM_UP --> EVT --> CPS --> PROG
+    RAC --> CRIT --> DOM_UP --> EVT --> CPS --> PROG
     PROG --> NOTIF
     PROG --> SNAP
-`} caption="Scoring pipeline — all score changes flow through applyScoreDelta()" />
+`} caption="Scoring pipeline — all score changes flow through recomputeAndCascade()" />
 
 ### Background job flows
 
-Six SQS queues feed six Lambda handlers. The parse job chains into backfill. The nightly recompute runs on an EventBridge schedule.
+Seven SQS queues feed seven Lambda handlers. The parse job chains into backfill. The nightly recompute runs on an EventBridge schedule.
 
 <Mermaid chart={`flowchart LR
     subgraph Dispatch["API Route Dispatchers"]
@@ -198,6 +202,7 @@ Six SQS queues feed six Lambda handlers. The parse job chains into backfill. The
         D4["POST /connectors/sync"]
         D5["EventBridge\n3am UTC"]
         D6["POST /evidence\n(library upload)"]
+        D7["POST /evidence\n+ 4 evidence routes"]
     end
 
     subgraph Queues["SQS Queues"]
@@ -207,6 +212,7 @@ Six SQS queues feed six Lambda handlers. The parse job chains into backfill. The
         Q4[backfill-evidence-links]
         Q5[sync-connector]
         Q6[classify-library-evidence]
+        Q7[embed-evidence]
     end
 
     subgraph Lambda["Lambda Handlers"]
@@ -217,6 +223,7 @@ Six SQS queues feed six Lambda handlers. The parse job chains into backfill. The
         L5["Sync Connector\nFunnel classify\n(embed → LLM confirm)\n→ link → score delta"]
         L6["Full Recompute\nAll programs →\ndrift detection\n→ corrections"]
         L7["Classify Library\nExtract → chunk → embed\n→ pgvector match\n→ link → score delta"]
+        L8["Embed Evidence\nvoyage-law-2 → vector(1024)\nasync after upload"]
     end
 
     D1 --> Q1 --> L1
@@ -225,6 +232,7 @@ Six SQS queues feed six Lambda handlers. The parse job chains into backfill. The
     D4 --> Q5 --> L5
     D5 --> L6
     D6 --> Q6 --> L7
+    D7 --> Q7 --> L8
 
     L1 -->|chains| Q4 --> L4
     L2 -->|notify| NOTIF2["Notifications"]
@@ -267,11 +275,13 @@ Core table relationships showing the multi-tenant hierarchy, compliance scoring 
         string id PK "CD-YYYY-NNN"
         string domainKey
         number currentScore
+        number thresholdPct "1-100, per-domain target"
     }
     scoringCriteria {
         string id PK "SC-YYYY-NNN"
         string definitionKey "ic-01 etc"
-        string evidenceStatus "missing|partial|sufficient"
+        string evidenceStatus "missing|partial|sufficient (auto-derived)"
+        number criterionScore "novelty-weighted"
         jsonb linkedEvidence
         vector embedding "1024d for classification"
     }
@@ -290,6 +300,10 @@ Core table relationships showing the multi-tenant hierarchy, compliance scoring 
         string id PK
         string sourceType "exam|domain|library|connector"
         string classificationStatus "pending|classified|no_match|skipped|error"
+        vector embedding "1024d voyage-law-2"
+        string embeddingStatus "pending|embedded|non_embeddable|failed"
+        string contentHash "SHA-256 dedup"
+        timestamp lastVerifiedAt "connector freshness"
     }
     evidenceLinks {
         string status "auto_applied|confirmed|rejected"

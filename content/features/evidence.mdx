@@ -30,14 +30,15 @@ evidence/{orgId}/{examId}/{itemId}/{timestamp}-{uuid}-{filename}
 
 ## Evidence status
 
-Each scoring criterion tracks evidence status with four levels:
+Each scoring criterion tracks evidence status, auto-derived from the criterion's novelty-weighted score:
 
-| Status | Score contribution | Description |
-|--------|-------------------|-------------|
-| Sufficient | 100 points | Full evidence coverage |
-| Partial | 50 points | Some evidence, gaps remain |
-| Stale | 0 points | Evidence exists but is outdated |
-| Missing | 0 points | No evidence provided |
+| Status | Criterion score | Description |
+|--------|----------------|-------------|
+| Sufficient | ≥ 100 | Full evidence coverage |
+| Partial | 1–99 | Some evidence, gaps remain |
+| Missing | 0 | No evidence provided |
+
+Evidence status updates automatically as evidence is added or removed. Connector freshness is tracked via `last_verified_at` timestamps on evidence rows.
 
 <img
   src="/images/evidence-training.png"
