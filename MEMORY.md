@@ -4,26 +4,39 @@ Checkpoint for `/sync-from-app` runs. Used to determine which PRs are new since 
 
 ## Last Sync
 
-- **Date:** 2026-05-12
-- **Latest merged PR:** #495 (docs: add markdown copies of agent session transcripts)
-- **Main repo commit:** aa0a2c32f4efa92062515a2946425cf9fc60df5e
-- **Merged at:** 2026-05-05
+- **Date:** 2026-05-29
+- **Latest merged PR:** #503 (fix(claude): drop duplicate _origin in improve-prompt checklist)
+- **Main repo commit:** e996751
+- **Merged at:** 2026-05-24
 
-No new merged PRs since previous checkpoint (#495). Verity `main` has not moved.
+PRs since previous checkpoint (#495):
+
+- #453 feat: scoring engine v2 — novelty-weighted additive model + trends page — **Major feature.** Replaces percentage-based scoring with novelty-weighted additive model (cosine similarity on voyage-law-2 evidence embeddings). Per-domain configurable thresholds, trends page, embed-evidence SQS+Lambda pipeline, content-hash dedup, auto-derived evidence status. `recomputeAndCascade()` canonical helper. 135 files changed, 10K+ additions.
+- #465 chore(deps): bump rustls-webpki — Cargo dependency bump. No user-visible impact.
+- #498 chore(deps): bump the npm_and_yarn group across 3 directories — NPM dependency bumps. No user-visible impact.
+- #502 chore(claude): sync calsuite skills to 2.32 — Internal Claude Code tooling. No user-visible impact.
+- #503 fix(claude): drop duplicate _origin in improve-prompt checklist — Internal Claude Code tooling. No user-visible impact.
 
 ### Impact
 
-- No docs pages updated. Full diff of all 5 source-of-truth files confirmed no drift. All pages are current.
+- **roadmap.mdx**: Added spec #38 "Scoring Refactor" (Complete) row. Updated spec count from 37 to 38, complete count from 32 to 33. Added "Scoring Refactor (Complete)" to recently completed section with full description.
+- **todo.mdx**: Added "Scoring refactor — deferred" section with 3 deferred items (variable weights, evidence quality indicators, MD5→SHA-256 migration).
+- **scoring.mdx**: Rewrote scoring formula from percentage-based to novelty-weighted additive. Removed `stale` from evidence status. Status is now auto-derived from criterion score bands. Added evidence embedding pipeline section. Updated criteria table columns. Updated auto-match description.
+- **evidence.mdx**: Updated evidence status table (removed `stale`, changed to novelty-weighted contributions). Updated library classification to reference `recomputeAndCascade()` and embed-evidence queue.
+- **architecture.mdx**: Added `embed-evidence` queue+Lambda to service breakdown, application layer diagram, and background jobs diagram. Updated scoring pipeline diagram to show `recomputeAndCascade()` flow. Updated data model with new fields (evidence.embedding, embeddingStatus, contentHash, lastVerifiedAt; scoringCriteria.criterionScore; complianceDomains.thresholdPct).
+- **index.mdx**: Updated bank-readiness scoring card description for novelty-weighted model. Added "Score trends" feature card.
+- **walkthrough.mdx**: Updated scoring description from percentage to novelty-weighted. Removed `stale` status. Updated notification thresholds to percentage-based. Updated domain threshold from fixed 70% to configurable. Updated evidence library section to reference `recomputeAndCascade()`.
+- **background-jobs.mdx**: Updated core concepts (evidence now embedded). Updated score recomputation section for v2 formula. Added embed-evidence queue to SQS table. Added embed-evidence job description. Updated embeddings table (evidence.embedding, scoringCriteria.embedding). Updated configuration table (per-domain thresholds, percentage-based notifications).
 
 ### Build verification
 
-- No MDX files changed — build verification not required.
+- `next build` passes cleanly — all 33 pages generated successfully.
 
 ---
 
-## Previous Sync (2026-05-10)
+## Previous Sync (2026-05-12)
 
-- **Date:** 2026-05-05
+- **Date:** 2026-05-12
 - **Latest merged PR:** #495 (docs: add markdown copies of agent session transcripts)
 - **Main repo commit:** aa0a2c32f4efa92062515a2946425cf9fc60df5e
 - **Merged at:** 2026-05-05

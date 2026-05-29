@@ -13,19 +13,30 @@ Bank-readiness scoring maps regulatory requirements to scoring criteria by compl
 
 ## How scoring works
 
-The scoring model is a three-tier hierarchy: **Program** → **Domain** → **Criteria**.
+The scoring model is a three-tier hierarchy: **Program** → **Domain** → **Criteria**, using a novelty-weighted additive formula that rewards evidence diversity.
 
 - **Programs** are scoped by regulation type — BSA/AML maps to 5 FFIEC pillars, Third-Party Oversight maps to 8 OCC 2023-17 monitoring areas
-- **Domains** correspond to regulatory categories (e.g., Internal Controls, Independent Testing)
-- **Criteria** have an evidence status: `missing`, `stale`, `partial`, or `sufficient`
+- **Domains** correspond to regulatory categories (e.g., Internal Controls, Independent Testing), each with a configurable readiness threshold (1–100%, replacing the former global 70% target)
+- **Criteria** have an evidence status auto-derived from their score: `missing` (score = 0), `partial` (score under 100), or `sufficient` (score ≥ 100)
 
 ### Score formula
 
+Evidence is embedded using Voyage AI (`voyage-law-2`, 1024-dim vectors). When evidence is linked to a criterion, its cosine similarity to all prior evidence on that criterion determines its novelty contribution:
+
 ```
-domain_score = ((sufficient_count × 100) + (partial_count × 50)) / total_criteria
+contribution = 100 × (1 − max_similarity_to_prior_evidence)
+criterion_score = sum of all contributions (unbounded)
+domain_score = sum of criterion scores
+program_score = sum of domain scores
 ```
 
-Each "sufficient" criterion contributes 100 points, each "partial" contributes 50, and everything else contributes zero. The domain score updates in real time as you change evidence statuses.
+First evidence on a criterion contributes the full 100 points. Near-duplicate evidence (high cosine similarity) contributes close to zero. This means five copies of the same policy score the same as one, but one policy + one training log + one audit report = three genuinely different arguments for compliance.
+
+Content-hash deduplication (SHA-256) blocks identical files from being linked twice to the same criterion (returns 409 DUPLICATE_EVIDENCE before embedding is attempted).
+
+### Evidence embedding pipeline
+
+Evidence embeddings are generated asynchronously after upload via the `embed-evidence` SQS queue and Lambda. The Lambda downloads the file from S3, extracts text, generates a voyage-law-2 embedding, and recomputes scores for all linked criteria. Embedding status tracks the lifecycle: `pending` → `embedded` (or `non_embeddable` / `failed`).
 
 ## Criteria table
 
@@ -36,14 +47,15 @@ The domain detail page lists every scoring criterion, each one mapped to a speci
 | Criterion text | What the regulation requires |
 | Regulatory source | The specific FFIEC section or OCC 2023-17 paragraph |
 | Evidence count | How many documents are linked |
-| Evidence status | Missing, Stale, Partial, or Sufficient |
+| Criterion score | Novelty-weighted points from linked evidence |
+| Evidence status | Auto-derived: Missing (0), Partial (1–99), or Sufficient (≥100) |
 
 Each row also shows the **criterion definition key** (e.g., `ic-01`, `tr-03`) in the Source column above the regulatory source link, making it easy to cross-reference with parsed examination items.
 
-The status column is a dropdown — click to change it. A modal prompts for an optional reason ("Updated after board review," "Waiting on Q4 minutes") and the domain score updates immediately.
+Evidence status is **auto-derived** from the criterion score — it cannot be set manually. Link evidence to change the score and status. The domain score updates in real time as evidence is linked or removed.
 
 <Warning>
-Criteria with a **REQUIRES REVIEW** warning beneath the status dropdown have been auto-matched with evidence and set to "sufficient" by the system, but no human has confirmed them yet. The warning clears when you change the status or add reviewer notes.
+Criteria with a **REQUIRES REVIEW** warning have been auto-matched with evidence by the system, but no human has confirmed them yet. The warning clears when you add reviewer notes.
 </Warning>
 
 ## Reviewer notes and history
@@ -87,7 +99,7 @@ Matching uses two signals:
 1. **Direct criterion key** — if a request item has a scoring criterion key (like `ic-01`) that matches a criterion's definition key, that's an exact match
 2. **Regulatory source alignment** — if a request item and a criterion both reference the same FFIEC section, the evidence is relevant
 
-When evidence is auto-linked, the system sets the criterion's status to **Sufficient** and recomputes the domain score. The **REQUIRES REVIEW** warning appears until a human confirms. This is opt-out, not opt-in — the system attaches evidence it considers relevant, and you remove anything that doesn't belong.
+When evidence is auto-linked, the system recomputes the criterion's novelty-weighted score and the domain score cascades automatically. The **REQUIRES REVIEW** warning appears until a human confirms. This is opt-out, not opt-in — the system attaches evidence it considers relevant, and you remove anything that doesn't belong.
 
 <Tip>
 Auto-matching turns examination evidence into reusable compliance proof. Evidence uploaded for one examination cycle can strengthen your readiness score across future cycles.
