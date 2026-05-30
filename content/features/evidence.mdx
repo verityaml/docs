@@ -30,14 +30,15 @@ evidence/{orgId}/{examId}/{itemId}/{timestamp}-{uuid}-{filename}
 
 ## Evidence status
 
-Each scoring criterion tracks evidence status with four levels:
+Evidence status is **auto-derived** from the criterion's novelty-weighted score:
 
-| Status | Score contribution | Description |
-|--------|-------------------|-------------|
-| Sufficient | 100 points | Full evidence coverage |
-| Partial | 50 points | Some evidence, gaps remain |
-| Stale | 0 points | Evidence exists but is outdated |
-| Missing | 0 points | No evidence provided |
+| Status | Score band | Description |
+|--------|-----------|-------------|
+| Sufficient | ≥100 | Full evidence coverage |
+| Partial | 1–99 | Some evidence, gaps remain |
+| Missing | 0 | No evidence provided |
+
+Each piece of evidence contributes `100 × (1 − max_similarity_to_prior)` points. The first document earns 100 points; near-duplicates earn close to 0. Identical files are blocked at link time via SHA-256 content-hash dedup.
 
 <img
   src="/images/evidence-training.png"

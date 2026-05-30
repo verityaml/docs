@@ -4,24 +4,37 @@ Checkpoint for `/sync-from-app` runs. Used to determine which PRs are new since 
 
 ## Last Sync
 
-- **Date:** 2026-05-12
-- **Latest merged PR:** #495 (docs: add markdown copies of agent session transcripts)
-- **Main repo commit:** aa0a2c32f4efa92062515a2946425cf9fc60df5e
-- **Merged at:** 2026-05-05
+- **Date:** 2026-05-30
+- **Latest merged PR:** #503 (fix(claude): drop duplicate _origin in improve-prompt checklist)
+- **Main repo commit:** e9967510bfeafbd7703cef41cd144a25797aaa88
+- **Merged at:** 2026-05-24
 
-No new merged PRs since previous checkpoint (#495). Verity `main` has not moved.
+PRs since previous checkpoint (#495):
+
+- #453 feat: scoring engine v2 — novelty-weighted additive model + trends page — replaces percentage-based scoring with novelty-weighted additive model (cosine similarity on Voyage AI embeddings). Per-domain configurable thresholds. Trends page with Recharts. Evidence embedding pipeline (embed-evidence SQS + Lambda). Content-hash dedup (SHA-256). Evidence status auto-derived from score bands. `stale` removed from evidence_status enum.
+- #465 chore(deps): bump rustls-webpki from 0.103.10 to 0.103.13 in /desktop/src-tauri — Dependabot security bump. No user-visible impact.
+- #498 chore(deps): bump the npm_and_yarn group across 3 directories with 10 updates — Dependabot dependency bump. No user-visible impact.
+- #502 chore(claude): sync calsuite skills to 2.32 — internal Claude Code tooling sync. No user-visible impact.
+- #503 fix(claude): drop duplicate _origin in improve-prompt checklist — internal tooling fix. No user-visible impact.
 
 ### Impact
 
-- No docs pages updated. Full diff of all 5 source-of-truth files confirmed no drift. All pages are current.
+- **roadmap.mdx**: Added spec #38 "Scoring Refactor" (Complete) to the spec table. Updated total from "All 37 feature specs" to "All 38 feature specs" and count from "32 complete" to "33 complete". Added "Scoring Refactor (Complete)" entry to "Recently completed" section describing novelty-weighted additive model. Added "Scoring refactor — deferred" section with variable weights, evidence quality indicators, and MD5→SHA-256 migration.
+- **todo.mdx**: Added "Scoring refactor — deferred" section (variable per-criterion weights, evidence quality indicators, MD5→SHA-256 migration).
+- **scoring.mdx**: Rewrote score formula from percentage-based to novelty-weighted additive. Removed `stale` from evidence status. Added per-domain configurable thresholds section. Added score impact preview on status dropdown. Updated criteria table status column.
+- **evidence.mdx**: Replaced 4-level evidence status table with 3-level auto-derived status table. Added novelty scoring and content-hash dedup description.
+- **dashboard.mdx**: Updated bank-readiness score description from "percentage" to unbounded novelty-weighted. Added sparklines and per-domain threshold warning badges to domain cards.
+- **walkthrough.mdx**: Updated scoring descriptions (unbounded scores, sparklines, per-domain thresholds, auto-derived status). Added score impact preview to status dropdown. Added Trends page subsection. Updated notification threshold descriptions from global 70% to per-domain configurable.
+- **architecture.mdx**: Added embed-evidence queue/Lambda to application layer, background job flows (7 queues, not 6), and data model diagrams. Updated scoring pipeline description for novelty-weighted model. Updated notification/snapshot thresholds to percentage-based. Added evidence embedding fields (embedding, embeddingStatus, contentHash), criterionScore, and thresholdPct to data model.
+- **index.mdx**: Updated bank-readiness scoring card to describe novelty-weighted additive model. Added "Score trends" feature card.
 
 ### Build verification
 
-- No MDX files changed — build verification not required.
+- `next build` succeeded — all 33 pages generated cleanly.
 
 ---
 
-## Previous Sync (2026-05-10)
+## Previous Sync (2026-05-12)
 
 - **Date:** 2026-05-05
 - **Latest merged PR:** #495 (docs: add markdown copies of agent session transcripts)

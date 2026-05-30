@@ -5,7 +5,7 @@ description: Planned features and tracked improvements beyond the current build
 
 ## Spec status
 
-All 37 feature specs are tracked in the main repository's `SPECLOG.md`. Current status as of April 2026:
+All 38 feature specs are tracked in the main repository's `SPECLOG.md`. Current status as of May 2026:
 
 | Spec | Status |
 |------|--------|
@@ -42,12 +42,13 @@ All 37 feature specs are tracked in the main repository's `SPECLOG.md`. Current 
 | Google Drive Connector | Complete |
 | Agentic File Classification | Complete |
 | Evidence Bridge | Complete |
+| Scoring Refactor | Complete |
 | Desktop App | In Progress |
 | Library Evidence Classification | In Progress |
 | Classification FDR Tuning | In Progress |
 | Funnel Eval Calibration | Specified |
 
-**32 complete**, 3 in progress, 1 specified, 1 removed.
+**33 complete**, 3 in progress, 1 specified, 1 removed.
 
 ---
 
@@ -87,6 +88,10 @@ Auto-classifying evidence library uploads via embedding similarity. Text extract
 ---
 
 ## Recently completed
+
+### Scoring Refactor (Complete)
+
+Novelty-weighted additive scoring replacing the percentage-based formula. Evidence embeddings via Voyage AI (`voyage-law-2`) enable cosine similarity novelty scoring — first evidence on a criterion earns 100 points, near-duplicates earn close to 0. Scores are unbounded integers rewarding complementary evidence over duplicate submissions. Per-domain configurable thresholds replace the global 70% target. Evidence status is auto-derived from score bands (0 = missing, 1–99 = partial, 100+ = sufficient); `stale` removed from the status enum. Content-hash dedup (SHA-256) blocks identical files at link time. New `embed-evidence` SQS queue + Lambda generates embeddings asynchronously. Trends page with Recharts line charts, date range presets, auto-bucketing, and domain filter. Phase A (engine) shipped. Phase B (embedding backfill) deferred.
 
 ### Evidence Bridge (Complete)
 
@@ -145,6 +150,14 @@ Structured quarterly progress reports for regulators. Planned for consent order 
 - Retroactive classification of existing library evidence uploaded before this feature
 - Manual "re-classify" button in evidence library UI
 - Reclassification when criteria definitions are updated (shared concern with connector reclassification below)
+
+---
+
+## Scoring refactor — deferred
+
+- Variable per-criterion weights — multiply novelty contribution by weight factor. Currently all criteria equally weighted. P2.
+- Evidence quality indicators in UI — show "low novelty" hints when evidence is highly similar to existing. Help users upload diverse evidence. P3.
+- Migrate connector MD5 checksums (`sync-connector.ts` `createHash("md5")`) to SHA-256 for consistency with evidence `content_hash`. Internal cleanup.
 
 ---
 
