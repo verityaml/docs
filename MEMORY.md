@@ -4,26 +4,36 @@ Checkpoint for `/sync-from-app` runs. Used to determine which PRs are new since 
 
 ## Last Sync
 
-- **Date:** 2026-05-12
-- **Latest merged PR:** #495 (docs: add markdown copies of agent session transcripts)
-- **Main repo commit:** aa0a2c32f4efa92062515a2946425cf9fc60df5e
-- **Merged at:** 2026-05-05
+- **Date:** 2026-05-31
+- **Latest merged PR:** #503 (fix(claude): drop duplicate _origin in improve-prompt checklist)
+- **Main repo commit:** e996751
+- **Merged at:** 2026-05-24
 
-No new merged PRs since previous checkpoint (#495). Verity `main` has not moved.
+PRs since previous checkpoint (#495):
+
+- #453 feat: scoring engine v2 — novelty-weighted additive model + trends page — Major feature: replaces percentage-based scoring with novelty-weighted additive model. Evidence embeddings (voyage-law-2), cosine similarity, unbounded scores, per-domain thresholds, trends page, embed-evidence SQS+Lambda, content-hash dedup, stale status removed. **Docs impact.**
+- #498 chore(deps): bump the npm_and_yarn group across 3 directories with 10 updates — Dependabot bump. No docs impact.
+- #465 chore(deps): bump rustls-webpki — Cargo dependency bump. No docs impact.
+- #502 chore(claude): sync calsuite skills to 2.32 — Internal tooling. No docs impact.
+- #503 fix(claude): drop duplicate _origin in improve-prompt checklist — Internal tooling. No docs impact.
 
 ### Impact
 
-- No docs pages updated. Full diff of all 5 source-of-truth files confirmed no drift. All pages are current.
+- **roadmap.mdx**: Added spec #38 "Scoring Refactor" (Complete) to status table. Updated count from "All 37 feature specs" to "All 38 feature specs" and from "32 complete" to "33 complete". Added "Scoring Refactor (Complete)" section under "Recently completed" describing novelty-weighted additive scoring, embed-evidence pipeline, per-domain thresholds, trends page, and auto-derived evidence status.
+- **todo.mdx**: Added new "Scoring refactor — deferred" section with 3 items: variable per-criterion weights (P2), evidence quality indicators (P3), and MD5→SHA-256 connector checksum migration.
+- **architecture.mdx**: Added `embed-evidence` queue and Lambda to application layer diagram and background jobs diagram (7 queues, 8 handlers). Updated scoring pipeline diagram to reflect `recomputeAndCascade()` as the canonical entry point (replacing `applyScoreDelta()`), with `recomputeCriterionScore()` → `applyScoreDelta()` → `cascadeProgramScore()` chain and per-domain threshold notifications. Updated data model with `thresholdPct` on domains, `criterionScore` on criteria, and `embedding`/`embeddingStatus`/`contentHash` on evidence.
+- **scoring.mdx**: Rewrote score formula from percentage-based `(sufficient × 100 + partial × 50) / total` to novelty-weighted additive `sum(100 × (1 − max_cosine_similarity))`. Removed `stale` from status list. Added per-domain thresholds section. Updated criteria table column description.
+- **evidence.mdx**: Updated evidence status table — removed `stale` status, changed from fixed point values to auto-derived score bands (0 = missing, 1–99 = partial, 100+ = sufficient). Added cross-reference to scoring formula.
 
 ### Build verification
 
-- No MDX files changed — build verification not required.
+- `next build` passes — all 33 pages generated successfully.
 
 ---
 
-## Previous Sync (2026-05-10)
+## Previous Sync (2026-05-12)
 
-- **Date:** 2026-05-05
+- **Date:** 2026-05-12
 - **Latest merged PR:** #495 (docs: add markdown copies of agent session transcripts)
 - **Main repo commit:** aa0a2c32f4efa92062515a2946425cf9fc60df5e
 - **Merged at:** 2026-05-05
