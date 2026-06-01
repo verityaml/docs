@@ -4,24 +4,37 @@ Checkpoint for `/sync-from-app` runs. Used to determine which PRs are new since 
 
 ## Last Sync
 
-- **Date:** 2026-05-12
-- **Latest merged PR:** #495 (docs: add markdown copies of agent session transcripts)
-- **Main repo commit:** aa0a2c32f4efa92062515a2946425cf9fc60df5e
-- **Merged at:** 2026-05-05
+- **Date:** 2026-06-01
+- **Latest merged PR:** #504 (feat(trends): render historical v1 score snapshots as dashed series)
+- **Main repo commit:** 3589814 (HEAD of main)
+- **Merged at:** 2026-06-01
 
-No new merged PRs since previous checkpoint (#495). Verity `main` has not moved.
+PRs since previous checkpoint (#495):
+
+- #453 feat: scoring engine v2 — novelty-weighted additive model + trends page — major scoring refactor. Criterion scores use novelty-weighted cosine similarity (first evidence = 100pts, subsequent weighted by diversity). Evidence status auto-derived from score bands. `stale` removed from evidence_status enum. Per-domain configurable thresholds replace global 70%. Trends page with Recharts. `embed-evidence` SQS queue + Lambda. Content-hash dedup (SHA-256). `recomputeAndCascade()` canonical helper. Adversarial review rounds 5 & 7 (security fixes, typed errors, operational resilience). Spec #38 "Scoring Refactor" complete.
+- #465 chore(deps): bump rustls-webpki — dependency bump, no user-visible impact.
+- #498 chore(deps): bump the npm_and_yarn group across 3 directories with 10 updates — dependency bump, no user-visible impact.
+- #502 chore(claude): sync calsuite skills to 2.32 — internal Claude Code tooling only.
+- #503 fix(claude): drop duplicate _origin key in improve-prompt checklist — internal Claude Code tooling only.
+- #504 feat(trends): render historical v1 score snapshots as dashed series — pre-v2 percentage scores render as dashed series on trends chart and domain sparklines, v1→v2 cutover at `formulaChangedAt`.
 
 ### Impact
 
-- No docs pages updated. Full diff of all 5 source-of-truth files confirmed no drift. All pages are current.
+- **roadmap.mdx**: Added spec #38 "Scoring Refactor" (Complete) row. Updated total from "37 feature specs" to "38 feature specs" and count from "32 complete" to "33 complete". Added "Scoring Refactor (Complete)" section under "Recently completed" describing the novelty-weighted additive model, per-domain thresholds, trends page, embed-evidence pipeline, content-hash dedup, and recomputeAndCascade. Updated Event-Based Score Recomputation entry to note `applyScoreDelta()` is now wrapped by `recomputeAndCascade()`.
+- **todo.mdx**: Added "Scoring refactor — deferred" section with 3 items (variable per-criterion weights, evidence quality indicators in UI, connector MD5→SHA-256 migration).
+- **scoring.mdx**: Rewrote scoring formula section from percentage-based to novelty-weighted additive model. Removed `stale` from evidence status enum. Documented auto-derived status. Added per-domain configurable thresholds section. Updated criteria table evidence status description.
+- **evidence.mdx**: Rewrote evidence status table — removed Stale, updated to show criterion score thresholds (0 = missing, 1-99 = partial, ≥100 = sufficient). Documented novelty-weighted scoring in status description.
+- **walkthrough.mdx**: Updated domain detail criteria table to remove "Stale" from evidence status list. Replaced "Updating evidence status" section (manual dropdown) with "Understanding evidence status" (auto-derived from novelty-weighted score). Updated notification thresholds from fixed "5 points" / "70%" to percentage-based / per-domain. Updated sparkline description to mention per-domain thresholds and v1 dashed history.
+- **architecture.mdx**: Updated scoring pipeline diagram to show `recomputeAndCascade()` as canonical entry point with full pipeline steps. Updated Score Engine label. Added `embed-evidence` to background jobs in both application layer and job flows diagrams (7 queues, 7 handlers). Added `criterionScore`, `thresholdPct`, `embedding`, `embeddingStatus`, `contentHash` fields to data model ER diagram. Updated service breakdown to include evidence embedding.
+- **index.mdx**: Updated Bank-readiness scoring card description for novelty-weighted model. Added "Score trends" card. Updated Score notifications card for percentage-based thresholds.
 
 ### Build verification
 
-- No MDX files changed — build verification not required.
+- `next build` succeeds — 33/33 static pages generated. All changed MDX files compile cleanly.
 
 ---
 
-## Previous Sync (2026-05-10)
+## Previous Sync (2026-05-12)
 
 - **Date:** 2026-05-05
 - **Latest merged PR:** #495 (docs: add markdown copies of agent session transcripts)

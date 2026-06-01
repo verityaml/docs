@@ -17,15 +17,28 @@ The scoring model is a three-tier hierarchy: **Program** → **Domain** → **Cr
 
 - **Programs** are scoped by regulation type — BSA/AML maps to 5 FFIEC pillars, Third-Party Oversight maps to 8 OCC 2023-17 monitoring areas
 - **Domains** correspond to regulatory categories (e.g., Internal Controls, Independent Testing)
-- **Criteria** have an evidence status: `missing`, `stale`, `partial`, or `sufficient`
+- **Criteria** have an evidence status: `missing`, `partial`, or `sufficient` — auto-derived from the criterion score
 
 ### Score formula
 
+Scores use a **novelty-weighted additive model** based on evidence embeddings:
+
 ```
-domain_score = ((sufficient_count × 100) + (partial_count × 50)) / total_criteria
+criterion_score = sum(100 × (1 − max_similarity_to_prior_evidence))
 ```
 
-Each "sufficient" criterion contributes 100 points, each "partial" contributes 50, and everything else contributes zero. The domain score updates in real time as you change evidence statuses.
+The first piece of evidence linked to a criterion contributes the full 100 points. Each subsequent piece of evidence is weighted by how different it is from all prior evidence — `100 × (1 − max_cosine_similarity)`. This rewards diverse, complementary evidence over duplicate submissions. Scores are unbounded integers.
+
+```
+domain_score  = sum of criterion scores
+program_score = sum of domain scores
+```
+
+Evidence status is **auto-derived** from the criterion score: 0 = missing, < 100 = partial, ≥ 100 = sufficient. Manual evidence status updates are no longer accepted — the score drives the status.
+
+### Per-domain thresholds
+
+Each domain has a configurable readiness threshold (`threshold_pct`, 1–100) that replaces the previous global 70% threshold. Admins set targets per domain via an inline slider on the domain card. Threshold-crossed notifications fire per-domain using each domain's configured target.
 
 ## Criteria table
 
@@ -36,11 +49,11 @@ The domain detail page lists every scoring criterion, each one mapped to a speci
 | Criterion text | What the regulation requires |
 | Regulatory source | The specific FFIEC section or OCC 2023-17 paragraph |
 | Evidence count | How many documents are linked |
-| Evidence status | Missing, Stale, Partial, or Sufficient |
+| Evidence status | Missing, Partial, or Sufficient (auto-derived from score) |
 
 Each row also shows the **criterion definition key** (e.g., `ic-01`, `tr-03`) in the Source column above the regulatory source link, making it easy to cross-reference with parsed examination items.
 
-The status column is a dropdown — click to change it. A modal prompts for an optional reason ("Updated after board review," "Waiting on Q4 minutes") and the domain score updates immediately.
+Evidence status is **auto-derived** from the criterion's score — it updates automatically as evidence is linked or removed. The score and status update in real time.
 
 <Warning>
 Criteria with a **REQUIRES REVIEW** warning beneath the status dropdown have been auto-matched with evidence and set to "sufficient" by the system, but no human has confirmed them yet. The warning clears when you change the status or add reviewer notes.

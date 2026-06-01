@@ -72,11 +72,11 @@ Each row shows:
 - **Criterion text** — what the regulation requires (e.g., "Board-approved BSA/AML compliance program documented and updated annually")
 - **Regulatory source** — the specific FFIEC section or OCC 2023-17 paragraph it traces back to
 - **Evidence count** — how many documents are linked to this criterion
-- **Evidence status** — where you stand: Missing, Stale, Partial, or Sufficient
+- **Evidence status** — where you stand: Missing, Partial, or Sufficient (auto-derived from the criterion's novelty-weighted score)
 
-### Updating evidence status
+### Understanding evidence status
 
-The status column is a dropdown, not a static label. Click it and a modal prompts for an optional reason ("Updated after board review," "Waiting on Q4 minutes"). The domain score at the top of the page updates in real time.
+Evidence status is **auto-derived** from the criterion's score — not manually set. As evidence is linked, the system computes a novelty-weighted score (first evidence = 100 points, subsequent evidence weighted by diversity). The score determines the status: 0 = missing, < 100 = partial, ≥ 100 = sufficient. The domain score at the top of the page updates in real time.
 
 Criteria with a **REQUIRES REVIEW** warning have been auto-matched with evidence by the system. The warning clears when you change the status or add reviewer notes.
 
@@ -96,7 +96,7 @@ Each timeline entry shows the score delta (e.g., "+8pts"), the trigger type, a t
 
 Use the **filter buttons** (All, Manual, Auto-match, Propagation, Correction) to focus on specific event types. The timeline supports cursor pagination via a "Load more" button.
 
-A **sparkline** in the timeline header shows the 30-day score trend at a glance. The same sparkline appears on each domain card on the dashboard, along with a threshold warning badge (amber ▲) on domains scoring below 70%.
+A **sparkline** in the timeline header shows the 30-day score trend at a glance. The same sparkline appears on each domain card on the dashboard, along with a threshold warning badge (amber ▲) on domains scoring below their configured readiness threshold. Historical v1 percentage scores (from before the scoring refactor) render as a dashed segment preceding the solid v2 line.
 
 ### Domain-level evidence upload
 
@@ -110,8 +110,8 @@ Above the criteria table, a drag-and-drop **upload zone** lets you upload eviden
 
 The **notification bell** shows a badge with the count of unread notifications (capped at "9+"), polling every 30 seconds with Page Visibility API pause/resume. Notifications are generated automatically when:
 
-- A domain score changes by 5 or more points
-- A domain crosses the 70% readiness threshold (up or down)
+- A domain score changes by more than 5% of its reference maximum
+- A domain crosses its configured readiness threshold (up or down) — each domain has its own configurable target
 - A program reaches a milestone (50%, 60%, 70%, 80%, 90%)
 - The nightly recompute detects and corrects score drift
 

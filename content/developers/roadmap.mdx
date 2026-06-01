@@ -5,7 +5,7 @@ description: Planned features and tracked improvements beyond the current build
 
 ## Spec status
 
-All 37 feature specs are tracked in the main repository's `SPECLOG.md`. Current status as of April 2026:
+All 38 feature specs are tracked in the main repository's `SPECLOG.md`. Current status as of June 2026:
 
 | Spec | Status |
 |------|--------|
@@ -46,8 +46,9 @@ All 37 feature specs are tracked in the main repository's `SPECLOG.md`. Current 
 | Library Evidence Classification | In Progress |
 | Classification FDR Tuning | In Progress |
 | Funnel Eval Calibration | Specified |
+| Scoring Refactor | Complete |
 
-**32 complete**, 3 in progress, 1 specified, 1 removed.
+**33 complete**, 3 in progress, 1 specified, 1 removed.
 
 ---
 
@@ -88,6 +89,14 @@ Auto-classifying evidence library uploads via embedding similarity. Text extract
 
 ## Recently completed
 
+### Scoring Refactor (Complete)
+
+Novelty-weighted additive scoring model replacing the original percentage-based formula. Criterion scores now reflect evidence diversity via cosine similarity — first evidence contributes full 100 points, subsequent evidence weighted by `100 × (1 − max_similarity_to_prior)`. Scores are unbounded integers, rewarding complementary evidence. Evidence status (`missing`, `partial`, `sufficient`) is now auto-derived from criterion score bands instead of manually set. `stale` removed from the enum — connector freshness tracked via `last_verified_at` timestamp.
+
+Per-domain configurable thresholds (`compliance_domains.threshold_pct`) replace the global 70% threshold. Trends page at `/compliance/[programId]/trends` with time-series score visualization, date range presets, auto-bucketing, domain filter, and paginated score events table. Historical v1 percentage scores render as a dashed series alongside the v2 additive line with a secondary axis.
+
+New `embed-evidence` SQS queue and Lambda generate `voyage-law-2` embeddings asynchronously after upload. Content-hash deduplication (SHA-256) prevents identical files being linked twice to the same criterion. `recomputeAndCascade()` canonical helper bundles the full score pipeline — criterion recompute, domain delta, program cascade, notifications — replacing manual orchestration of four primitives in API routes.
+
 ### Evidence Bridge (Complete)
 
 Criteria → request item evidence propagation. When evidence is linked to a scoring criterion (manual, accept suggestion, or connector auto-link), matching request items automatically receive the evidence as a suggestion. Deterministic matching via `definition_key` = `scoring_criterion_key`. Async via the existing `propagate-evidence` SQS queue with discriminated union message routing. `EvidenceLinkBanner` conditionally renders criterion-key links ("From: [Program] · [Domain] · [key]") alongside existing semantic links ("From: [Obligation] · RI-XXX").
@@ -106,7 +115,7 @@ AWS migration Phase 5 — SES email (replacing Resend), Supabase storage provide
 
 ### Event-Based Score Recomputation (Complete)
 
-Delta-based scoring pipeline replacing scattered `recomputeDomainScore()` calls. `applyScoreDelta()` as single entry point, `score_change_events` audit table, program score caching, auto-snapshots, nightly full recompute via EventBridge Lambda. All migrations applied staging and production.
+Delta-based scoring pipeline replacing scattered `recomputeDomainScore()` calls. `applyScoreDelta()` as core primitive, `score_change_events` audit table, program score caching, auto-snapshots, nightly full recompute via EventBridge Lambda. All migrations applied staging and production. Subsequently wrapped by `recomputeAndCascade()` in the Scoring Refactor (spec #38) as the canonical entry point for API routes.
 
 ---
 
