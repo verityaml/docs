@@ -17,15 +17,29 @@ The scoring model is a three-tier hierarchy: **Program** → **Domain** → **Cr
 
 - **Programs** are scoped by regulation type — BSA/AML maps to 5 FFIEC pillars, Third-Party Oversight maps to 8 OCC 2023-17 monitoring areas
 - **Domains** correspond to regulatory categories (e.g., Internal Controls, Independent Testing)
-- **Criteria** have an evidence status: `missing`, `stale`, `partial`, or `sufficient`
+- **Criteria** have an evidence status: `missing`, `partial`, or `sufficient` — auto-derived from the criterion's score
 
-### Score formula
+### Score formula (v2 — novelty-weighted additive)
+
+Scoring rewards **diverse** evidence, not just more evidence. Each piece of evidence linked to a criterion is compared against all previously linked evidence using cosine similarity on Voyage AI embeddings:
 
 ```
-domain_score = ((sufficient_count × 100) + (partial_count × 50)) / total_criteria
+contribution = 100 × (1 − max_similarity_to_prior_evidence)
+criterion_score = sum(contributions)
+domain_score = sum(criterion_scores)
+program_score = sum(domain_scores)
 ```
 
-Each "sufficient" criterion contributes 100 points, each "partial" contributes 50, and everything else contributes zero. The domain score updates in real time as you change evidence statuses.
+- **First evidence** linked to a criterion contributes **100 points** (full novelty)
+- **Near-duplicate** evidence (high cosine similarity to existing) contributes close to **0 points**
+- **Non-embeddable** evidence (binary files, failed extraction) contributes a flat **50 points**
+- Scores are **unbounded integers** — a team that thoroughly documents a domain will show it
+
+Evidence status is auto-derived from `criterion_score`: **0 = missing**, **< 100 = partial**, **≥ 100 = sufficient**. You cannot set evidence status manually — the PATCH criteria route rejects manual `evidenceStatus` updates.
+
+### Per-domain configurable thresholds
+
+Each domain has an optional `threshold_pct` (1–100) that replaces the former global threshold. Admins set readiness targets per domain via an inline slider on the domain detail page. Threshold-crossed notifications fire per-domain using each domain's configured target. Domains without a threshold configured display scores as raw points.
 
 ## Criteria table
 
@@ -36,11 +50,11 @@ The domain detail page lists every scoring criterion, each one mapped to a speci
 | Criterion text | What the regulation requires |
 | Regulatory source | The specific FFIEC section or OCC 2023-17 paragraph |
 | Evidence count | How many documents are linked |
-| Evidence status | Missing, Stale, Partial, or Sufficient |
+| Evidence status | Missing, Partial, or Sufficient (auto-derived from criterion score) |
 
 Each row also shows the **criterion definition key** (e.g., `ic-01`, `tr-03`) in the Source column above the regulatory source link, making it easy to cross-reference with parsed examination items.
 
-The status column is a dropdown — click to change it. A modal prompts for an optional reason ("Updated after board review," "Waiting on Q4 minutes") and the domain score updates immediately.
+Evidence status is auto-derived from the criterion's novelty-weighted score, so it updates automatically as evidence is linked or unlinked. You can still add reviewer notes and manage linked evidence manually.
 
 <Warning>
 Criteria with a **REQUIRES REVIEW** warning beneath the status dropdown have been auto-matched with evidence and set to "sufficient" by the system, but no human has confirmed them yet. The warning clears when you change the status or add reviewer notes.
@@ -87,7 +101,15 @@ Matching uses two signals:
 1. **Direct criterion key** — if a request item has a scoring criterion key (like `ic-01`) that matches a criterion's definition key, that's an exact match
 2. **Regulatory source alignment** — if a request item and a criterion both reference the same FFIEC section, the evidence is relevant
 
-When evidence is auto-linked, the system sets the criterion's status to **Sufficient** and recomputes the domain score. The **REQUIRES REVIEW** warning appears until a human confirms. This is opt-out, not opt-in — the system attaches evidence it considers relevant, and you remove anything that doesn't belong.
+When evidence is auto-linked, the system recomputes the criterion's novelty-weighted score and updates the evidence status accordingly. The **REQUIRES REVIEW** warning appears until a human confirms. This is opt-out, not opt-in — the system attaches evidence it considers relevant, and you remove anything that doesn't belong.
+
+### Evidence embedding pipeline
+
+All evidence uploads compute a SHA-256 content hash (preventing identical files from being linked twice to the same criterion) and dispatch to the `embed-evidence` SQS queue. A Lambda downloads the file, extracts text, and generates a `voyage-law-2` embedding. This embedding is what powers the novelty-weighted scoring — each new piece of evidence is compared against existing linked evidence to determine how much novel information it adds.
+
+### Trends page
+
+Navigate to **Trends** from a compliance program to see score history over time. The trends page shows Recharts line charts with date range presets (7d/30d/90d/180d/1y), auto-bucketing (daily/weekly/monthly), and domain filtering with URL state. A paginated score events table below the chart shows individual score-affecting events. Historical v1 percentage scores (from before the scoring engine v2 migration) render as a dashed series on a secondary axis.
 
 <Tip>
 Auto-matching turns examination evidence into reusable compliance proof. Evidence uploaded for one examination cycle can strengthen your readiness score across future cycles.
