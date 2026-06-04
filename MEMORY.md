@@ -4,6 +4,41 @@ Checkpoint for `/sync-from-app` runs. Used to determine which PRs are new since 
 
 ## Last Sync
 
+- **Date:** 2026-06-04
+- **Latest merged PR:** #513 (chore(claude): sync calsuite skills to 4837536 (v2.40))
+- **Main repo commit:** fa7d8e7e82a373a44d996d7c2637b83ef433a76e
+- **Merged at:** 2026-06-03
+
+PRs since previous checkpoint (#495):
+
+- #453 feat: scoring engine v2 — novelty-weighted additive model + trends page — **Major feature.** Replaces percentage-based scoring with novelty-weighted additive model using Voyage AI embeddings. New embed-evidence SQS+Lambda pipeline, content-hash SHA-256 dedup, per-domain configurable thresholds, Trends page with Recharts, evidence deletion runs full recompute pipeline.
+- #465 chore(deps): bump rustls-webpki in desktop/src-tauri — Dependabot cargo bump. No user-visible impact.
+- #498 chore(deps): bump the npm_and_yarn group across 3 directories — Dependabot npm bump. No user-visible impact.
+- #502 chore(claude): sync calsuite skills to 2.32 — Internal tooling only.
+- #503 fix(claude): drop duplicate _origin in improve-prompt checklist — Internal tooling only.
+- #504 feat(trends): render historical v1 score snapshots as dashed series — Pre-v2 percentage scores render as dashed series on trends chart secondary axis and domain sparklines. Closes #456.
+- #509 chore(claude): sync calsuite skills to dfaf5b4 — Internal tooling only.
+- #513 chore(claude): sync calsuite skills to 4837536 (v2.40) — Internal tooling only.
+
+### Impact
+
+- **roadmap.mdx**: Added spec #38 "Scoring Refactor" (Complete) to the spec table. Updated header from "All 37" to "All 38 feature specs" and count from "32 complete" to "33 complete". Added "Scoring Refactor (Complete)" to the "Recently completed" section describing the novelty-weighted additive model, embed-evidence pipeline, per-domain thresholds, trends page, and v1 historical rendering. Added "Scoring refactor — deferred" section (per-criterion weights, evidence quality indicators, MD5→SHA-256 migration).
+- **todo.mdx**: Added "Scoring refactor — deferred" section with the three deferred items from TODO.md.
+- **scoring.mdx**: Major rewrite of scoring formula section — replaced percentage-based formula with v2 novelty-weighted additive model (cosine similarity, unbounded scores, auto-derived status). Added sections for per-domain configurable thresholds, content-hash dedup, evidence embedding pipeline, and Trends page (with v1 dashed series). Removed `stale` from evidence status. Updated criteria table to include criterion score column.
+- **architecture.mdx**: Added `embed-evidence` queue/Lambda to all three diagrams (application layer, scoring pipeline, background job flows). Updated scoring pipeline description and diagram for v2 flow (recomputeCriterionScore → applyScoreDelta → cascadeProgramScore). Added fields to data model: `scoringCriteria.criterionScore`, `evidence.embedding/embeddingStatus/contentHash`, `complianceDomains.thresholdPct`, `scoreChangeEvents.formulaVersion`. Updated background job count from six to seven.
+- **index.mdx**: Updated bank-readiness scoring card to mention novelty-weighted scoring and per-domain thresholds. Added "Score trends" card for the Trends page.
+- **features/evidence.mdx**: Updated evidence status table — removed `stale`, changed from fixed point values to score band descriptions, added reference to the scoring formula page.
+- **features/dashboard.mdx**: Updated bank-readiness score description from "percentage" to novelty-weighted unbounded scores. Added per-domain configurable threshold mention.
+- **walkthrough.mdx**: Added "Trends page" subsection under Domain detail. Updated sparkline description to mention v1 dashed clay-coloured segment. Removed hardcoded "below 70%" threshold reference.
+
+### Build verification
+
+- `next build` passed cleanly — all 33 static pages generated successfully.
+
+---
+
+## Previous Sync (2026-05-12)
+
 - **Date:** 2026-05-12
 - **Latest merged PR:** #495 (docs: add markdown copies of agent session transcripts)
 - **Main repo commit:** aa0a2c32f4efa92062515a2946425cf9fc60df5e

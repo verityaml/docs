@@ -13,7 +13,7 @@ The dashboard is the single view that answers the question every BSA officer ask
 
 ## Bank-readiness score
 
-At the top of the dashboard, a **Bank-Readiness Score** shows a real-time percentage measuring how prepared your compliance program is for an examination. This isn't a static number someone entered — it's computed from the evidence status of every criterion across every regulatory domain.
+At the top of the dashboard, a **Bank-Readiness Score** shows a real-time measure of how prepared your compliance program is for an examination. This isn't a static number someone entered — it's computed from the novelty-weighted evidence scores of every criterion across every regulatory domain. Scores are unbounded integers that reward evidence diversity: the first piece of evidence linked to a criterion contributes 100 points, while near-duplicate uploads contribute close to zero.
 
 ## Domain cards
 
@@ -33,7 +33,7 @@ Each card shows its own score and a count of how many criteria are sufficient, p
   style={{ borderRadius: '0.5rem' }}
 />
 
-If you see a domain card with gaps — say CDD/KYC at 60% with two missing criteria — that's the system telling you where to focus *before* the examination letter arrives.
+Each domain has an optional configurable **readiness threshold** (1–100%). When a domain crosses its threshold, a notification fires. Domain cards with gaps tell you where to focus *before* the examination letter arrives.
 
 ## Run Gap Analysis
 

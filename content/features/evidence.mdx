@@ -30,14 +30,15 @@ evidence/{orgId}/{examId}/{itemId}/{timestamp}-{uuid}-{filename}
 
 ## Evidence status
 
-Each scoring criterion tracks evidence status with four levels:
+Each scoring criterion tracks evidence status, auto-derived from the novelty-weighted criterion score:
 
-| Status | Score contribution | Description |
-|--------|-------------------|-------------|
-| Sufficient | 100 points | Full evidence coverage |
-| Partial | 50 points | Some evidence, gaps remain |
-| Stale | 0 points | Evidence exists but is outdated |
+| Status | Score band | Description |
+|--------|-----------|-------------|
+| Sufficient | ≥ 100 points | Full evidence coverage |
+| Partial | 1–99 points | Some evidence, gaps remain |
 | Missing | 0 points | No evidence provided |
+
+Scores are computed from the novelty-weighted additive formula — first evidence linked to a criterion contributes 100 points, near-duplicates contribute close to zero. See [Bank-readiness scoring](/features/scoring) for the full formula.
 
 <img
   src="/images/evidence-training.png"

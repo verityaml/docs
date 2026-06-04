@@ -17,15 +17,42 @@ The scoring model is a three-tier hierarchy: **Program** → **Domain** → **Cr
 
 - **Programs** are scoped by regulation type — BSA/AML maps to 5 FFIEC pillars, Third-Party Oversight maps to 8 OCC 2023-17 monitoring areas
 - **Domains** correspond to regulatory categories (e.g., Internal Controls, Independent Testing)
-- **Criteria** have an evidence status: `missing`, `stale`, `partial`, or `sufficient`
+- **Criteria** have an evidence status: `missing`, `partial`, or `sufficient` (auto-derived from score bands)
 
-### Score formula
+### Score formula (v2 — novelty-weighted additive)
+
+Scores reward *evidence diversity*, not just evidence volume. Each piece of evidence linked to a criterion is compared against all previously linked evidence using cosine similarity on Voyage AI (`voyage-law-2`) embeddings:
 
 ```
-domain_score = ((sufficient_count × 100) + (partial_count × 50)) / total_criteria
+contribution = 100 × (1 − max_cosine_similarity(new_embedding, prior_embeddings))
+criterion_score = sum(contributions)
+domain_score = sum(criterion_scores)
+program_score = sum(domain_scores)
 ```
 
-Each "sufficient" criterion contributes 100 points, each "partial" contributes 50, and everything else contributes zero. The domain score updates in real time as you change evidence statuses.
+- **First evidence** linked to a criterion contributes **100 points** (full novelty)
+- **Near-duplicate** evidence (high cosine similarity) contributes close to **0 points**
+- **Non-embeddable** evidence (binary files, empty content) contributes a flat **50 points**
+- Scores are **unbounded integers** — a team that over-documents with diverse evidence can show it
+
+Evidence status is auto-derived from criterion score bands: `0` → missing, `<100` → partial, `≥100` → sufficient. Status is never set manually.
+
+### Per-domain configurable thresholds
+
+Each domain has an optional `threshold_pct` (1–100) that replaces the former global 70% threshold. When a domain crosses its configured threshold, a notification fires. Domains without a threshold skip threshold-crossing notifications.
+
+### Content-hash dedup
+
+Every evidence upload computes a SHA-256 `content_hash`. Linking identical content to the same criterion returns a 409 `DUPLICATE_EVIDENCE` response — preventing score inflation from re-uploading the same file.
+
+### Evidence embedding pipeline
+
+Evidence embeddings are generated asynchronously after upload:
+
+1. API route sets `embedding_status='pending'` and dispatches to the `embed-evidence` SQS queue
+2. Lambda downloads the file from S3, extracts text, and generates a 1024-dim embedding via Voyage AI (`voyage-law-2`)
+3. Lambda stores the embedding and calls `recomputeCriterionScore()` for each linked criterion
+4. If text extraction fails, the evidence is marked `non_embeddable` and contributes a flat 50 points per link
 
 ## Criteria table
 
@@ -36,7 +63,8 @@ The domain detail page lists every scoring criterion, each one mapped to a speci
 | Criterion text | What the regulation requires |
 | Regulatory source | The specific FFIEC section or OCC 2023-17 paragraph |
 | Evidence count | How many documents are linked |
-| Evidence status | Missing, Stale, Partial, or Sufficient |
+| Criterion score | Unbounded novelty-weighted score |
+| Evidence status | Missing, Partial, or Sufficient (auto-derived from score) |
 
 Each row also shows the **criterion definition key** (e.g., `ic-01`, `tr-03`) in the Source column above the regulatory source link, making it easy to cross-reference with parsed examination items.
 
@@ -92,3 +120,14 @@ When evidence is auto-linked, the system sets the criterion's status to **Suffic
 <Tip>
 Auto-matching turns examination evidence into reusable compliance proof. Evidence uploaded for one examination cycle can strengthen your readiness score across future cycles.
 </Tip>
+
+## Trends page
+
+The **Trends** page at `/compliance/[programId]/trends` visualises score history over time using Recharts line charts.
+
+- **Date range presets** — 7d, 30d, 90d, 180d, 1 year
+- **Auto-bucketing** — daily, weekly, or monthly granularity based on the selected range
+- **Domain filter** — filter to a specific domain or view the program-level trend, with URL state persistence
+- **Paginated events table** — shows individual score change events with details
+
+Historical v1 percentage scores (from before the scoring refactor) render as a **dashed series** on a secondary right-side axis with `(v1)` tooltips and a footnote explaining the dual encoding. Domain card sparklines show v1 history as a clay-coloured dashed line preceding the solid v2 line. v1 data stops at the v1→v2 cutover point so legacy scores never bleed into the v2 era.

@@ -96,7 +96,17 @@ Each timeline entry shows the score delta (e.g., "+8pts"), the trigger type, a t
 
 Use the **filter buttons** (All, Manual, Auto-match, Propagation, Correction) to focus on specific event types. The timeline supports cursor pagination via a "Load more" button.
 
-A **sparkline** in the timeline header shows the 30-day score trend at a glance. The same sparkline appears on each domain card on the dashboard, along with a threshold warning badge (amber ▲) on domains scoring below 70%.
+A **sparkline** in the timeline header shows the 30-day score trend at a glance. The same sparkline appears on each domain card on the dashboard. Historical v1 percentage scores (from before the scoring refactor) render as a dashed clay-coloured segment preceding the solid v2 line on sparklines.
+
+### Trends page
+
+**Where to find it:** From the dashboard, click the **Trends** link on a compliance program, or navigate to `/compliance/[programId]/trends`.
+
+The trends page visualises score history over time using line charts. Choose a **date range preset** (7d, 30d, 90d, 180d, 1 year) and the chart auto-buckets into daily, weekly, or monthly granularity. Use the **domain filter** to focus on a specific domain or view the program-level trend — filter state persists in the URL.
+
+Below the chart, a **paginated events table** shows individual score change events with details — what triggered the change, the score delta, and when it happened.
+
+If the program has pre-v2 scoring history, historical v1 percentage scores render as a **dashed series** on a secondary right-side axis with `(v1)` tooltips and a footnote explaining the dual encoding. v1 data stops at the v1→v2 cutover so legacy scores never bleed into the v2 era.
 
 ### Domain-level evidence upload
 
