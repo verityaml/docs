@@ -23,7 +23,7 @@ For local development, follow the [Quickstart](/developers/quickstart) to get a 
 
 The dashboard is the single view that answers the question every BSA officer asks: *"How ready are we?"*
 
-At the top, you'll see a **Bank-Readiness Score** — a real-time percentage measuring how prepared your compliance program is for an examination. This isn't a static number someone entered. It's computed from the evidence status of every criterion across every regulatory domain.
+At the top, you'll see a **Bank-Readiness Score** — a real-time measure of how prepared your compliance program is for an examination. This isn't a static number someone entered. It's computed from novelty-weighted evidence scores across every criterion in every regulatory domain — scores reward diverse, complementary evidence rather than duplicate uploads.
 
 Below the score, **domain cards** break down readiness by compliance area. For a BSA/AML program, that's the five FFIEC pillars — Internal Controls, Independent Testing, BSA Officer Oversight, Training, and CDD/KYC. Each card shows its own score and a count of how many criteria are sufficient, partial, or missing.
 
@@ -72,11 +72,12 @@ Each row shows:
 - **Criterion text** — what the regulation requires (e.g., "Board-approved BSA/AML compliance program documented and updated annually")
 - **Regulatory source** — the specific FFIEC section or OCC 2023-17 paragraph it traces back to
 - **Evidence count** — how many documents are linked to this criterion
-- **Evidence status** — where you stand: Missing, Stale, Partial, or Sufficient
+- **Criterion score** — the novelty-weighted score (unbounded)
+- **Evidence status** — auto-derived from the score: Missing (0), Partial (1–99), or Sufficient (100+)
 
 ### Updating evidence status
 
-The status column is a dropdown, not a static label. Click it and a modal prompts for an optional reason ("Updated after board review," "Waiting on Q4 minutes"). The domain score at the top of the page updates in real time.
+Evidence status is **auto-derived** from the criterion's novelty-weighted score and cannot be set manually. When evidence is linked or unlinked, the criterion score recomputes automatically via cosine similarity against all other linked evidence, and the domain score updates in real time.
 
 Criteria with a **REQUIRES REVIEW** warning have been auto-matched with evidence by the system. The warning clears when you change the status or add reviewer notes.
 
@@ -96,7 +97,9 @@ Each timeline entry shows the score delta (e.g., "+8pts"), the trigger type, a t
 
 Use the **filter buttons** (All, Manual, Auto-match, Propagation, Correction) to focus on specific event types. The timeline supports cursor pagination via a "Load more" button.
 
-A **sparkline** in the timeline header shows the 30-day score trend at a glance. The same sparkline appears on each domain card on the dashboard, along with a threshold warning badge (amber ▲) on domains scoring below 70%.
+A **sparkline** in the timeline header shows the 30-day score trend at a glance. The same sparkline appears on each domain card on the dashboard, along with a threshold warning badge (amber ▲) on domains below their configured threshold. Pre-v2 historical scores render as a dashed clay-coloured segment preceding the solid v2 line.
+
+For a full-page historical view, navigate to the **Trends** page (`/compliance/[programId]/trends`) — Recharts line charts with date range presets (7d/30d/90d/180d/1y), auto-bucketing, domain filtering, and a paginated events table. Legacy v1 scores appear as a dashed series on a secondary axis.
 
 ### Domain-level evidence upload
 

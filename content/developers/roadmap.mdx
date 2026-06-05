@@ -5,7 +5,7 @@ description: Planned features and tracked improvements beyond the current build
 
 ## Spec status
 
-All 37 feature specs are tracked in the main repository's `SPECLOG.md`. Current status as of April 2026:
+All 38 feature specs are tracked in the main repository's `SPECLOG.md`. Current status as of June 2026:
 
 | Spec | Status |
 |------|--------|
@@ -46,8 +46,9 @@ All 37 feature specs are tracked in the main repository's `SPECLOG.md`. Current 
 | Library Evidence Classification | In Progress |
 | Classification FDR Tuning | In Progress |
 | Funnel Eval Calibration | Specified |
+| Scoring Refactor | Complete |
 
-**32 complete**, 3 in progress, 1 specified, 1 removed.
+**33 complete**, 3 in progress, 1 specified, 1 removed.
 
 ---
 
@@ -87,6 +88,10 @@ Auto-classifying evidence library uploads via embedding similarity. Text extract
 ---
 
 ## Recently completed
+
+### Scoring Refactor (Complete)
+
+Novelty-weighted additive scoring model replacing the percentage-based formula. Evidence embeddings via Voyage AI (`voyage-law-2`), cosine similarity novelty weighting, unbounded criterion/domain/program scores, per-domain configurable thresholds (replacing the global 70%), content-hash SHA-256 dedup, and an `embed-evidence` SQS + Lambda pipeline for asynchronous embedding. Trends page at `/compliance/[programId]/trends` with Recharts line charts, date range presets, auto-bucketing, and domain filtering. Historical v1 scores render as a dashed series on a secondary axis alongside the v2 line. `recomputeAndCascade()` canonical helper bundles the full scoring pipeline for API routes. Phase A (engine) shipped in PR #453; v1 snapshot rendering added in PR #504.
 
 ### Evidence Bridge (Complete)
 

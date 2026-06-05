@@ -30,14 +30,15 @@ evidence/{orgId}/{examId}/{itemId}/{timestamp}-{uuid}-{filename}
 
 ## Evidence status
 
-Each scoring criterion tracks evidence status with four levels:
+Evidence status is **auto-derived** from the novelty-weighted criterion score — it cannot be set manually. The PATCH criteria route rejects `evidenceStatus` updates with 400.
 
-| Status | Score contribution | Description |
-|--------|-------------------|-------------|
-| Sufficient | 100 points | Full evidence coverage |
-| Partial | 50 points | Some evidence, gaps remain |
-| Stale | 0 points | Evidence exists but is outdated |
-| Missing | 0 points | No evidence provided |
+| Status | Criterion score | Description |
+|--------|----------------|-------------|
+| Sufficient | 100+ pts | Diverse evidence coverage |
+| Partial | 1–99 pts | Some evidence, more diversity needed |
+| Missing | 0 pts | No evidence linked |
+
+Scores are unbounded — each piece of linked evidence contributes `100 × (1 − max_cosine_similarity)` points, rewarding complementary evidence over duplicates. See [scoring](/features/scoring) for the full formula.
 
 <img
   src="/images/evidence-training.png"

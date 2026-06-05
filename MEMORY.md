@@ -4,20 +4,35 @@ Checkpoint for `/sync-from-app` runs. Used to determine which PRs are new since 
 
 ## Last Sync
 
-- **Date:** 2026-05-12
-- **Latest merged PR:** #495 (docs: add markdown copies of agent session transcripts)
-- **Main repo commit:** aa0a2c32f4efa92062515a2946425cf9fc60df5e
-- **Merged at:** 2026-05-05
+- **Date:** 2026-06-05
+- **Latest merged PR:** #513 (chore(claude): sync calsuite skills to 4837536 (v2.40))
+- **Main repo commit:** fa7d8e7
+- **Merged at:** 2026-06-03
 
-No new merged PRs since previous checkpoint (#495). Verity `main` has not moved.
+PRs since previous checkpoint (#495):
+
+- #453 feat: scoring engine v2 — novelty-weighted additive model + trends page — MAJOR. Replaces percentage-based scoring with novelty-weighted additive model. Evidence embeddings via Voyage AI, cosine similarity novelty, unbounded scores, per-domain configurable thresholds, trends page with Recharts, embed-evidence SQS+Lambda pipeline, content-hash SHA-256 dedup, `recomputeAndCascade()` canonical helper. Spec #38 (Scoring Refactor) complete.
+- #465 chore(deps): bump rustls-webpki in desktop — Dependabot. No user-visible impact.
+- #498 chore(deps): bump npm_and_yarn group — Dependabot. No user-visible impact.
+- #502 chore(claude): sync calsuite skills to 2.32 — Internal tooling only.
+- #503 fix(claude): drop duplicate _origin in improve-prompt checklist — Internal tooling only.
+- #504 feat(trends): render historical v1 score snapshots as dashed series — Pre-v2 scores now render as dashed clay-coloured line on trends chart and domain sparklines. Trends API returns `legacyBuckets`; score-history returns `legacy` array. v1 buckets stop at cutover. Closes #456.
+- #509 chore(claude): sync calsuite skills to dfaf5b4 — Internal tooling only.
+- #513 chore(claude): sync calsuite skills to 4837536 (v2.40) — Internal tooling only.
 
 ### Impact
 
-- No docs pages updated. Full diff of all 5 source-of-truth files confirmed no drift. All pages are current.
+- **scoring.mdx**: Complete rewrite of score formula section — now documents v2 novelty-weighted additive model (`criterion_score = sum(100 × (1 − max_sim))`), auto-derived evidence status (removed `stale`), per-domain configurable thresholds, evidence embedding pipeline, and new Trends page section with v1 legacy series description.
+- **evidence.mdx**: Evidence status table rewritten — removed `stale` status, updated score contributions to reflect novelty-weighted model with auto-derived statuses. Link to scoring page for full formula.
+- **architecture.mdx**: Added `embed-evidence` SQS queue and Lambda to service breakdown, application layer diagram, and background job flows. Scoring pipeline diagram rewritten for `recomputeAndCascade()` with v2 triggers (evidence link/unlink, embed-evidence Lambda). Data model updated with `criterionScore`, `thresholdPct`, `embedding`/`embeddingStatus`/`contentHash` fields.
+- **roadmap.mdx**: Added spec #38 (Scoring Refactor) as Complete. Updated header from 37 to 38 specs, count from 32 to 33 complete. Added Scoring Refactor to recently completed section with description of novelty-weighted scoring, trends page, and v1 snapshot rendering.
+- **walkthrough.mdx**: Updated dashboard score description (novelty-weighted, not percentage). Domain detail section rewritten — evidence status auto-derived, removed manual status dropdown description. Sparkline section updated with v1 dashed segment and trends page reference.
+- **todo.mdx**: Added "Scoring refactor — deferred" section (per-criterion weights, evidence quality indicators, MD5→SHA-256 migration).
+- **index.mdx**: Updated bank-readiness scoring card for novelty-weighted model. Added "Score trends" card for trends page with v1 legacy series.
 
 ### Build verification
 
-- No MDX files changed — build verification not required.
+- `next build` passes cleanly — all 30 pages generated, 0 errors.
 
 ---
 
