@@ -5,7 +5,7 @@ description: Planned features and tracked improvements beyond the current build
 
 ## Spec status
 
-All 37 feature specs are tracked in the main repository's `SPECLOG.md`. Current status as of April 2026:
+All 38 feature specs are tracked in the main repository's `SPECLOG.md`. Current status as of June 2026:
 
 | Spec | Status |
 |------|--------|
@@ -42,12 +42,13 @@ All 37 feature specs are tracked in the main repository's `SPECLOG.md`. Current 
 | Google Drive Connector | Complete |
 | Agentic File Classification | Complete |
 | Evidence Bridge | Complete |
+| Scoring Refactor | Complete |
 | Desktop App | In Progress |
 | Library Evidence Classification | In Progress |
 | Classification FDR Tuning | In Progress |
 | Funnel Eval Calibration | Specified |
 
-**32 complete**, 3 in progress, 1 specified, 1 removed.
+**33 complete**, 3 in progress, 1 specified, 1 removed.
 
 ---
 
@@ -87,6 +88,10 @@ Auto-classifying evidence library uploads via embedding similarity. Text extract
 ---
 
 ## Recently completed
+
+### Scoring Refactor (Complete)
+
+Novelty-weighted additive scoring replacing the percentage-based formula. Evidence files are now embedded via Voyage AI (`voyage-law-2`) through a new `embed-evidence` SQS queue and Lambda. Criterion scores reflect evidence diversity: first evidence = 100 points, near-duplicates score close to zero based on cosine similarity. Scores are unbounded integers — domains and programs accumulate points rather than computing percentages. SHA-256 content-hash dedup blocks identical files at link time (409). Per-domain configurable thresholds (`compliance_domains.threshold_pct`, 1–100, nullable) replace the global 70% target. New **Trends page** at `/compliance/[programId]/trends` with Recharts line charts, date range presets, auto-bucketing, and domain filter. Pre-v2 percentage scores render as a dashed series on the trends chart and domain sparklines, so historical data isn't lost. Evidence deletion now runs the full recompute + cascade + notify pipeline. Phase A (engine) shipped in PR #453; Phase B deferred.
 
 ### Evidence Bridge (Complete)
 
@@ -139,6 +144,14 @@ Structured quarterly progress reports for regulators. Planned for consent order 
 
 ---
 
+## Scoring refactor — deferred
+
+- Variable per-criterion weights — multiply novelty contribution by weight factor. Currently all criteria equally weighted. P2.
+- Evidence quality indicators in UI — show "low novelty" hints when evidence is highly similar to existing. Help users upload diverse evidence. P3.
+- Migrate connector MD5 checksums (`sync-connector.ts`) to SHA-256 for consistency with evidence `content_hash`. Internal cleanup.
+
+---
+
 ## Library evidence classification — deferred
 
 - Auto-refresh criteria embeddings when `SCORING_CRITERIA_DEFINITIONS` change (re-run backfill or incremental update)
@@ -158,6 +171,7 @@ Structured quarterly progress reports for regulators. Planned for consent order 
 - Reclassification on criteria change — re-run classification when scoring criteria definitions are updated
 - Confirm endpoint: refetch from server after confirm
 - Coverage grid: server-side aggregated counts
+- Validate metadata-only classification accuracy (0.70 threshold) with real production data at 2-week post-launch mark — synthetic golden set may not represent real 403 fallback quality
 
 ---
 

@@ -17,15 +17,32 @@ The scoring model is a three-tier hierarchy: **Program** → **Domain** → **Cr
 
 - **Programs** are scoped by regulation type — BSA/AML maps to 5 FFIEC pillars, Third-Party Oversight maps to 8 OCC 2023-17 monitoring areas
 - **Domains** correspond to regulatory categories (e.g., Internal Controls, Independent Testing)
-- **Criteria** have an evidence status: `missing`, `stale`, `partial`, or `sufficient`
+- **Criteria** have an evidence status: `missing`, `partial`, or `sufficient` — auto-derived from the criterion's score
 
-### Score formula
+### Score formula (v2 — novelty-weighted additive)
+
+Scores reward evidence *diversity*, not just evidence *volume*. Each piece of evidence linked to a criterion is embedded via Voyage AI (`voyage-law-2`, 1024 dimensions) and compared against all previously linked evidence using cosine similarity.
 
 ```
-domain_score = ((sufficient_count × 100) + (partial_count × 50)) / total_criteria
+contribution = 100 × (1 − max_cosine_similarity(new_embedding, prior_embeddings))
+criterion_score = sum(contributions)
+domain_score = sum(criterion_scores)
+program_score = sum(domain_scores)
 ```
 
-Each "sufficient" criterion contributes 100 points, each "partial" contributes 50, and everything else contributes zero. The domain score updates in real time as you change evidence statuses.
+First evidence with a valid embedding contributes **100 points** (full novelty). Near-duplicate evidence (high cosine similarity) contributes close to zero. Evidence that can't be embedded (non-extractable content) contributes a flat **50 points**. Scores are **unbounded integers** — a well-documented criterion can score well above 100.
+
+Evidence status is auto-derived from the criterion score: **0 → missing**, **1–99 → partial**, **100+ → sufficient**. Status is never set manually — the PATCH criteria route rejects `evidenceStatus` with 400.
+
+SHA-256 content-hash dedup blocks identical files at link time, returning 409 before embedding is attempted.
+
+### Per-domain thresholds
+
+Each compliance domain has a configurable `threshold_pct` (1–100, nullable). When a domain's score crosses its configured threshold, a notification fires. This replaces the previous global 70% target — high-risk areas can require 90% readiness while low-risk areas target 70%.
+
+### Trends page
+
+The **Trends** page at `/compliance/[programId]/trends` provides visual score history with Recharts line charts, date range presets (7d/30d/90d/180d/1y), auto-bucketing (daily/weekly/monthly), domain filter with URL state, and a paginated score events table. Pre-v2 percentage scores render as a dashed series on a secondary axis so historical data is preserved across the scoring model transition.
 
 ## Criteria table
 
@@ -36,11 +53,11 @@ The domain detail page lists every scoring criterion, each one mapped to a speci
 | Criterion text | What the regulation requires |
 | Regulatory source | The specific FFIEC section or OCC 2023-17 paragraph |
 | Evidence count | How many documents are linked |
-| Evidence status | Missing, Stale, Partial, or Sufficient |
+| Evidence status | Missing, Partial, or Sufficient (auto-derived from score) |
 
 Each row also shows the **criterion definition key** (e.g., `ic-01`, `tr-03`) in the Source column above the regulatory source link, making it easy to cross-reference with parsed examination items.
 
-The status column is a dropdown — click to change it. A modal prompts for an optional reason ("Updated after board review," "Waiting on Q4 minutes") and the domain score updates immediately.
+Evidence status is read-only — it's auto-derived from the criterion's score as evidence is linked. The score column shows the criterion's current novelty-weighted score.
 
 <Warning>
 Criteria with a **REQUIRES REVIEW** warning beneath the status dropdown have been auto-matched with evidence and set to "sufficient" by the system, but no human has confirmed them yet. The warning clears when you change the status or add reviewer notes.

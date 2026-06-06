@@ -28,16 +28,19 @@ Files are stored securely in **AWS S3** via the `backend/src/lib/storage.ts` abs
 evidence/{orgId}/{examId}/{itemId}/{timestamp}-{uuid}-{filename}
 ```
 
+## Evidence embeddings
+
+Evidence files are embedded asynchronously after upload via the `embed-evidence` SQS queue and Lambda. The Lambda downloads the file from S3, extracts text via `extractTextFromBuffer()`, and generates a 1024-dimension embedding using Voyage AI (`voyage-law-2`). Embedding status tracks the lifecycle: `pending` → `embedded` | `non_embeddable` | `failed`. Evidence with pending or failed embeddings contributes a flat 50 points per linked criterion until the embedding is resolved.
+
 ## Evidence status
 
-Each scoring criterion tracks evidence status with four levels:
+Each scoring criterion's evidence status is **auto-derived** from its novelty-weighted score:
 
-| Status | Score contribution | Description |
-|--------|-------------------|-------------|
-| Sufficient | 100 points | Full evidence coverage |
-| Partial | 50 points | Some evidence, gaps remain |
-| Stale | 0 points | Evidence exists but is outdated |
-| Missing | 0 points | No evidence provided |
+| Status | Score band | Description |
+|--------|-----------|-------------|
+| Sufficient | ≥ 100 | Full evidence coverage — diverse documents linked |
+| Partial | 1–99 | Some evidence, more diversity needed |
+| Missing | 0 | No evidence linked |
 
 <img
   src="/images/evidence-training.png"

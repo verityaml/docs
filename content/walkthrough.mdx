@@ -23,9 +23,9 @@ For local development, follow the [Quickstart](/developers/quickstart) to get a 
 
 The dashboard is the single view that answers the question every BSA officer asks: *"How ready are we?"*
 
-At the top, you'll see a **Bank-Readiness Score** — a real-time percentage measuring how prepared your compliance program is for an examination. This isn't a static number someone entered. It's computed from the evidence status of every criterion across every regulatory domain.
+At the top, you'll see a **Bank-Readiness Score** measuring how prepared your compliance program is for an examination. This isn't a static number someone entered. It's computed from the novelty-weighted evidence scores of every criterion across every regulatory domain — rewarding diverse evidence, not just volume.
 
-Below the score, **domain cards** break down readiness by compliance area. For a BSA/AML program, that's the five FFIEC pillars — Internal Controls, Independent Testing, BSA Officer Oversight, Training, and CDD/KYC. Each card shows its own score and a count of how many criteria are sufficient, partial, or missing.
+Below the score, **domain cards** break down readiness by compliance area. For a BSA/AML program, that's the five FFIEC pillars — Internal Controls, Independent Testing, BSA Officer Oversight, Training, and CDD/KYC. Each card shows its own score, a 30-day score trend as an inline sparkline, and a count of how many criteria are sufficient, partial, or missing. Domains scoring below their configured threshold display an amber warning badge.
 
 <img
   src="/images/home-scroll-1.png"
@@ -72,11 +72,11 @@ Each row shows:
 - **Criterion text** — what the regulation requires (e.g., "Board-approved BSA/AML compliance program documented and updated annually")
 - **Regulatory source** — the specific FFIEC section or OCC 2023-17 paragraph it traces back to
 - **Evidence count** — how many documents are linked to this criterion
-- **Evidence status** — where you stand: Missing, Stale, Partial, or Sufficient
+- **Evidence status** — where you stand: Missing, Partial, or Sufficient (auto-derived from the criterion's novelty-weighted score)
 
-### Updating evidence status
+### Evidence status
 
-The status column is a dropdown, not a static label. Click it and a modal prompts for an optional reason ("Updated after board review," "Waiting on Q4 minutes"). The domain score at the top of the page updates in real time.
+Evidence status is auto-derived from the criterion's score — it updates automatically as evidence is linked. Each linked piece of evidence is embedded and its novelty contribution is computed based on cosine similarity to previously linked evidence. Diverse evidence scores higher; near-duplicates contribute little.
 
 Criteria with a **REQUIRES REVIEW** warning have been auto-matched with evidence by the system. The warning clears when you change the status or add reviewer notes.
 
@@ -96,7 +96,9 @@ Each timeline entry shows the score delta (e.g., "+8pts"), the trigger type, a t
 
 Use the **filter buttons** (All, Manual, Auto-match, Propagation, Correction) to focus on specific event types. The timeline supports cursor pagination via a "Load more" button.
 
-A **sparkline** in the timeline header shows the 30-day score trend at a glance. The same sparkline appears on each domain card on the dashboard, along with a threshold warning badge (amber ▲) on domains scoring below 70%.
+A **sparkline** in the timeline header shows the 30-day score trend at a glance. The same sparkline appears on each domain card on the dashboard, along with a threshold warning badge (amber ▲) on domains scoring below their configured threshold. Pre-v2 percentage scores render as a dashed clay-coloured segment preceding the solid v2 line, so historical data is preserved.
+
+For a full visual score history, navigate to the **Trends** page at `/compliance/[programId]/trends`. It provides Recharts line charts with date range presets (7d/30d/90d/180d/1y), auto-bucketing (daily/weekly/monthly), domain filter, and a paginated score events table. Historical v1 percentage scores render as a dashed series on a secondary axis with `(v1)` tooltips.
 
 ### Domain-level evidence upload
 
@@ -110,9 +112,9 @@ Above the criteria table, a drag-and-drop **upload zone** lets you upload eviden
 
 The **notification bell** shows a badge with the count of unread notifications (capped at "9+"), polling every 30 seconds with Page Visibility API pause/resume. Notifications are generated automatically when:
 
-- A domain score changes by 5 or more points
-- A domain crosses the 70% readiness threshold (up or down)
-- A program reaches a milestone (50%, 60%, 70%, 80%, 90%)
+- A domain score changes by ≥5% of the domain reference max
+- A domain crosses its configured readiness threshold (up or down)
+- A program reaches a milestone (25%, 50%, 75%, 90%, 100% of program reference max)
 - The nightly recompute detects and corrects score drift
 
 **Click the bell** to open the notification panel — a slide-out panel on desktop (280px from right) or a full-height bottom sheet on mobile. Notifications are grouped by date (Today, Yesterday, This Week, Earlier) with type-based color borders: forest for score changes, amber for threshold crossings, stone for milestones, and red for corrections.

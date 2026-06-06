@@ -7,7 +7,7 @@ How evidence flows through Verity — from file upload to scoring criteria. Cove
 
 ## Core concepts
 
-**Evidence is never evaluated.** Verity does not read, embed, or analyze evidence files. Evidence is opaque — a PDF, CSV, or image that a user attaches. All matching is based on the metadata of the things evidence is attached to, not the evidence content itself.
+**Evidence is embedded for novelty scoring.** After upload, evidence files are processed asynchronously by the `embed-evidence` Lambda — text is extracted and embedded via Voyage AI (`voyage-law-2`, 1024 dimensions). The embedding is used to compute novelty-weighted scores: each evidence's contribution to a criterion depends on how different it is from previously linked evidence.
 
 **Matching is transitive.** If a user attaches evidence to request item X, and item X maps to scoring criterion Y, then that evidence is linked to criterion Y. The system asks "what does this item map to?" and copies the item's attachments along for the ride.
 
@@ -16,8 +16,8 @@ How evidence flows through Verity — from file upload to scoring criteria. Cove
 | Entity | What it is | Has embeddings? |
 |--------|-----------|-----------------|
 | **Request item** | A parsed line item from an examination letter (e.g., "Provide CDD policies") | Yes — generated at parse time |
-| **Scoring criterion** | A compliance requirement within a domain (e.g., "CDD program documented") | No |
-| **Evidence** | An uploaded file (PDF, CSV, image) | No — completely opaque |
+| **Scoring criterion** | A compliance requirement within a domain (e.g., "CDD program documented") | Yes — generated at insert time for classification matching |
+| **Evidence** | An uploaded file (PDF, CSV, image) | Yes — generated asynchronously via `embed-evidence` Lambda |
 
 ---
 
@@ -114,24 +114,33 @@ When a new examination is parsed, the `backfill-evidence-links` function runs th
 
 ## Step 5: Score recomputation
 
-All evidence status changes route through `applyScoreDelta()` — a single entry point that updates the domain score, records a `score_change_events` audit entry, and cascades to the program score via `cascadeProgramScore()`. Direct calls to `recomputeDomainScore()` are reserved for the nightly full recompute only.
+All evidence mutations (link, unlink, delete) flow through `recomputeAndCascade()` — the canonical pipeline helper that calls `recomputeCriterionScore` → `applyScoreDelta` → `cascadeProgramScore` → `emitScoreNotifications`.
+
+### Novelty-weighted scoring (v2)
 
 ```
-domain_score = ((sufficient_count * 100) + (partial_count * 50)) / total_criteria
+contribution = 100 × (1 − max_cosine_similarity(new_embedding, prior_embeddings))
+criterion_score = sum(contributions)
+domain_score = sum(criterion_scores)
+program_score = sum(domain_scores)
 ```
 
-| Status | Points |
-|--------|--------|
-| `sufficient` | 100 |
-| `partial` | 50 |
-| `stale` | 0 (counts as missing for scoring) |
-| `missing` | 0 |
+| Scenario | Points |
+|----------|--------|
+| First evidence (full novelty) | 100 |
+| Near-duplicate (high similarity) | ~0 |
+| Non-embeddable evidence | 50 (flat) |
+| Pending/failed embedding | 50 (flat, until resolved) |
 
-Program scores are cached on `compliance_programs.current_score` and updated by `cascadeProgramScore()` after every domain score change. Auto-snapshots are created when the program score changes by 5 or more points (with a 1-hour cooldown).
+Evidence status is **auto-derived** from the criterion score: 0 = missing, 1–99 = partial, 100+ = sufficient.
+
+Scores are **unbounded integers**. A `REFERENCE_DEPTH_PTS` constant (240 = `round(100 × ln(11))`) represents the expected score from 10 fully diverse evidence per criterion, used for percentage-based threshold calculations.
+
+Program scores are cached on `compliance_programs.current_score` and updated by `cascadeProgramScore()` after every domain score change. Auto-snapshots are created when the program score changes by 5% of the program reference max (with a 1-hour cooldown).
 
 A nightly **full recompute** Lambda (EventBridge, 3am UTC) runs `fullRecomputeAllPrograms()` to detect and correct any score drift, writing correction events only when discrepancies are found.
 
-Score changes also trigger **notifications** via `emitScoreNotifications()` — for deltas ≥5 points, threshold crossings at 70%, and program milestones (50/60/70/80/90%).
+Score changes trigger **notifications** via `emitScoreNotifications()` — for deltas ≥5% of the domain reference max, per-domain threshold crossings, and program milestones (25/50/75/90/100% of program reference max).
 
 ---
 
@@ -157,6 +166,8 @@ Schema definitions use zod v4's built-in `z.toJSONSchema()` for LLM structured o
 | `propagate-evidence` | `infra/lambda/propagate-evidence.ts` | Forward evidence propagation across obligations |
 | `backfill-evidence-links` | `infra/lambda/backfill-evidence-links.ts` | Backward backfill when a new obligation is parsed |
 | `sync-connector` | `infra/lambda/sync-connector.ts` | Google Drive connector sync pipeline |
+| `classify-library-evidence` | `infra/lambda/classify-library-evidence.ts` | Auto-classify library uploads via embedding similarity |
+| `embed-evidence` | `infra/lambda/embed-evidence.ts` | Generate evidence embeddings and recompute scores |
 
 ### EventBridge scheduled jobs
 
@@ -184,6 +195,14 @@ Backward backfill — when a new examination is parsed, searches all existing ev
 
 Connector sync pipeline for external integrations (Google Drive). 12-step orchestrator: load config, decrypt credentials (KMS), per-folder diff/classify/apply cycle, batch score updates, cascade program scores, write sync results. Includes token refresh on 401 and circuit breaker (3 consecutive auth failures disables connector).
 
+### embed-evidence
+
+Evidence embedding pipeline. Downloads the evidence file from S3, extracts text via `extractTextFromBuffer()` (PDF via `unpdf`, DOCX via `mammoth`, text/* directly), generates a 1024-dim embedding via Voyage AI (`voyage-law-2`), then calls `recomputeCriterionScore()` for each criterion the evidence is linked to. Non-embeddable content sets `embedding_status='non_embeddable'` and contributes a flat 50 points. SHA-256 content-hash dedup prevents duplicate evidence at link time.
+
+### classify-library-evidence
+
+Auto-classifies library-uploaded evidence via embedding similarity. Extracts text, chunks by heading, batch-embeds via Voyage AI, runs pgvector cosine similarity against scoring criteria, links high-confidence matches, and updates scores through `recomputeAndCascade()`.
+
 ### Dispatching from an API route
 
 ```typescript
@@ -199,9 +218,9 @@ await sendMessage("parse-examination", { uploadId, examinationId, orgId })
 | Location | Generated when | Used for |
 |----------|---------------|----------|
 | `request_items.embedding` | Exam parsing (Voyage AI, `inputType: "document"`) | KB enrichment during parse, cross-obligation propagation |
+| `scoring_criteria.embedding` | Criteria insert (inline at 5 insert sites) | Classification matching (connector funnel, library auto-classify) |
+| `evidence.embedding` | Async via `embed-evidence` Lambda (Voyage AI) | Novelty-weighted scoring (cosine similarity against prior evidence) |
 | KB tables (4 tables) `.embedding` | Seed time (`npm run db:seed`) | Semantic search in **Reference Library**, item enrichment during parse |
-
-Evidence files have no embeddings. They are opaque files. All intelligence comes from the metadata on the entities they are attached to.
 
 ---
 
@@ -213,7 +232,10 @@ Evidence files have no embeddings. They are opaque files. All intelligence comes
 | Cross-link similarity threshold | `backend/src/config/evidence-propagation.ts` | 0.82 |
 | Max cross-links per upload | `backend/src/config/evidence-propagation.ts` | 5 |
 | KB search similarity threshold | `backend/src/lib/knowledge-search.ts` | 0.3 (default) |
-| Notification delta threshold | `backend/src/config/scoring-config.ts` | 5 points |
-| Domain threshold | `backend/src/config/scoring-config.ts` | 70% |
-| Program milestones | `backend/src/config/scoring-config.ts` | 50, 60, 70, 80, 90% |
+| Reference depth points | `backend/src/config/scoring-config.ts` | 240 (per criterion) |
+| Full novelty contribution | `backend/src/config/scoring-config.ts` | 100 points |
+| Flat contribution (non-embeddable) | `backend/src/config/scoring-config.ts` | 50 points |
+| Notification delta threshold | `backend/src/config/scoring-config.ts` | 5% of domain reference max |
+| Domain threshold | Per-domain `threshold_pct` column | 1–100, nullable |
+| Program milestones | `backend/src/config/scoring-config.ts` | 25, 50, 75, 90, 100% of program reference max |
 | Vector index type | PostgreSQL | HNSW on `vector(1024)` columns |
