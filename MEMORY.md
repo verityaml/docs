@@ -4,6 +4,42 @@ Checkpoint for `/sync-from-app` runs. Used to determine which PRs are new since 
 
 ## Last Sync
 
+- **Date:** 2026-06-06
+- **Latest merged PR:** #513 (chore(claude): sync calsuite skills to 4837536 (v2.40))
+- **Main repo commit:** fa7d8e7e82a373a44d996d7c2637b83ef433a76e
+- **Merged at:** 2026-06-03
+
+PRs since previous checkpoint (#495):
+
+- #453 feat: scoring engine v2 — novelty-weighted additive model + trends page — massive feature: replaces percentage-based scoring with novelty-weighted additive model (cosine similarity on evidence embeddings via Voyage AI), new embed-evidence SQS queue + Lambda, per-domain configurable thresholds, Trends page with Recharts, evidence deletion runs full recompute pipeline, content-hash dedup. 10,421 additions, 135 files changed.
+- #465 chore(deps): bump rustls-webpki in /desktop/src-tauri — Cargo security bump. No user-visible impact.
+- #498 chore(deps): bump the npm_and_yarn group across 3 directories with 10 updates — Dependabot bump. No user-visible impact.
+- #502 chore(claude): sync calsuite skills to 2.32 — internal tooling sync. No user-visible impact.
+- #503 fix(claude): drop duplicate _origin in improve-prompt checklist — internal tooling fix. No user-visible impact.
+- #504 feat(trends): render historical v1 score snapshots as dashed series — pre-v2 percentage scores now render as dashed series on trends chart and domain sparklines, `legacyBuckets` API field, secondary right-side axis with `(v1)` tooltips. Closes #456.
+- #509 chore(claude): sync calsuite skills to dfaf5b4 — internal tooling sync. No user-visible impact.
+- #513 chore(claude): sync calsuite skills to 4837536 (v2.40) — internal tooling sync. No user-visible impact.
+
+### Impact
+
+- **roadmap.mdx**: Added spec #38 "Scoring Refactor" (Complete) to spec table and "Recently completed" section. Updated header to "38 feature specs" and counts to "33 complete, 3 in progress, 1 specified, 1 removed". Added "Scoring refactor — deferred" section with 3 items (per-criterion weights, evidence quality indicators, MD5→SHA-256 migration). Added metadata-only accuracy validation item to Google Drive V2 deferred list.
+- **todo.mdx**: Added "Scoring refactor — deferred" section with 3 items matching TODO.md.
+- **features/scoring.mdx**: Rewrote scoring formula for v2 novelty-weighted additive model. Updated evidence status to auto-derived (removed Stale). Added per-domain configurable thresholds section. Added Trends page section. Updated criteria table status column description.
+- **features/evidence.mdx**: Added "Evidence embeddings" section describing embed-evidence Lambda pipeline. Updated evidence status table (removed Stale, changed to score-band-based auto-derivation).
+- **developers/architecture.mdx**: Added embed-evidence to service breakdown, application layer diagram (SQS queue + Lambda), scoring pipeline triggers, background job flows diagram. Updated data model with evidence embedding/embeddingStatus/contentHash columns, criteria criterionScore column, domain thresholdPct column. Updated scoring pipeline description for v2.
+- **developers/background-jobs.mdx**: Updated core concepts (evidence now embedded, not opaque). Rewrote Step 5 scoring formula for novelty-weighted v2. Added embed-evidence and classify-library-evidence to SQS queues table. Added job descriptions for both. Updated "Where embeddings live" table with scoring_criteria and evidence embeddings. Updated configuration table with v2 constants and per-domain thresholds.
+- **features/dashboard.mdx**: Updated Bank-Readiness Score description for unbounded novelty-weighted scoring. Added sparklines and per-domain threshold badges to domain cards.
+- **walkthrough.mdx**: Updated dashboard section for novelty-weighted scoring. Added sparklines and per-domain threshold to domain cards. Updated evidence status section (auto-derived, removed Stale). Added Trends page paragraph to score timeline section. Updated notification thresholds to per-domain and percentage-based.
+- **index.mdx**: Added "Trends and score history" feature card. Updated "Bank-readiness scoring" card for novelty-weighted model and per-domain thresholds.
+
+### Build verification
+
+- `next build` passed — all 33 pages generated successfully. Fixed two MDX compile errors where `<100` was interpreted as JSX tags (replaced with `1–99`).
+
+---
+
+## Previous Sync (2026-05-12)
+
 - **Date:** 2026-05-12
 - **Latest merged PR:** #495 (docs: add markdown copies of agent session transcripts)
 - **Main repo commit:** aa0a2c32f4efa92062515a2946425cf9fc60df5e
