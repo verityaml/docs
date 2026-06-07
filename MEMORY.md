@@ -4,6 +4,30 @@ Checkpoint for `/sync-from-app` runs. Used to determine which PRs are new since 
 
 ## Last Sync
 
+- **Date:** 2026-06-07
+- **Latest merged PR:** #510 (feat(compliance): per-domain readiness threshold slider UI)
+- **Main repo commit:** d3bf25ea2c04df90236b0882728e2c98ad1b9673
+- **Merged at:** 2026-06-07
+
+PRs since previous checkpoint (#509):
+
+- #510 feat(compliance): per-domain readiness threshold slider UI — Per-domain readiness threshold slider on domain detail page (admin/owner only). Null state shows "No target set" + "Set target" CTA initializing to 80%. Optimistic UI with 400ms debounced PATCH, AbortController for out-of-order responses, fire-on-blur flush. Domain progress bar adopts threshold-relative semantics — fills to 100% at threshold, 3-band score color (forest/clay/red-600), amber ▲ when below target. New Slider UI primitive. Closes #455.
+- #513 chore(claude): sync calsuite skills to 4837536 (v2.40) — Internal tooling only.
+
+### Impact
+
+- **features/scoring.mdx**: Enhanced "Per-domain configurable thresholds" section with null-state behavior ("No target set" + "Set target" CTA initializing to 80%), optimistic UI details (debounced save, fire-on-blur), and progress bar threshold-relative semantics (3-band color system, amber ▲ glyph).
+- **walkthrough.mdx**: Added "Per-domain readiness threshold" subsection to domain detail section describing the admin-only slider, null state, 80% default, and progress bar 3-band color behavior.
+- No other pages updated. #513 is internal tooling. Roadmap, architecture, index, todo, and dashboard pages are unaffected — dashboard.mdx already describes the threshold warning badge on domain cards.
+
+### Build verification
+
+- Pending — build will be run before committing.
+
+---
+
+## Previous Sync (2026-06-03)
+
 - **Date:** 2026-06-03
 - **Latest merged PR:** #509 (chore(claude): sync calsuite skills to dfaf5b4)
 - **Main repo commit:** 3b10959f9161d2d9d834d7da1bb001c0287b3f8b

@@ -39,7 +39,9 @@ Evidence status is auto-derived from `criterion_score`: **0 = missing**, **< 100
 
 ### Per-domain configurable thresholds
 
-Each domain has an optional `threshold_pct` (1–100) that replaces the former global threshold. Admins set readiness targets per domain via an inline slider on the domain detail page. Threshold-crossed notifications fire per-domain using each domain's configured target. Domains without a threshold configured display scores as raw points.
+Each domain has an optional `threshold_pct` (1–100) that replaces the former global threshold. Admins and owners set readiness targets per domain via an inline **threshold slider** on the domain detail page. Domains start with no threshold — a "No target set" state with a **Set target** button that initializes to 80%. The slider uses optimistic UI with a debounced save; navigating away after a drag still persists the value.
+
+When a threshold is set, the domain progress bar adopts threshold-relative semantics — it fills to 100% at the configured target with a 3-band color system (forest when on track, clay when lagging, red when critically below) and an amber **▲** glyph when the score is below target. This matches the domain card display on the dashboard. Threshold-crossed notifications fire per-domain using each domain's configured target. Domains without a threshold configured display scores as raw points.
 
 ## Criteria table
 
