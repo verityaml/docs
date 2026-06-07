@@ -76,7 +76,7 @@ Marks all unread notifications as read for the current user.
 
 | Type | Trigger | Metadata |
 |------|---------|----------|
-| `score_change` | Domain score changes by 5+ points | `domainId`, `oldScore`, `newScore`, `trigger` |
-| `threshold_crossed` | Domain crosses 70% threshold | `domainId`, `direction` (up/down), `score` |
-| `program_milestone` | Program reaches 25/50/75/100% | `programId`, `milestone`, `score` |
+| `score_change` | Domain score changes by ≥5% of domain reference max | `domainId`, `oldScore`, `newScore`, `trigger` |
+| `threshold_crossed` | Domain crosses its configured `threshold_pct` | `domainId`, `direction` (up/down), `score` |
+| `program_milestone` | Program reaches 25/50/75/90/100% of program reference max | `programId`, `milestone`, `score` |
 | `drift_correction` | Nightly recompute finds score drift | `programId`, `domainId`, `correctedScore` |

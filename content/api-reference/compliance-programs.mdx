@@ -119,7 +119,8 @@ Deletes a program with FK cascade cleanup of domains and criteria.
   - `id` — Criterion ID (e.g., `SC-2026-001`)
   - `criterionText` — What the regulation requires
   - `regulatorySourceId` — FK to knowledge base
-  - `evidenceStatus` — `missing`, `stale`, `partial`, or `sufficient`
+  - `criterionScore` — Unbounded novelty-weighted score
+  - `evidenceStatus` — Auto-derived: `missing`, `partial`, or `sufficient`
   - `linkedEvidence` — JSONB array of linked evidence entries
   - `reviewerNotes` — Free-text notes
   - `sortOrder` — Display order
@@ -131,11 +132,7 @@ Deletes a program with FK cascade cleanup of domains and criteria.
 
 <ParamField path="method" type="PATCH">`/api/compliance-programs/[id]/domains/[domainId]/criteria/[criteriaId]`</ParamField>
 
-Updates a scoring criterion's evidence status, notes, or linked evidence. Automatically recomputes the domain and program scores via `applyScoreDelta()`.
-
-<ParamField body="evidenceStatus" type="string">
-  New evidence status. One of: `missing`, `stale`, `partial`, `sufficient`.
-</ParamField>
+Updates a scoring criterion's notes or linked evidence. Evidence status is auto-derived from the criterion's novelty-weighted score and cannot be set manually (returns 400 if `evidenceStatus` is included). Automatically recomputes scores via `recomputeAndCascade()`.
 
 <ParamField body="reviewerNotes" type="string">
   Updated reviewer notes.
