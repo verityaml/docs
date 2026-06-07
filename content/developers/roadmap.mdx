@@ -5,7 +5,7 @@ description: Planned features and tracked improvements beyond the current build
 
 ## Spec status
 
-All 37 feature specs are tracked in the main repository's `SPECLOG.md`. Current status as of April 2026:
+All 38 feature specs are tracked in the main repository's `SPECLOG.md`. Current status as of June 2026:
 
 | Spec | Status |
 |------|--------|
@@ -46,8 +46,9 @@ All 37 feature specs are tracked in the main repository's `SPECLOG.md`. Current 
 | Library Evidence Classification | In Progress |
 | Classification FDR Tuning | In Progress |
 | Funnel Eval Calibration | Specified |
+| Scoring Refactor | Complete |
 
-**32 complete**, 3 in progress, 1 specified, 1 removed.
+**33 complete**, 3 in progress, 1 specified, 1 removed.
 
 ---
 
@@ -87,6 +88,10 @@ Auto-classifying evidence library uploads via embedding similarity. Text extract
 ---
 
 ## Recently completed
+
+### Scoring Refactor (Complete)
+
+Novelty-weighted additive scoring replacing the percentage-based formula. Evidence uploads now generate `voyage-law-2` embeddings asynchronously via a new `embed-evidence` SQS queue and Lambda. Each piece of evidence linked to a criterion is scored by how much novel information it adds (cosine similarity against existing evidence). Scores are unbounded integers — domain score = sum of criterion scores, program score = sum of domain scores. Per-domain configurable thresholds replace the former global 70% target. Content-hash deduplication prevents identical files from inflating scores (409 DUPLICATE_EVIDENCE). Trends page with Recharts line charts, date range presets, domain filtering, and paginated score events table. Historical v1 percentage scores render as a dashed series on a secondary axis alongside the v2 additive line. `recomputeAndCascade()` canonical helper enforced by lint rule for all API route score mutations.
 
 ### Evidence Bridge (Complete)
 
@@ -136,6 +141,14 @@ Select multiple request items, assign to one person. API (`PATCH /items/bulk`) +
 ### Progress report generation
 
 Structured quarterly progress reports for regulators. Planned for consent order support.
+
+---
+
+## Scoring refactor — deferred
+
+- Variable per-criterion weights — multiply novelty contribution by weight factor. Currently all criteria equally weighted. P2.
+- Evidence quality indicators in UI — show "low novelty" hints when evidence is highly similar to existing. Help users upload diverse evidence. P3.
+- Migrate connector MD5 checksums to SHA-256 for consistency with evidence `content_hash`. Internal cleanup.
 
 ---
 

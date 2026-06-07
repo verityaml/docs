@@ -13,7 +13,7 @@ The dashboard is the single view that answers the question every BSA officer ask
 
 ## Bank-readiness score
 
-At the top of the dashboard, a **Bank-Readiness Score** shows a real-time percentage measuring how prepared your compliance program is for an examination. This isn't a static number someone entered — it's computed from the evidence status of every criterion across every regulatory domain.
+At the top of the dashboard, a **Bank-Readiness Score** shows a real-time measure of how prepared your compliance program is for an examination. This isn't a static number someone entered — it's computed from the novelty-weighted evidence scores of every criterion across every regulatory domain. Scores are unbounded integers that reward diverse evidence rather than duplicate documentation.
 
 ## Domain cards
 
@@ -25,7 +25,7 @@ Below the score, **domain cards** break down readiness by compliance area. For a
 - Training
 - CDD/KYC
 
-Each card shows its own score and a count of how many criteria are sufficient, partial, or missing.
+Each card shows its own score, a 30-day sparkline showing recent score movement (with historical v1 percentage scores rendered as a dashed clay line), and a count of how many criteria are sufficient, partial, or missing. Domains with a configurable readiness threshold display a warning badge when scoring below target.
 
 <img
   src="/images/home-scroll-1.png"

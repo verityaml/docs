@@ -71,11 +71,12 @@ Track compliance readiness across regulatory frameworks. Three-tier scoring: **P
 | orgId | text FK | → organization |
 | domainKey | text | e.g. `internal_controls` |
 | domainLabel | text | Human-readable label |
-| currentScore | integer? | `((sufficient × 100) + (partial × 50)) / total` |
+| currentScore | integer? | Sum of criterion scores (unbounded, novelty-weighted) |
 | totalCriteria | integer | |
 | sufficientCriteria | integer | |
 | partialCriteria | integer | |
 | missingCriteria | integer | |
+| thresholdPct | integer? | Per-domain readiness target (1-100, nullable) |
 | lastScoredAt | timestamptz? | |
 
 **scoringCriteria**
@@ -89,7 +90,8 @@ Track compliance readiness across regulatory frameworks. Three-tier scoring: **P
 | regulatorySourceId | text? | FK to knowledge base entry |
 | regulatorySourceTable | text? | Which KB table |
 | definitionKey | text? | Stable config key |
-| evidenceStatus | text | `missing` \| `stale` \| `partial` \| `sufficient` |
+| criterionScore | integer | Unbounded novelty-weighted score |
+| evidenceStatus | text | `missing` \| `partial` \| `sufficient` (auto-derived from criterionScore) |
 | linkedEvidence | jsonb | Array of linked evidence objects |
 | reviewerNotes | text? | |
 | sortOrder | integer | |
@@ -121,6 +123,7 @@ Track compliance readiness across regulatory frameworks. Three-tier scoring: **P
 | actorType | text | `user` \| `system` \| `job` |
 | eventClass | text | Category of change |
 | evidenceIds | text[]? | Related evidence |
+| formulaVersion | integer | `1` (legacy %) or `2` (novelty-weighted) |
 | description | text? | Human-readable summary |
 
 ### API examples
@@ -215,7 +218,7 @@ Response:
 ```
 
 <Note>
-Updating `evidenceStatus` triggers `applyScoreDelta()` → domain score update → `cascadeProgramScore()` → `scoreChangeEvents` audit record. If the program score changes by 5+ points, an auto-snapshot is taken (1 hour cooldown).
+Evidence status is auto-derived from `criterionScore` (0 = missing, &lt;100 = partial, ≥100 = sufficient) — manual `evidenceStatus` updates are rejected with 400. Linking or unlinking evidence triggers `recomputeAndCascade()` → `recomputeCriterionScore()` (novelty-weighted) → `applyScoreDelta()` → `cascadeProgramScore()` → `emitScoreNotifications()`. Auto-snapshots are taken when the program score changes by ≥5% of its reference max (1 hour cooldown).
 </Note>
 
 ---
@@ -378,6 +381,10 @@ Evidence files can be attached to request items, compliance domains, remediation
 | mimeType | text? | |
 | notes | text? | |
 | sourceSystem | text? | e.g. `sharepoint`, `google_drive` |
+| embedding | vector(1024)? | Voyage AI voyage-law-2 embedding |
+| embeddingStatus | text? | `pending` \| `embedded` \| `non_embeddable` \| `failed` |
+| contentHash | text? | SHA-256 for deduplication |
+| lastVerifiedAt | timestamptz? | Connector freshness tracking |
 | uploadedBy | text? FK | → user |
 | uploadedAt | timestamptz | |
 
@@ -812,10 +819,13 @@ REGULATION_CONFIG = {
 Never hardcode regulation types, category labels, or obligation types in UI or API routes. Always import from `@verity/backend/config`.
 </Note>
 
-### Scoring formula
+### Scoring formula (v2 — novelty-weighted additive)
 
 ```
-domain_score = ((sufficient_count × 100) + (partial_count × 50)) / total_criteria
+contribution = 100 × (1 − max_cosine_sim(new_embedding, priors))
+criterion_score = sum(contributions)
+domain_score = sum(criterion_scores)
+program_score = sum(domain_scores)
 ```
 
-All score changes flow through `applyScoreDelta()` → domain update → `cascadeProgramScore()` → audit event. Notifications fire on 5+ point deltas, 70% threshold crossings, and program milestones.
+Evidence status is auto-derived from `criterion_score`: 0 = missing, < 100 = partial, ≥ 100 = sufficient. All evidence mutations flow through `recomputeAndCascade()` → `recomputeCriterionScore()` → `applyScoreDelta()` → `cascadeProgramScore()` → `emitScoreNotifications()`. Notifications fire on ≥5% deltas (relative to domain reference max), per-domain threshold crossings, and program milestones (25/50/75/90/100%).

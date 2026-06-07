@@ -23,9 +23,9 @@ For local development, follow the [Quickstart](/developers/quickstart) to get a 
 
 The dashboard is the single view that answers the question every BSA officer asks: *"How ready are we?"*
 
-At the top, you'll see a **Bank-Readiness Score** — a real-time percentage measuring how prepared your compliance program is for an examination. This isn't a static number someone entered. It's computed from the evidence status of every criterion across every regulatory domain.
+At the top, you'll see a **Bank-Readiness Score** — a real-time measure of how prepared your compliance program is for an examination. This isn't a static number someone entered. It's computed from the novelty-weighted evidence scores of every criterion across every regulatory domain. Scores are unbounded integers that reward diverse evidence — five copies of the same policy count less than five different types of documentation covering the same requirement.
 
-Below the score, **domain cards** break down readiness by compliance area. For a BSA/AML program, that's the five FFIEC pillars — Internal Controls, Independent Testing, BSA Officer Oversight, Training, and CDD/KYC. Each card shows its own score and a count of how many criteria are sufficient, partial, or missing.
+Below the score, **domain cards** break down readiness by compliance area. For a BSA/AML program, that's the five FFIEC pillars — Internal Controls, Independent Testing, BSA Officer Oversight, Training, and CDD/KYC. Each card shows its own score, a 30-day score trend displayed as an inline sparkline (with historical v1 percentage scores shown as a dashed clay line preceding the solid v2 line), and a count of how many criteria are sufficient, partial, or missing. Domains with a configurable readiness threshold display a warning badge when scoring below target.
 
 <img
   src="/images/home-scroll-1.png"
@@ -72,13 +72,13 @@ Each row shows:
 - **Criterion text** — what the regulation requires (e.g., "Board-approved BSA/AML compliance program documented and updated annually")
 - **Regulatory source** — the specific FFIEC section or OCC 2023-17 paragraph it traces back to
 - **Evidence count** — how many documents are linked to this criterion
-- **Evidence status** — where you stand: Missing, Stale, Partial, or Sufficient
+- **Evidence status** — where you stand: Missing, Partial, or Sufficient — auto-derived from the criterion's novelty-weighted score
 
-### Updating evidence status
+### Evidence status
 
-The status column is a dropdown, not a static label. Click it and a modal prompts for an optional reason ("Updated after board review," "Waiting on Q4 minutes"). The domain score at the top of the page updates in real time.
+Evidence status is automatically derived from the criterion's score: 0 = missing, < 100 = partial, >= 100 = sufficient. You cannot set it manually. The status updates in real time as evidence is linked or unlinked.
 
-Criteria with a **REQUIRES REVIEW** warning have been auto-matched with evidence by the system. The warning clears when you change the status or add reviewer notes.
+Criteria with a **REQUIRES REVIEW** warning have been auto-matched with evidence by the system. The warning clears when you change reviewer notes or manually adjust linked evidence.
 
 ### Evidence and history tabs
 
@@ -96,7 +96,9 @@ Each timeline entry shows the score delta (e.g., "+8pts"), the trigger type, a t
 
 Use the **filter buttons** (All, Manual, Auto-match, Propagation, Correction) to focus on specific event types. The timeline supports cursor pagination via a "Load more" button.
 
-A **sparkline** in the timeline header shows the 30-day score trend at a glance. The same sparkline appears on each domain card on the dashboard, along with a threshold warning badge (amber ▲) on domains scoring below 70%.
+A **sparkline** in the timeline header shows the 30-day score trend at a glance — with historical v1 percentage scores (from before the scoring engine v2 migration) rendered as a dashed clay line preceding the solid v2 line. The same sparkline appears on each domain card on the dashboard, along with a threshold warning badge on domains scoring below their configured target.
+
+For a broader view, navigate to the **Trends** page from any compliance program to see score history with date range presets (7d/30d/90d/180d/1y), auto-bucketing (daily/weekly/monthly), and domain filtering. A paginated score events table below the chart shows individual score-affecting events.
 
 ### Domain-level evidence upload
 
@@ -110,9 +112,9 @@ Above the criteria table, a drag-and-drop **upload zone** lets you upload eviden
 
 The **notification bell** shows a badge with the count of unread notifications (capped at "9+"), polling every 30 seconds with Page Visibility API pause/resume. Notifications are generated automatically when:
 
-- A domain score changes by 5 or more points
-- A domain crosses the 70% readiness threshold (up or down)
-- A program reaches a milestone (50%, 60%, 70%, 80%, 90%)
+- A domain score changes by ≥5% of its reference max (the maximum possible score for that domain's criteria count)
+- A domain crosses its configured readiness threshold (up or down) — per-domain, not a global percentage
+- A program reaches a milestone (25%, 50%, 75%, 90%, 100% of its reference max)
 - The nightly recompute detects and corrects score drift
 
 **Click the bell** to open the notification panel — a slide-out panel on desktop (280px from right) or a full-height bottom sheet on mobile. Notifications are grouped by date (Today, Yesterday, This Week, Earlier) with type-based color borders: forest for score changes, amber for threshold crossings, stone for milestones, and red for corrections.
@@ -291,7 +293,7 @@ This is the centralised view of every piece of evidence in your organisation —
 
 The evidence table shows each file with its **source type badge** (EXAM, DOMAIN, or LIBRARY), the context where it was uploaded, how many scoring criteria it's linked to (hover over the count for a popover listing linked criteria with domain labels), upload date, and who uploaded it.
 
-Upload files directly using the drag-and-drop zone at the top. Files land with a LIBRARY source type and are **automatically classified** — the system extracts text from the document (PDF or text/*), generates embeddings for each heading-based chunk, and matches them against your scoring criteria using pgvector cosine similarity. High-confidence matches are linked automatically and scores update through `applyScoreDelta()`. A classification status badge on each file shows the result: a spinner while pending, a checkmark when classified, a dash for no matches, and a warning for errors.
+Upload files directly using the drag-and-drop zone at the top. Files land with a LIBRARY source type. Two things happen: the file is **automatically classified** (text extracted, embedded by heading-based chunk, and matched against scoring criteria via pgvector cosine similarity — high-confidence matches auto-link with novelty-weighted score updates) and **queued for evidence embedding** (a background Lambda generates a `voyage-law-2` embedding that powers the novelty-weighted scoring when the evidence is linked to criteria). Identical files are blocked by SHA-256 content-hash deduplication. A classification status badge on each file shows the result: a spinner while pending, a checkmark when classified, a dash for no matches, and a warning for errors.
 
 Filter the table using source type pills (Exam, Domain, Library, Connector), the domain dropdown, or filename search. Download any file via a signed URL. Delete library-sourced files with automatic criteria cleanup and score recomputation.
 
