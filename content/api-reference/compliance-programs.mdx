@@ -132,7 +132,11 @@ Deletes a program with FK cascade cleanup of domains and criteria.
 
 <ParamField path="method" type="PATCH">`/api/compliance-programs/[id]/domains/[domainId]/criteria/[criteriaId]`</ParamField>
 
-Updates a scoring criterion's notes or linked evidence. Evidence status is auto-derived from the criterion's novelty-weighted score and cannot be set manually (returns 400 if `evidenceStatus` is included). Automatically recomputes scores via `recomputeAndCascade()`.
+Updates a scoring criterion's notes or linked evidence. Linking or unlinking evidence triggers `recomputeAndCascade()` to update the domain and program scores.
+
+<ParamField body="evidenceStatus" type="string">
+  **Rejected with 400.** Evidence status is auto-derived from `criterionScore` (0 = missing, &lt;100 = partial, ≥100 = sufficient) and cannot be set manually.
+</ParamField>
 
 <ParamField body="reviewerNotes" type="string">
   Updated reviewer notes.
