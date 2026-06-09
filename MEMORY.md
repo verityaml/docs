@@ -4,6 +4,31 @@ Checkpoint for `/sync-from-app` runs. Used to determine which PRs are new since 
 
 ## Last Sync
 
+- **Date:** 2026-06-09
+- **Latest merged PR:** #513 (chore(claude): sync calsuite skills to 4837536 (v2.40))
+- **Main repo commit:** d3bf25ea2c04df90236b0882728e2c98ad1b9673
+- **Merged at:** 2026-06-07
+
+PRs since previous checkpoint (#509):
+
+- #510 feat(compliance): per-domain readiness threshold slider UI — Admin-only threshold slider on domain detail page. Null state shows "No target set" + "Set target" CTA initializing to 80% (spec default). Optimistic UI with 400ms debounced PATCH, AbortController for out-of-order prevention, fire-on-blur flush. Domain progress bar adopts threshold-relative semantics — fills to 100% at threshold, 3-band score color (forest/clay/red-600), amber ▲ glyph when below target — mirrored on dashboard domain cards. New Slider UI primitive (styled native range input, no Radix). Closes #455.
+- #513 chore(claude): sync calsuite skills to 4837536 (v2.40) — Internal tooling only.
+
+### Impact
+
+- **walkthrough.mdx**: Added "Readiness threshold slider" subsection under "Domain detail: criteria and evidence" describing the admin-only slider, null state, 80% default, optimistic save, and threshold-relative progress bar with 3-band color and amber ▲ glyph.
+- **features/scoring.mdx**: Enriched "Per-domain configurable thresholds" section with implementation details now that the UI is shipped — null state, 80% default, optimistic debounced PATCH, progress bar fills relative to threshold with 3-band color and amber ▲, mirrored on dashboard cards.
+- **features/dashboard.mdx**: Updated domain cards description to describe threshold-relative progress bar behavior (fills to 100% at threshold, 3-band color, amber ▲, link to detail page slider).
+- **developers/roadmap.mdx**: Updated "Scoring Refactor (Complete)" description to mention the threshold slider UI and progress bar semantics.
+
+### Build verification
+
+- `next build` passed — all 33 pages generated successfully.
+
+---
+
+## Previous Sync (2026-06-03)
+
 - **Date:** 2026-06-03
 - **Latest merged PR:** #509 (chore(claude): sync calsuite skills to dfaf5b4)
 - **Main repo commit:** 3b10959f9161d2d9d834d7da1bb001c0287b3f8b
@@ -11,26 +36,17 @@ Checkpoint for `/sync-from-app` runs. Used to determine which PRs are new since 
 
 PRs since previous checkpoint (#495):
 
-- #453 feat: scoring engine v2 — novelty-weighted additive model + trends page — **Major.** Replaces percentage-based scoring formula with novelty-weighted additive model using cosine similarity on evidence embeddings. New `embed-evidence` SQS queue + Lambda pipeline. Per-domain configurable thresholds replacing global 70%. Trends page with Recharts. Content-hash dedup. `recomputeAndCascade()` canonical helper. Evidence status auto-derived from criterion_score. Multiple adversarial review rounds landed operational resilience fixes, typed-error pipelines, and lint rules.
-- #465 chore(deps): bump rustls-webpki — Dependabot Rust dep bump. No user-visible impact.
-- #498 chore(deps): bump the npm_and_yarn group — Dependabot npm bump. No user-visible impact.
+- #453 feat: scoring engine v2 — novelty-weighted additive model + trends page — **Major.**
+- #465 chore(deps): bump rustls-webpki — Dependabot. No user-visible impact.
+- #498 chore(deps): bump the npm_and_yarn group — Dependabot. No user-visible impact.
 - #502 chore(claude): sync calsuite skills to 2.32 — Internal tooling only.
 - #503 fix(claude): drop duplicate _origin in improve-prompt — Internal tooling only.
-- #504 feat(trends): render historical v1 score snapshots as dashed series — Pre-v2 percentage scores now render as dashed clay line on trends chart (secondary axis) and domain sparklines. Trends API returns `legacyBuckets`, score-history API returns `legacy` array.
+- #504 feat(trends): render historical v1 score snapshots as dashed series.
 - #509 chore(claude): sync calsuite skills to dfaf5b4 — Internal tooling only.
 
 ### Impact
 
-- **features/scoring.mdx**: Rewrote scoring formula section from percentage-based to novelty-weighted additive. Removed `stale` status. Added per-domain configurable thresholds section. Added evidence embedding pipeline and trends page sections. Updated criteria table to reflect auto-derived status.
-- **developers/roadmap.mdx**: Added spec #38 "Scoring Refactor" as Complete. Updated counts to 38 specs / 33 complete. Added "Scoring Refactor (Complete)" to recently completed section. Added "Scoring refactor — deferred" section.
-- **walkthrough.mdx**: Updated dashboard description (unbounded scores, sparkline v1 dashed line, per-domain thresholds). Updated domain detail (auto-derived status, removed Stale, added trends page link). Updated notifications (percentage-based thresholds, per-domain). Updated evidence library (embedding pipeline, content-hash dedup).
-- **index.mdx**: Updated scoring card description to mention novelty-weighted scoring. Added "Trends and score history" feature card.
-- **developers/todo.mdx**: Added "Scoring refactor — deferred" section.
-- **developers/architecture.mdx**: Added `embed-evidence` to application layer diagram, service connections, background job flows diagram (7 queues now). Rewrote scoring pipeline diagram for v2 with `recomputeCriterionScore`. Updated data model diagram with evidence embedding columns, threshold_pct, criterion_score.
-- **developers/data-model.mdx**: Added evidence embedding columns (embedding, embeddingStatus, contentHash, lastVerifiedAt), criterion_score, threshold_pct, formulaVersion. Updated scoring formula to v2 novelty-weighted. Updated API note to reflect auto-derived status and `recomputeAndCascade()`.
-- **developers/background-jobs.mdx**: Rewrote core concepts (evidence now has embeddings). Added embed-evidence and classify-library-evidence to SQS queues table. Added job descriptions for both. Updated step 5 scoring to v2 formula. Updated "Where embeddings live" table with evidence and criteria embeddings. Updated configuration table with v2 constants.
-- **features/evidence.mdx**: Replaced "Evidence is never evaluated" with embedding-aware description. Updated evidence status table (removed Stale, added novelty-weighted scoring explanation). Updated score contributions from fixed points to novelty-based.
-- **features/dashboard.mdx**: Updated score description to mention unbounded novelty-weighted. Added sparkline v1 dashed line and per-domain threshold description.
+Major docs update across 11 pages for scoring engine v2 and v1 historical series.
 
 ### Build verification
 
