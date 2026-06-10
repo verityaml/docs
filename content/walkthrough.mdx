@@ -100,6 +100,12 @@ A **sparkline** in the timeline header shows the 30-day score trend at a glance 
 
 For a broader view, navigate to the **Trends** page from any compliance program to see score history with date range presets (7d/30d/90d/180d/1y), auto-bucketing (daily/weekly/monthly), and domain filtering. A paginated score events table below the chart shows individual score-affecting events.
 
+### Readiness threshold slider
+
+At the top of the domain page, admins see a **readiness threshold slider** — a configurable target for the domain's readiness score. Domains without a threshold show a "No target set" state with a "Set target" button that initializes to **80%** (the spec default). Drag the slider to adjust the target. Changes save automatically with a 400ms debounce; navigating away mid-drag still persists the value.
+
+The **domain progress bar** fills relative to the threshold — reaching 100% means the domain meets its target. Three color bands indicate status: forest (on or above target), clay (approaching target), and red (well below target). An amber **▲** glyph appears next to the score when it's below the configured threshold. These same semantics appear on the domain cards on the dashboard, so both views tell the same story.
+
 ### Domain-level evidence upload
 
 Above the criteria table, a drag-and-drop **upload zone** lets you upload evidence directly to the domain. After upload, files are auto-suggested against all criteria in the domain. Use the **Link Evidence** dropdown on any criterion to manually assign unlinked files.
