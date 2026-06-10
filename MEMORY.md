@@ -4,6 +4,25 @@ Checkpoint for `/sync-from-app` runs. Used to determine which PRs are new since 
 
 ## Last Sync
 
+- **Date:** 2026-06-10
+- **Latest merged PR:** #513 (chore(claude): sync calsuite skills to 4837536 (v2.40))
+- **Main repo commit:** d3bf25ea2c04df90236b0882728e2c98ad1b9673
+- **Merged at:** 2026-06-07
+
+No new merged PRs since previous checkpoint (#513). Verity `main` has not moved.
+
+### Impact
+
+- No docs pages updated. Full diff of all 5 source-of-truth files confirmed no drift. All pages are current.
+
+### Build verification
+
+- No MDX files changed — build verification not required.
+
+---
+
+## Previous Sync (2026-06-09)
+
 - **Date:** 2026-06-09
 - **Latest merged PR:** #513 (chore(claude): sync calsuite skills to 4837536 (v2.40))
 - **Main repo commit:** d3bf25ea2c04df90236b0882728e2c98ad1b9673
