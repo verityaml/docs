@@ -4,12 +4,12 @@ Checkpoint for `/sync-from-app` runs. Used to determine which PRs are new since 
 
 ## Last Sync
 
-- **Date:** 2026-06-19
-- **Latest merged PR:** #513 (chore(claude): sync calsuite skills to 4837536 (v2.40))
+- **Date:** 2026-06-27
+- **Latest merged PR:** #510 (feat(compliance): per-domain readiness threshold slider UI)
 - **Main repo commit:** d3bf25ea2c04df90236b0882728e2c98ad1b9673
 - **Merged at:** 2026-06-07
 
-No new merged PRs since previous checkpoint (#513). Verity `main` has not moved — HEAD is still `d3bf25ea`.
+No new merged PRs since previous checkpoint (#510). Verity `main` has not moved — HEAD is still `d3bf25ea`. Three Dependabot PRs (#514, #515, #516) were closed without merging.
 
 ### Impact
 
@@ -21,7 +21,7 @@ No new merged PRs since previous checkpoint (#513). Verity `main` has not moved 
 
 ---
 
-## Previous Sync (2026-06-17)
+## Previous Sync (2026-06-19)
 
 - **Date:** 2026-06-09
 - **Latest merged PR:** #513 (chore(claude): sync calsuite skills to 4837536 (v2.40))
